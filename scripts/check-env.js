@@ -1,0 +1,23 @@
+/**
+ * This file should be run only in the workflow that check this action.
+ * @see{.github/workflows/workflow.yml}
+ */
+
+checkEnv('JFROG_CLI_OFFER_CONFIG', 'false');
+checkEnv('JFROG_CLI_BUILD_NAME', process.env.GITHUB_WORKFLOW);
+checkEnv('JFROG_CLI_BUILD_NUMBER', process.env.GITHUB_SHA);
+checkEnv('JFROG_CLI_ENV_EXCLUDE', '*password*;*secret*;*key*;*token*;JF_ARTIFACTORY_*');
+
+function checkEnv(envKey, expectedValue) {
+    // Verify that the environment variable is not empty
+    if (!process.env[envKey]) {
+        console.error(envKey + ' env is missing');
+        process.exit(1);
+    }
+    // Verify that the environment variable is as expected
+    if (process.env[envKey] !== expectedValue) {
+        console.error(envKey + " env is '" + process.env[envKey] + "' but expected to be " + expectedValue);
+        process.exit(1);
+    }
+    console.log(envKey + ' is correct');
+}

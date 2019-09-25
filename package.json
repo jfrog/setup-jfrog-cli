@@ -1,0 +1,59 @@
+{
+    "name": "setup-jfrog-cli",
+    "version": "1.0.0",
+    "private": true,
+    "description": "Setup JFrog CLI in Github Actions",
+    "main": "lib/main.js",
+    "scripts": {
+        "build": "tsc",
+        "prepublishOnly": "npm prune --production && npm run build",
+        "format": "prettier --write **/*.ts",
+        "format-check": "prettier --check **/*.ts",
+        "lint": "tslint -p tsconfig.json",
+        "compile": "tsc -p ./",
+        "pretest": "npm run compile",
+        "test": "jest --colors"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/actions/javascript-template.git"
+    },
+    "keywords": [
+        "cli",
+        "xray",
+        "jfrog",
+        "bintray",
+        "jfrog-cli",
+        "artifactory",
+        "mission-control"
+    ],
+    "author": "JFrog",
+    "license": "Apache-2.0",
+    "dependencies": {
+        "@actions/core": "^1.0.0",
+        "@actions/exec": "^1.0.0",
+        "@actions/tool-cache": "^1.0.0",
+        "@types/fs-extra": "^8.0.0",
+        "@types/node": "^12.7.2",
+        "@types/semver": "^6.0.2",
+        "fs-extra": "^8.1.0"
+    },
+    "devDependencies": {
+        "@types/jest": "^24.0.18",
+        "jest": "^24.9.0",
+        "jest-circus": "^24.9.0",
+        "ts-jest": "^24.0.2",
+        "tslint": "^5.20.0",
+        "tslint-config-prettier": "^1.18.0",
+        "typescript": "^3.6.3",
+        "husky": "^3.0.5",
+        "prettier": "^1.18.2"
+    },
+    "husky": {
+        "skipCI": true,
+        "hooks": {
+            "pre-commit": "npm run build && npm run format",
+            "post-commit": "npm prune --production && git add node_modules/* && git commit -m \"Husky commit correct node modules\""
+        }
+    }
+}

@@ -1,0 +1,34 @@
+name: 'Main workflow'
+on: [push, pull_request]
+
+jobs:
+    test:
+        runs-on: ${{ matrix.os }}
+        strategy:
+            matrix:
+                os: [ubuntu-latest, windows-latest, macOS-latest]
+            fail-fast: false
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v1
+            - name: Setup JFrog CLI
+              uses: ./
+              env:
+                  JF_ARTIFACTORY_LOCAL: eyJ2ZXJzaW9uIjoxLCJ1cmwiOiJodHRwOi8vMTI3LjAuMC4xOjgwODEvYXJ0aWZhY3RvcnkvIiwidXNlciI6ImFkbWluIiwicGFzc3dvcmQiOiJBUEI3REVaUlBpSHFIRFRRb2tMa3g5aGh6S1QiLCJzZXJ2ZXJJZCI6ImxvY2FsIn0=
+            - name: Sanity # Check that the correct CLI downloaded and local server successfully configured
+              run: jfrog rt c show local
+            - name: Check build URL
+              uses: wei/curl@master
+              with:
+                  args: -I ${JFROG_CLI_BUILD_URL}
+              if: runner.os == 'Linux'
+            - name: Setup NodeJS # Download NodeJS to allow running the tests on macOS
+              uses: actions/setup-node@v1
+              with:
+                  node-version: '12.x'
+            - name: Check action environment
+              run: node scripts/check-env.js
+            - name: Install
+              run: npm i
+            - name: Unit tests
+              run: npm t
