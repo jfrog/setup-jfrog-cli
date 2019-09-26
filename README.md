@@ -2,7 +2,7 @@
 
 # Setup JFrog CLI
 
-This action downloads, installs and configures JFrog CLI, so that it can be used as part of the workflow.
+This Github Action downloads, installs and configures JFrog CLI, so that it can be used as part of the workflow.
 
 In addition, the action includes the following features, when using JFrog CLI to work with Artifactory.
 * The connection details of the Artifactory servers used by JFrog CLI can be stored as secrets. Read more about it [here](#storing-artifactory-servers-details-as-secrets).
@@ -85,6 +85,9 @@ By default, JFrog CLI version set in [action.yml](action.yml) is used. To set a 
 ```
 | Important: Only JFrog CLI versions 1.29.0 or above are supported. |
 | --- |
+
+## Example Project
+To help you get started, you can use [this](https://github.com/jfrog/project-examples/tree/master/github-action-example) sample project on GitHub.
 
 # Developing the Action code
 ## Build the Code
