@@ -107,6 +107,9 @@ Please help us enhance and improve this action.
 - If the existing tests do not already cover your changes, please add tests.
 - Please run `npm run format` for formatting the code before submitting the pull request.
 
+# License
+This action is available under the Apache License, Version 2.0.
+
 # References
 - [JFrog CLI Documentation](https://www.jfrog.com/confluence/display/CLI/JFrog+CLI)
 - [Github Actions Documentation](https://help.github.com/en/categories/automating-your-workflow-with-github-actions)
