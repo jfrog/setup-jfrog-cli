@@ -2,7 +2,7 @@
 
 # Setup JFrog CLI
 
-This Github Action downloads, installs and configures JFrog CLI, so that it can be used as part of the workflow.
+This GitHub Action downloads, installs and configures JFrog CLI, so that it can be used as part of the workflow.
 
 In addition, the action includes the following features, when using JFrog CLI to work with Artifactory.
 * The connection details of the Artifactory servers used by JFrog CLI can be stored as secrets. Read more about it [here](#storing-artifactory-servers-details-as-secrets).
@@ -25,7 +25,7 @@ The connection details of the Artifactory servers used by JFrog CLI can be store
 1. Make sure JFrog CLI version **1.29.0** or above is installed on your local machine by running ```jfrog -v```.
 2. Configure the details of the Artifactory server by running ```jfrog rt c```.
 3. Export the details of the Artifactory server you configured, using the server ID you chose. Do this by running ```jfrog rt c export <SERVER ID>```.
-4. Copy the generated token to the clipboard and save it as a secret on Github.
+4. Copy the generated token to the clipboard and save it as a secret on GitHub.
 
 ### Using the Secret in the Workflow
 To use the saved Artifactory server configuration in the workflow, all you need to do it to expose the secret to the workflow.
@@ -112,4 +112,4 @@ This action is available under the Apache License, Version 2.0.
 
 # References
 - [JFrog CLI Documentation](https://www.jfrog.com/confluence/display/CLI/JFrog+CLI)
-- [Github Actions Documentation](https://help.github.com/en/categories/automating-your-workflow-with-github-actions)
+- [GitHub Actions Documentation](https://help.github.com/en/categories/automating-your-workflow-with-github-actions)
