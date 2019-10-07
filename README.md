@@ -4,7 +4,7 @@
 
 This GitHub Action downloads, installs and configures JFrog CLI, so that it can be used as part of the workflow.
 
-In addition, the action includes the following features, when using JFrog CLI to work with Artifactory.
+In addition, the Action includes the following features, when using JFrog CLI to work with Artifactory.
 * The connection details of the Artifactory servers used by JFrog CLI can be stored as secrets. Read more about it [here](#storing-artifactory-servers-details-as-secrets).
 * There's no need to add the *build name* and *build number* options and arguments to commands which accpet them.
 All build related operations will be automatically recorded with the *Workflow Name* as build name and *Commit Hash* as build number.
@@ -53,16 +53,16 @@ If you have multiple Artifactory servers configured as secrets, you can use all 
     jfrog rt use local-1
     # Ping local-1
     jfrog rt ping
-    # Now use the second sever configuration exposed to the action.
+    # Now use the second sever configuration exposed to the Action.
     jfrog rt use local-2
     # Ping local-2
     jfrog rt ping
 ```
-| Important: When exposing more than one Artifactory servers to the action, you should always add the ```jfrog rt use``` command to specify the server to use. |
+| Important: When exposing more than one Artifactory servers to the Action, you should always add the ```jfrog rt use``` command to specify the server to use. |
 | --- |
 
 ## Setting the Build Name and Build Number When Publishing Build-Info to Artifactory
-The action automatically sets the following environment variables:
+The Action automatically sets the following environment variables:
 *JFROG_CLI_BUILD_NAME* and *JFROG_CLI_BUILD_NUMBER* with the workflow name and commit hash respectively.
 You therefore don't need to specify the build name and build number on any of the build related JFrog CLI commands.
 
@@ -76,7 +76,7 @@ are registered as the build artifacts.
 ```
 
 ## Setting JFrog CLI Version
-By default, JFrog CLI version set in [action.yml](action.yml) is used. To set a specific version, add the *version* input as follows:
+By default, JFrog CLI version set in [action.yml](https://github.com/jfrog/setup-jfrog-cli/blob/master/action.yml) is used. To set a specific version, add the *version* input as follows:
 
 ```yml
 - uses: jfrog/setup-jfrog-cli@v1
@@ -101,14 +101,14 @@ npm i && npm t
 ## Code Contributions
 We welcome code contributions through pull requests.
 
-Please help us enhance and improve this action.
+Please help us enhance and improve this Action.
 ### Pull Requests Guidelines
-- Follow the instructions in [CONTRIBUTING.md](CONTRIBUTING.md).
+- Follow the instructions in [CONTRIBUTING.md](https://github.com/jfrog/setup-jfrog-cli/blob/master/CONTRIBUTING.md).
 - If the existing tests do not already cover your changes, please add tests.
 - Please run `npm run format` for formatting the code before submitting the pull request.
 
 # License
-This action is available under the Apache License, Version 2.0.
+This Action is licensed under the [Apache License 2.0](https://github.com/jfrog/setup-jfrog-cli/blob/master/LICENSE).
 
 # References
 - [JFrog CLI Documentation](https://www.jfrog.com/confluence/display/CLI/JFrog+CLI)
