@@ -3,7 +3,7 @@ import { Utils } from './utils';
 
 async function main() {
     try {
-        core.startGroup('Setup JFrog CLI');        
+        core.startGroup('Setup JFrog CLI');
         Utils.setCliEnv();
         let cliPath: string = await Utils.downloadCli();
         await Utils.configArtifactoryServers(cliPath);
