@@ -1,4 +1,4 @@
-name: 'JFrog CLI'
+name: 'Setup JFrog CLI'
 description: 'Install and configure JFrog CLI.'
 author: 'JFrog'
 inputs:
