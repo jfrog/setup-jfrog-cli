@@ -1,5 +1,5 @@
 name: 'JFrog CLI'
-description: 'Execute JFrog CLI'
+description: 'Install and configure JFrog CLI.'
 author: 'JFrog'
 inputs:
     version:
@@ -9,3 +9,6 @@ inputs:
 runs:
     using: 'node12'
     main: 'lib/main.js'
+branding:
+    icon: 'terminal'
+    color: 'green'
