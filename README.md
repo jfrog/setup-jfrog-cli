@@ -76,7 +76,7 @@ are registered as the build artifacts.
 ```
 
 ## Setting JFrog CLI Version
-By default, JFrog CLI version set in [action.yml](https://github.com/jfrog/setup-jfrog-cli/blob/master/action.yml) is used. To set a specific version, add the *version* input as follows:
+By default the JFrog CLI version set in [action.yml](https://github.com/jfrog/setup-jfrog-cli/blob/master/action.yml) is used. To set a specific version, add the *version* input as follows:
 
 ```yml
 - uses: jfrog/setup-jfrog-cli@v1
