@@ -46,8 +46,7 @@
         "tslint": "^5.20.1",
         "tslint-config-prettier": "^1.18.0",
         "typescript": "^3.7.4",
-        "husky": "^4.0.10",
-        "prettier": "^1.19.1"
+        "husky": "^4.0.10"
     },
     "husky": {
         "skipCI": true,
