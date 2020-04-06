@@ -17,17 +17,17 @@ All build related operations will be automatically recorded with the *Workflow N
 - run: jfrog --version
 ```
 
-## Storing Artifactory Servers Details as Secrets
+## Storing Artifactory servers details as secrets
 ### General
 The connection details of the Artifactory servers used by JFrog CLI can be stored as secrets.
 
-### Crating the Configuration on Your Local Machine 
+### Creating the configuration on your local machine 
 1. Make sure JFrog CLI version **1.35.3** or above is installed on your local machine by running ```jfrog -v```.
 2. Configure the details of the Artifactory server by running ```jfrog rt c```.
 3. Export the details of the Artifactory server you configured, using the server ID you chose. Do this by running ```jfrog rt c export <SERVER ID>```.
 4. Copy the generated token to the clipboard and save it as a secret on GitHub.
 
-### Using the Secret in the Workflow
+### Using the secret in the workflow
 To use the saved Artifactory server configuration in the workflow, all you need to do it to expose the secret to the workflow.
 The secret should be exposed as an environment variable with the *JF_ARTIFACTORY_* prefix.
 Here's how you do this:
@@ -61,7 +61,7 @@ If you have multiple Artifactory servers configured as secrets, you can use all 
 | Important: When exposing more than one Artifactory servers to the Action, you should always add the ```jfrog rt use``` command to specify the server to use. |
 | --- |
 
-## Setting the Build Name and Build Number When Publishing Build-Info to Artifactory
+## Setting the build name and build number ehen publishing build-info to Artifactory
 The Action automatically sets the following environment variables:
 *JFROG_CLI_BUILD_NAME* and *JFROG_CLI_BUILD_NUMBER* with the workflow name and commit hash respectively.
 You therefore don't need to specify the build name and build number on any of the build related JFrog CLI commands.
@@ -75,7 +75,7 @@ are registered as the build artifacts.
     jfrog rt bp
 ```
 
-## Setting JFrog CLI Version
+## Setting JFrog CLI version
 By default the JFrog CLI version set in [action.yml](https://github.com/jfrog/setup-jfrog-cli/blob/master/action.yml) is used. To set a specific version, add the *version* input as follows:
 
 ```yml
@@ -86,11 +86,11 @@ By default the JFrog CLI version set in [action.yml](https://github.com/jfrog/se
 | Important: Only JFrog CLI versions 1.35.3 or above are supported. |
 | --- |
 
-## Example Project
+## Example project
 To help you get started, you can use [this](https://github.com/jfrog/project-examples/tree/master/github-action-example) sample project on GitHub.
 
 # Developing the Action code
-## Build the Code
+## Build the code
 If you'd like to help us develop and enhance this Action, this section is for you.
 
 To build and run the Action tests, run
@@ -98,11 +98,11 @@ To build and run the Action tests, run
 npm i && npm t
 ```
 
-## Code Contributions
+## Code contributions
 We welcome code contributions through pull requests.
 
 Please help us enhance and improve this Action.
-### Pull Requests Guidelines
+### Pull requests guidelines
 - Follow the instructions in [CONTRIBUTING.md](https://github.com/jfrog/setup-jfrog-cli/blob/master/CONTRIBUTING.md).
 - If the existing tests do not already cover your changes, please add tests.
 - Please run `npm run format` for formatting the code before submitting the pull request.
