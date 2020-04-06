@@ -22,7 +22,7 @@ All build related operations will be automatically recorded with the *Workflow N
 The connection details of the Artifactory servers used by JFrog CLI can be stored as secrets.
 
 ### Crating the Configuration on Your Local Machine 
-1. Make sure JFrog CLI version **1.29.0** or above is installed on your local machine by running ```jfrog -v```.
+1. Make sure JFrog CLI version **1.35.3** or above is installed on your local machine by running ```jfrog -v```.
 2. Configure the details of the Artifactory server by running ```jfrog rt c```.
 3. Export the details of the Artifactory server you configured, using the server ID you chose. Do this by running ```jfrog rt c export <SERVER ID>```.
 4. Copy the generated token to the clipboard and save it as a secret on GitHub.
@@ -83,7 +83,7 @@ By default the JFrog CLI version set in [action.yml](https://github.com/jfrog/se
   with:
     version: X.Y.Z
 ```
-| Important: Only JFrog CLI versions 1.29.0 or above are supported. |
+| Important: Only JFrog CLI versions 1.35.3 or above are supported. |
 | --- |
 
 ## Example Project

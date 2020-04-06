@@ -46,13 +46,14 @@
         "tslint": "^5.20.1",
         "tslint-config-prettier": "^1.18.0",
         "typescript": "^3.7.4",
-        "husky": "^4.0.10"
+        "husky": "^4.0.10",
+        "prettier": "^2.0.4"
     },
     "husky": {
         "skipCI": true,
         "hooks": {
             "pre-commit": "npm run build && npm run format",
-            "post-commit": "npm prune --production && git add node_modules/* && git commit -m \"Husky commit correct node modules\""
+            "post-commit": "npm prune --production && git add node_modules/* && git commit -m \"Husky - delete dev depedencies\""
         }
     }
 }

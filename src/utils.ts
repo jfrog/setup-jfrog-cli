@@ -9,7 +9,7 @@ import * as semver from 'semver';
 export class Utils {
     public static readonly SERVER_TOKEN_PREFIX: RegExp = /^JF_ARTIFACTORY_.*$/;
     public static readonly CLI_VERSION_ARG: string = 'version';
-    public static readonly MIN_CLI_VERSION: string = '1.29.0';
+    public static readonly MIN_CLI_VERSION: string = '1.35.3';
 
     public static async downloadCli(): Promise<string> {
         let version: string = core.getInput(Utils.CLI_VERSION_ARG);
