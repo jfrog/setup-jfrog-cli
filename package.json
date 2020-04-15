@@ -1,6 +1,6 @@
 {
     "name": "setup-jfrog-cli",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "private": true,
     "description": "Setup JFrog CLI in GitHub Actions",
     "main": "lib/main.js",
@@ -46,13 +46,13 @@
         "tslint": "^5.20.1",
         "tslint-config-prettier": "^1.18.0",
         "typescript": "^3.7.4",
-        "husky": "^4.0.10"
+        "husky": "^4.0.10",
+        "prettier": "^2.0.4"
     },
     "husky": {
         "skipCI": true,
         "hooks": {
-            "pre-commit": "npm run build && npm run format",
-            "post-commit": "npm prune --production && git add node_modules/* && git commit -m \"Husky commit correct node modules\""
+            "pre-commit": "npm run build && npm prune --production && git add node_modules/*"
         }
     }
 }

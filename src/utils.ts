@@ -41,8 +41,8 @@ export class Utils {
 
     public static getServerTokens(): string[] {
         return Object.keys(process.env)
-            .filter(env => env.match(Utils.SERVER_TOKEN_PREFIX))
-            .map(envKey => process.env[envKey] || '');
+            .filter((env) => env.match(Utils.SERVER_TOKEN_PREFIX))
+            .map((envKey) => process.env[envKey] || '');
     }
 
     public static setCliEnv() {
