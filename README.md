@@ -103,7 +103,6 @@ We welcome code contributions through pull requests.
 
 Please help us enhance and improve this Action.
 ### Pull requests guidelines
-- Follow the instructions in [CONTRIBUTING.md](https://github.com/jfrog/setup-jfrog-cli/blob/master/CONTRIBUTING.md).
 - If the existing tests do not already cover your changes, please add tests.
 - Please run `npm run format` for formatting the code before submitting the pull request.
 
