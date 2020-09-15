@@ -87,7 +87,7 @@ By default the JFrog CLI version set in [action.yml](https://github.com/jfrog/se
 | --- |
 
 ## Example project
-To help you get started, you can use [this](https://github.com/jfrog/project-examples/tree/master/github-action-example) sample project on GitHub.
+To help you get started, you can use [this](https://github.com/jfrog/project-examples/tree/master/github-action-examples) sample project on GitHub.
 
 # Developing the Action code
 ## Build the code
