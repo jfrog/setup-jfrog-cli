@@ -7,6 +7,7 @@ import * as path from 'path';
 import * as semver from 'semver';
 
 export class Utils {
+    public static readonly USER_AGENT: string = 'setup-jfrog-cli-github-action/' + require('../package.json').version;
     public static readonly SERVER_TOKEN_PREFIX: RegExp = /^JF_ARTIFACTORY_.*$/;
     public static readonly CLI_VERSION_ARG: string = 'version';
     public static readonly MIN_CLI_VERSION: string = '1.29.0';
@@ -57,6 +58,7 @@ export class Utils {
             core.exportVariable('JFROG_CLI_BUILD_NUMBER', buildNumberEnv);
         }
         core.exportVariable('JFROG_CLI_BUILD_URL', 'https://github.com/' + process.env.GITHUB_REPOSITORY + '/commit/' + buildNumberEnv + '/checks');
+        core.exportVariable('JFROG_CLI_USER_AGENT', Utils.USER_AGENT);
     }
 
     public static async configArtifactoryServers(cliPath: string) {

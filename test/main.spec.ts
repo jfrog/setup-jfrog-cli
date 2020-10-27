@@ -68,4 +68,12 @@ describe('JFrog CLI action Tests', () => {
             expect(cliUrl).toBe(expectedUrl);
         });
     });
+
+    test('User agent', () => {
+        let userAgent: string = Utils.USER_AGENT;
+        let split: string[] = userAgent.split('/');
+        expect(split).toHaveLength(2);
+        expect(split[0]).toBe('setup-jfrog-cli-github-action');
+        expect(split[1]).toMatch(/\d*.\d*.\d*/);
+    });
 });
