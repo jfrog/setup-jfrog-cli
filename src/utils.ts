@@ -20,6 +20,7 @@ export class Utils {
         let fileName: string = Utils.getCliExecutableName();
         let cliDir: string = toolCache.find(fileName, version);
         if (cliDir) {
+            core.addPath(cliDir);
             return path.join(cliDir, fileName);
         }
         let url: string = Utils.getCliUrl(version, fileName);
