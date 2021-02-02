@@ -86,8 +86,8 @@ By default the JFrog CLI version set in [action.yml](https://github.com/jfrog/se
 | Important: Only JFrog CLI versions 1.29.0 or above are supported. |
 | --- |
 
-## Example project
-To help you get started, you can use [this](https://github.com/jfrog/project-examples/tree/master/github-action-example) sample project on GitHub.
+## Example projects
+To help you get started, you can use [these](https://github.com/jfrog/project-examples/tree/master/github-action-examples) sample projects on GitHub.
 
 # Developing the Action code
 ## Build the code
