@@ -64,12 +64,12 @@ export class Utils {
 
     public static async configArtifactoryServers(cliPath: string) {
         let version: string = core.getInput(Utils.CLI_VERSION_ARG);
-        let useNewConfig: boolean = semver.lt(version, this.NEW_CONFIG_CLI_VERSION);
-        if (!useNewConfig) {
+        let useOldConfig: boolean = semver.lt(version, this.NEW_CONFIG_CLI_VERSION);
+        if (useOldConfig) {
             core.warning('JFrog CLI ' + version + ' on Setup JFrog CLI GitHub Action is deprecated. Please use version 1.46.1 or above.');
         }
         for (let serverToken of Utils.getServerTokens()) {
-            let importCmd: string[] = useNewConfig ? ['c', 'import', serverToken] : ['rt', 'c', 'import', serverToken];
+            let importCmd: string[] = useOldConfig ? ['rt', 'c', 'import', serverToken] : ['c', 'import', serverToken];
             await Utils.runCli(cliPath, importCmd);
         }
     }
