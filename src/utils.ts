@@ -9,8 +9,9 @@ import * as semver from 'semver';
 export class Utils {
     public static readonly USER_AGENT: string = 'setup-jfrog-cli-github-action/' + require('../package.json').version;
     public static readonly SERVER_TOKEN_PREFIX: RegExp = /^JF_ARTIFACTORY_.*$/;
+    public static readonly NEW_CONFIG_CLI_VERSION: string = '1.45.0';
     public static readonly CLI_VERSION_ARG: string = 'version';
-    public static readonly MIN_CLI_VERSION: string = '1.45.0';
+    public static readonly MIN_CLI_VERSION: string = '1.29.0';
 
     public static async downloadCli(): Promise<string> {
         let version: string = core.getInput(Utils.CLI_VERSION_ARG);
@@ -62,8 +63,14 @@ export class Utils {
     }
 
     public static async configArtifactoryServers(cliPath: string) {
+        let version: string = core.getInput(Utils.CLI_VERSION_ARG);
+        let useNewConfig: boolean = semver.lt(version, this.NEW_CONFIG_CLI_VERSION);
+        if (!useNewConfig) {
+            core.warning('JFrog CLI ' + version + ' on Setup JFrog CLI GitHub Action is deprecated. Please use version 1.46.1 or above.');
+        }
         for (let serverToken of Utils.getServerTokens()) {
-            await Utils.runCli(cliPath, ['c', 'import', serverToken]);
+            let importCmd: string[] = useNewConfig ? ['c', 'import', serverToken] : ['rt', 'c', 'import', serverToken];
+            await Utils.runCli(cliPath, importCmd);
         }
     }
 
