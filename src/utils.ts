@@ -37,7 +37,7 @@ export class Utils {
     public static getCliUrl(version: string, fileName: string): string {
         let bintrayPackage: string = 'jfrog-cli-' + Utils.getArchitecture();
         return (
-            'https://api.bintray.com/content/jfrog/jfrog-cli-go/' + version + '/' + bintrayPackage + '/' + fileName + '?bt_package=' + bintrayPackage
+            'https://releases.jfrog.io/artifactory/jfrog-cli/v1/' + version + '/' + bintrayPackage + '/' + fileName
         );
     }
 
