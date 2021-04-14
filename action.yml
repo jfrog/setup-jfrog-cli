@@ -9,6 +9,7 @@ inputs:
 runs:
     using: 'node12'
     main: 'lib/main.js'
+    post: 'lib/cleanup.js'
 branding:
     icon: 'terminal'
     color: 'green'

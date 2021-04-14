@@ -36,9 +36,7 @@ export class Utils {
 
     public static getCliUrl(version: string, fileName: string): string {
         let bintrayPackage: string = 'jfrog-cli-' + Utils.getArchitecture();
-        return (
-            'https://releases.jfrog.io/artifactory/jfrog-cli/v1/' + version + '/' + bintrayPackage + '/' + fileName
-        );
+        return 'https://releases.jfrog.io/artifactory/jfrog-cli/v1/' + version + '/' + bintrayPackage + '/' + fileName;
     }
 
     public static getServerTokens(): string[] {
@@ -66,6 +64,10 @@ export class Utils {
         for (let serverToken of Utils.getServerTokens()) {
             await Utils.runCli(cliPath, ['rt', 'c', 'import', serverToken]);
         }
+    }
+
+    public static async removeArtifactoryServers(cliPath: string) {
+        await Utils.runCli(cliPath, ['c', 'rm', '--quiet']);
     }
 
     public static getArchitecture() {
