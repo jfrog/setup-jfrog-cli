@@ -27,38 +27,13 @@ describe('JFrog CLI action Tests', () => {
                 'win32' as NodeJS.Platform,
                 'amd64',
                 'jfrog.exe',
-                'https://api.bintray.com/content/jfrog/jfrog-cli-go/1.2.3/jfrog-cli-windows-amd64/jfrog.exe?bt_package=jfrog-cli-windows-amd64',
+                'https://releases.jfrog.io/artifactory/jfrog-cli/v1/1.2.3/jfrog-cli-windows-amd64/jfrog.exe',
             ],
-            [
-                'darwin' as NodeJS.Platform,
-                'amd64',
-                'jfrog',
-                'https://api.bintray.com/content/jfrog/jfrog-cli-go/1.2.3/jfrog-cli-mac-386/jfrog?bt_package=jfrog-cli-mac-386',
-            ],
-            [
-                'linux' as NodeJS.Platform,
-                'amd64',
-                'jfrog',
-                'https://api.bintray.com/content/jfrog/jfrog-cli-go/1.2.3/jfrog-cli-linux-amd64/jfrog?bt_package=jfrog-cli-linux-amd64',
-            ],
-            [
-                'linux' as NodeJS.Platform,
-                'arm64',
-                'jfrog',
-                'https://api.bintray.com/content/jfrog/jfrog-cli-go/1.2.3/jfrog-cli-linux-arm64/jfrog?bt_package=jfrog-cli-linux-arm64',
-            ],
-            [
-                'linux' as NodeJS.Platform,
-                '386',
-                'jfrog',
-                'https://api.bintray.com/content/jfrog/jfrog-cli-go/1.2.3/jfrog-cli-linux-386/jfrog?bt_package=jfrog-cli-linux-386',
-            ],
-            [
-                'linux' as NodeJS.Platform,
-                'arm',
-                'jfrog',
-                'https://api.bintray.com/content/jfrog/jfrog-cli-go/1.2.3/jfrog-cli-linux-arm/jfrog?bt_package=jfrog-cli-linux-arm',
-            ],
+            ['darwin' as NodeJS.Platform, 'amd64', 'jfrog', 'https://releases.jfrog.io/artifactory/jfrog-cli/v1/1.2.3/jfrog-cli-mac-386/jfrog'],
+            ['linux' as NodeJS.Platform, 'amd64', 'jfrog', 'https://releases.jfrog.io/artifactory/jfrog-cli/v1/1.2.3/jfrog-cli-linux-amd64/jfrog'],
+            ['linux' as NodeJS.Platform, 'arm64', 'jfrog', 'https://releases.jfrog.io/artifactory/jfrog-cli/v1/1.2.3/jfrog-cli-linux-arm64/jfrog'],
+            ['linux' as NodeJS.Platform, '386', 'jfrog', 'https://releases.jfrog.io/artifactory/jfrog-cli/v1/1.2.3/jfrog-cli-linux-386/jfrog'],
+            ['linux' as NodeJS.Platform, 'arm', 'jfrog', 'https://releases.jfrog.io/artifactory/jfrog-cli/v1/1.2.3/jfrog-cli-linux-arm/jfrog'],
         ];
 
         test.each(cases)('CLI Url for %s-%s', (platform, arch, fileName, expectedUrl) => {
