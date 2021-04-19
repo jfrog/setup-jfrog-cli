@@ -9,6 +9,7 @@ import * as semver from 'semver';
 export class Utils {
     public static readonly USER_AGENT: string = 'setup-jfrog-cli-github-action/' + require('../package.json').version;
     public static readonly SERVER_TOKEN_PREFIX: RegExp = /^JF_ARTIFACTORY_.*$/;
+    // Since 1.45.0, 'jfrog rt c' command changed to 'jfrog c add'
     public static readonly NEW_CONFIG_CLI_VERSION: string = '1.45.0';
     public static readonly CLI_VERSION_ARG: string = 'version';
     public static readonly MIN_CLI_VERSION: string = '1.29.0';
