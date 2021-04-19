@@ -66,7 +66,7 @@ export class Utils {
         let version: string = core.getInput(Utils.CLI_VERSION_ARG);
         let useOldConfig: boolean = semver.lt(version, this.NEW_CONFIG_CLI_VERSION);
         if (useOldConfig) {
-            core.warning('JFrog CLI ' + version + ' on Setup JFrog CLI GitHub Action is deprecated. Please use version 1.46.1 or above.');
+            core.warning('JFrog CLI ' + version + ' on Setup JFrog CLI GitHub Action is deprecated. Please use version 1.46.4 or above.');
         }
         for (let serverToken of Utils.getServerTokens()) {
             let importCmd: string[] = useOldConfig ? ['rt', 'c', 'import', serverToken] : ['c', 'import', serverToken];
