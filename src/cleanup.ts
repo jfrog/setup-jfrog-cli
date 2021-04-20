@@ -1,7 +1,7 @@
 import * as core from '@actions/core';
 import { Utils } from './utils';
 
-async function main() {
+async function cleanup() {
     try {
         core.startGroup('Cleanup JFrog CLI servers configuration');
         let cliPath: string = await Utils.downloadCli();
@@ -12,3 +12,5 @@ async function main() {
         core.endGroup();
     }
 }
+
+cleanup();
