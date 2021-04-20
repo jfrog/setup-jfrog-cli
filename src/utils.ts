@@ -64,14 +64,22 @@ export class Utils {
     }
 
     public static async configArtifactoryServers(cliPath: string) {
-        let version: string = core.getInput(Utils.CLI_VERSION_ARG);
-        let useOldConfig: boolean = semver.lt(version, this.NEW_CONFIG_CLI_VERSION);
+        let useOldConfig: boolean = Utils.useOldConfig();
         if (useOldConfig) {
+            let version: string = core.getInput(Utils.CLI_VERSION_ARG);
             core.warning('JFrog CLI ' + version + ' on Setup JFrog CLI GitHub Action is deprecated. Please use version 1.46.4 or above.');
         }
         for (let serverToken of Utils.getServerTokens()) {
             let importCmd: string[] = useOldConfig ? ['rt', 'c', 'import', serverToken] : ['c', 'import', serverToken];
             await Utils.runCli(cliPath, importCmd);
+        }
+    }
+
+    public static async removeArtifactoryServers(cliPath: string) {
+        if (Utils.useOldConfig()) {
+            await Utils.runCli(cliPath, ['rt', 'c', 'clear', '--interactive=false']);
+        } else {
+            await Utils.runCli(cliPath, ['c', 'rm', '--quiet']);
         }
     }
 
@@ -101,5 +109,14 @@ export class Utils {
         if (res !== core.ExitCode.Success) {
             throw new Error('JFrog CLI exited with exit code ' + res);
         }
+    }
+
+    /**
+     * Return true if should use 'jfrog rt c' instead of 'jfrog c'.
+     * @returns true if should use 'jfrog rt c' instead of 'jfrog c'.
+     */
+    private static useOldConfig(): boolean {
+        let version: string = core.getInput(Utils.CLI_VERSION_ARG);
+        return semver.lt(version, this.NEW_CONFIG_CLI_VERSION);
     }
 }
