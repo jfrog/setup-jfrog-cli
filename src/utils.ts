@@ -55,11 +55,14 @@ export class Utils {
         if (buildNameEnv) {
             core.exportVariable('JFROG_CLI_BUILD_NAME', buildNameEnv);
         }
-        let buildNumberEnv: string | undefined = process.env.GITHUB_SHA;
+        let buildNumberEnv: string | undefined = process.env.GITHUB_RUN_NUMBER;
         if (buildNumberEnv) {
             core.exportVariable('JFROG_CLI_BUILD_NUMBER', buildNumberEnv);
         }
-        core.exportVariable('JFROG_CLI_BUILD_URL', 'https://github.com/' + process.env.GITHUB_REPOSITORY + '/commit/' + buildNumberEnv + '/checks');
+        core.exportVariable(
+            'JFROG_CLI_BUILD_URL',
+            process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY + '/actions/runs/' + process.env.GITHUB_RUN_ID
+        );
         core.exportVariable('JFROG_CLI_USER_AGENT', Utils.USER_AGENT);
     }
 
