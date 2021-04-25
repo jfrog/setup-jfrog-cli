@@ -5,7 +5,7 @@
 
 checkEnv('JFROG_CLI_OFFER_CONFIG', 'false');
 checkEnv('JFROG_CLI_BUILD_NAME', process.env.GITHUB_WORKFLOW);
-checkEnv('JFROG_CLI_BUILD_NUMBER', process.env.GITHUB_SHA);
+checkEnv('JFROG_CLI_BUILD_NUMBER', process.env.GITHUB_RUN_NUMBER);
 checkEnv('JFROG_CLI_ENV_EXCLUDE', '*password*;*secret*;*key*;*token*;JF_ARTIFACTORY_*');
 checkEnv('JFROG_CLI_USER_AGENT', 'setup-jfrog-cli-github-action/' + require('../package.json').version)
 
