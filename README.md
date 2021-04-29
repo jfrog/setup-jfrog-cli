@@ -24,7 +24,7 @@ The connection details of the Artifactory servers used by JFrog CLI can be store
 ### Creating the configuration on your local machine 
 1. Make sure JFrog CLI version **1.29.0** or above is installed on your local machine by running ```jfrog -v```.
 2. Configure the details of the Artifactory server by running ```jfrog c add```.
-3. Export the details of the Artifactory server you configured, using the server ID you chose. Do this by running ```jfrog rt c export <SERVER ID>```.
+3. Export the details of the Artifactory server you configured, using the server ID you chose. Do this by running ```jfrog c export <SERVER ID>```.
 4. Copy the generated token to the clipboard and save it as a secret on GitHub.
 
 ### Using the secret in the workflow
@@ -49,7 +49,7 @@ If you have multiple Artifactory servers configured as secrets, you can use all 
     JF_ARTIFACTORY_1: ${{ secrets.JF_ARTIFACTORY_SECRET_1 }}
     JF_ARTIFACTORY_2: ${{ secrets.JF_ARTIFACTORY_SECRET_2 }}
 - run: |
-    # Set the Artifactory server to use by providing the server ID (configured by the 'jfrog rt c' command).
+    # Set the Artifactory server to use by providing the server ID (configured by the 'jfrog c add' command).
     jfrog rt use local-1
     # Ping local-1
     jfrog rt ping
