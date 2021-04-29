@@ -58,7 +58,7 @@ If you have multiple Artifactory servers configured as secrets, you can use all 
     # Ping local-2
     jfrog rt ping
 ```
-| Important: When exposing more than one Artifactory servers to the Action, you should always add the ```jfrog rt use``` command to specify the server to use. |
+| Important: When exposing more than one Artifactory servers to the Action, you should always add the ```jfrog c use``` command to specify the server to use. |
 | --- |
 
 ## Setting the build name and build number when publishing build-info to Artifactory
