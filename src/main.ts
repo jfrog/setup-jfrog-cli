@@ -10,7 +10,7 @@ async function main() {
         if (
             core.getInput('jfrog-api-key') != 'none' &&
             core.getInput('jfrog-api-user') != 'none' &&
-            core.getInput('jfrog-artifactory-url') != 'none'
+            core.getInput('jfrog-url') != 'none'
         ) {
             await Utils.configJFrogAPIKey(cliPath);
         }
