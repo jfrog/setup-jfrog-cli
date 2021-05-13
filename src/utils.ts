@@ -13,6 +13,7 @@ export class Utils {
     public static readonly NEW_CONFIG_CLI_VERSION: string = '1.45.0';
     public static readonly CLI_VERSION_ARG: string = 'version';
     public static readonly MIN_CLI_VERSION: string = '1.29.0';
+    public static readonly jFrogServerID: string = 'github-actions';
 
     public static async downloadCli(): Promise<string> {
         let version: string = core.getInput(Utils.CLI_VERSION_ARG);
@@ -84,6 +85,21 @@ export class Utils {
         } else {
             await Utils.runCli(cliPath, ['c', 'rm', '--quiet']);
         }
+    }
+
+    public static async configJFrogAPIKey(cliPath: string) {
+        const jFrogApikey = core.getInput('jfrog-api-key');
+        const jFrogApiUser = core.getInput('jfrog-api-user');
+        const jFrogUrl = core.getInput('jfrog-url');
+        const configCmd: string[] = [
+            'config', 'add', 
+            '--apikey=' + jFrogApikey,
+            '--url=' + jFrogUrl,
+            '--user=' + jFrogApiUser,
+            '--interactive=false',
+            Utils.jFrogServerID
+        ]
+        await Utils.runCli(cliPath, configCmd);
     }
 
     public static getArchitecture() {

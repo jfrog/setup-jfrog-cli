@@ -7,6 +7,13 @@ async function main() {
         Utils.setCliEnv();
         let cliPath: string = await Utils.downloadCli();
         await Utils.configArtifactoryServers(cliPath);
+        if (
+            core.getInput('jfrog-api-key') != 'none'
+            && core.getInput('jfrog-api-user') != 'none' 
+            && core.getInput('jfrog-artifactory-url') != 'none'
+            ) {
+                await Utils.configJFrogAPIKey(cliPath);
+        }
     } catch (error) {
         core.setFailed(error.message);
     } finally {
