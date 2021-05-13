@@ -92,13 +92,14 @@ export class Utils {
         const jFrogApiUser = core.getInput('jfrog-api-user');
         const jFrogUrl = core.getInput('jfrog-url');
         const configCmd: string[] = [
-            'config', 'add', 
+            'config',
+            'add',
             '--apikey=' + jFrogApikey,
             '--url=' + jFrogUrl,
             '--user=' + jFrogApiUser,
             '--interactive=false',
-            Utils.jFrogServerID
-        ]
+            Utils.jFrogServerID,
+        ];
         await Utils.runCli(cliPath, configCmd);
     }
 
