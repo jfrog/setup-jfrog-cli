@@ -39,7 +39,8 @@ export class Utils {
 
     public static getCliUrl(version: string, fileName: string): string {
         let architecture: string = 'jfrog-cli-' + Utils.getArchitecture();
-        return 'https://releases.jfrog.io/artifactory/jfrog-cli/v1/' + version + '/' + architecture + '/' + fileName;
+        let major: string = version.splt('.')[0];
+        return 'https://releases.jfrog.io/artifactory/jfrog-cli/v' + major + '/' + version + '/' + architecture + '/' + fileName;
     }
 
     public static getServerTokens(): string[] {
