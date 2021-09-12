@@ -20,7 +20,7 @@ describe('JFrog CLI action Tests', () => {
         expect(serverTokens).toStrictEqual(['DUMMY_SERVER_TOKEN_1', 'DUMMY_SERVER_TOKEN_2']);
     });
 
-    describe('JFrog CLI URL Tests', () => {
+    describe('JFrog CLI V1 URL Tests', () => {
         const myOs: jest.Mocked<typeof os> = os as any;
         let cases: string[][] = [
             [
@@ -40,6 +40,30 @@ describe('JFrog CLI action Tests', () => {
             myOs.platform.mockImplementation(() => <NodeJS.Platform>platform);
             myOs.arch.mockImplementation(() => arch);
             let cliUrl: string = Utils.getCliUrl('1.2.3', fileName);
+            expect(cliUrl).toBe(expectedUrl);
+        });
+    });
+
+    describe('JFrog CLI V2 URL Tests', () => {
+        const myOs: jest.Mocked<typeof os> = os as any;
+        let cases: string[][] = [
+            [
+                'win32' as NodeJS.Platform,
+                'amd64',
+                'jfrog.exe',
+                'https://releases.jfrog.io/artifactory/jfrog-cli/v2/2.3.4/jfrog-cli-windows-amd64/jfrog.exe',
+            ],
+            ['darwin' as NodeJS.Platform, 'amd64', 'jfrog', 'https://releases.jfrog.io/artifactory/jfrog-cli/v2/2.3.4/jfrog-cli-mac-386/jfrog'],
+            ['linux' as NodeJS.Platform, 'amd64', 'jfrog', 'https://releases.jfrog.io/artifactory/jfrog-cli/v2/2.3.4/jfrog-cli-linux-amd64/jfrog'],
+            ['linux' as NodeJS.Platform, 'arm64', 'jfrog', 'https://releases.jfrog.io/artifactory/jfrog-cli/v2/2.3.4/jfrog-cli-linux-arm64/jfrog'],
+            ['linux' as NodeJS.Platform, '386', 'jfrog', 'https://releases.jfrog.io/artifactory/jfrog-cli/v2/2.3.4/jfrog-cli-linux-386/jfrog'],
+            ['linux' as NodeJS.Platform, 'arm', 'jfrog', 'https://releases.jfrog.io/artifactory/jfrog-cli/v2/2.3.4/jfrog-cli-linux-arm/jfrog'],
+        ];
+
+        test.each(cases)('CLI Url for %s-%s', (platform, arch, fileName, expectedUrl) => {
+            myOs.platform.mockImplementation(() => <NodeJS.Platform>platform);
+            myOs.arch.mockImplementation(() => arch);
+            let cliUrl: string = Utils.getCliUrl('2.3.4', fileName);
             expect(cliUrl).toBe(expectedUrl);
         });
     });

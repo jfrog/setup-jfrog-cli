@@ -13,7 +13,7 @@ All build related operations will be automatically recorded with the *Workflow N
 ## General
 
 ```yml
-- uses: jfrog/setup-jfrog-cli@v1
+- uses: jfrog/setup-jfrog-cli@v2
 - run: jfrog --version
 ```
 
@@ -32,7 +32,7 @@ To use the saved Artifactory server configuration in the workflow, all you need 
 The secret should be exposed as an environment variable with the *JF_ARTIFACTORY_* prefix.
 Here's how you do this:
 ```yml
-- uses: jfrog/setup-jfrog-cli@v1
+- uses: jfrog/setup-jfrog-cli@v2
   env:
     JF_ARTIFACTORY_1: ${{ secrets.JF_ARTIFACTORY_SECRET_1 }}
 - run: |
@@ -44,7 +44,7 @@ as the *JF_ARTIFACTORY_1* environment variable. That's it - the ping command wil
 
 If you have multiple Artifactory servers configured as secrets, you can use all of the in the workflow as follows:
 ```yml
-- uses: jfrog/setup-jfrog-cli@v1
+- uses: jfrog/setup-jfrog-cli@v2
   env:
     JF_ARTIFACTORY_1: ${{ secrets.JF_ARTIFACTORY_SECRET_1 }}
     JF_ARTIFACTORY_2: ${{ secrets.JF_ARTIFACTORY_SECRET_2 }}
@@ -79,7 +79,7 @@ are registered as the build artifacts.
 By default the JFrog CLI version set in [action.yml](https://github.com/jfrog/setup-jfrog-cli/blob/master/action.yml) is used. To set a specific version, add the *version* input as follows:
 
 ```yml
-- uses: jfrog/setup-jfrog-cli@v1
+- uses: jfrog/setup-jfrog-cli@v2
   with:
     version: X.Y.Z
 ```
