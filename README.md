@@ -86,6 +86,15 @@ By default the JFrog CLI version set in [action.yml](https://github.com/jfrog/se
 | Important: Only JFrog CLI versions 1.29.0 or above are supported. |
 | --- |
 
+## Setting JFrog remote url
+By default the JFrog CLI is downloaded from https://releases.jfrog.io/artifactory/jfrog-cli but you can specify a different url and download the cli from a remote repository in a locally hosted instance of artifactory. To set a specific remote url, add the *cli_url* input as follows:
+
+```yml
+- uses: jfrog/setup-jfrog-cli@v2
+  with:
+    cli_url: https://artifactory.mycompany.com/artifactory/jfrog-cli
+```
+
 ## Example projects
 To help you get started, you can use [these](https://github.com/jfrog/project-examples/tree/master/github-action-examples) sample projects on GitHub.
 
