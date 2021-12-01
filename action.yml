@@ -6,6 +6,10 @@ inputs:
         description: 'JFrog CLI Version'
         default: '2.3.0'
         required: false
+    cli_url:
+        description: 'URL to JFrog cli'
+        default: 'https://releases.jfrog.io/artifactory/jfrog-cli'
+        required: false
 runs:
     using: 'node12'
     main: 'lib/main.js'

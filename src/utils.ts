@@ -12,9 +12,11 @@ export class Utils {
     // Since 1.45.0, 'jfrog rt c' command changed to 'jfrog c add'
     public static readonly NEW_CONFIG_CLI_VERSION: string = '1.45.0';
     public static readonly CLI_VERSION_ARG: string = 'version';
+    public static readonly CLI_URL: string = 'cli_url';
     public static readonly MIN_CLI_VERSION: string = '1.29.0';
 
     public static async downloadCli(): Promise<string> {
+        let cli_url: string = core.getInput(Utils.CLI_URL);
         let version: string = core.getInput(Utils.CLI_VERSION_ARG);
         if (semver.lt(version, this.MIN_CLI_VERSION)) {
             throw new Error('Requested to download JFrog CLI version ' + version + ' but must be at least ' + this.MIN_CLI_VERSION);
@@ -25,7 +27,7 @@ export class Utils {
             core.addPath(cliDir);
             return path.join(cliDir, fileName);
         }
-        let url: string = Utils.getCliUrl(version, fileName);
+        let url: string = Utils.getCliUrl(cli_url, version, fileName);
         core.debug('Downloading JFrog CLI from ' + url);
         let downloadDir: string = await toolCache.downloadTool(url);
         cliDir = await toolCache.cacheFile(downloadDir, fileName, fileName, version);
@@ -37,10 +39,10 @@ export class Utils {
         return cliPath;
     }
 
-    public static getCliUrl(version: string, fileName: string): string {
+    public static getCliUrl(cli_url: string, version: string, fileName: string): string {
         let architecture: string = 'jfrog-cli-' + Utils.getArchitecture();
         let major: string = version.split('.')[0];
-        return 'https://releases.jfrog.io/artifactory/jfrog-cli/v' + major + '/' + version + '/' + architecture + '/' + fileName;
+        return cli_url + '/v' + major + '/' + version + '/' + architecture + '/' + fileName;
     }
 
     public static getServerTokens(): string[] {
