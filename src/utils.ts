@@ -13,10 +13,16 @@ export class Utils {
     public static readonly NEW_CONFIG_CLI_VERSION: string = '1.45.0';
     public static readonly CLI_VERSION_ARG: string = 'version';
     public static readonly MIN_CLI_VERSION: string = '1.29.0';
+    public static readonly LATEST_CLI_VERSION_ARG: string ='latest';
 
     public static async downloadCli(): Promise<string> {
         let version: string = core.getInput(Utils.CLI_VERSION_ARG);
-        if (semver.lt(version, this.MIN_CLI_VERSION)) {
+        let major: string = version.split('.')[0];
+        if (version === this.LATEST_CLI_VERSION_ARG){
+            version = '[RELEASE]';
+            major = '2';
+        }
+        else if (semver.lt(version, this.MIN_CLI_VERSION)) {
             throw new Error('Requested to download JFrog CLI version ' + version + ' but must be at least ' + this.MIN_CLI_VERSION);
         }
         let fileName: string = Utils.getCliExecutableName();
@@ -25,7 +31,7 @@ export class Utils {
             core.addPath(cliDir);
             return path.join(cliDir, fileName);
         }
-        let url: string = Utils.getCliUrl(version, fileName);
+        let url: string = Utils.getCliUrl(major, version, fileName);
         core.debug('Downloading JFrog CLI from ' + url);
         let downloadDir: string = await toolCache.downloadTool(url);
         cliDir = await toolCache.cacheFile(downloadDir, fileName, fileName, version);
@@ -37,9 +43,8 @@ export class Utils {
         return cliPath;
     }
 
-    public static getCliUrl(version: string, fileName: string): string {
+    public static getCliUrl(major: string, version: string, fileName: string): string {
         let architecture: string = 'jfrog-cli-' + Utils.getArchitecture();
-        let major: string = version.split('.')[0];
         return 'https://releases.jfrog.io/artifactory/jfrog-cli/v' + major + '/' + version + '/' + architecture + '/' + fileName;
     }
 
@@ -121,6 +126,9 @@ export class Utils {
      */
     private static useOldConfig(): boolean {
         let version: string = core.getInput(Utils.CLI_VERSION_ARG);
+        if (version === this.LATEST_CLI_VERSION_ARG) {
+            return false;
+        }
         return semver.lt(version, this.NEW_CONFIG_CLI_VERSION);
     }
 }
