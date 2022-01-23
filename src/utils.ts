@@ -13,16 +13,15 @@ export class Utils {
     public static readonly NEW_CONFIG_CLI_VERSION: string = '1.45.0';
     public static readonly CLI_VERSION_ARG: string = 'version';
     public static readonly MIN_CLI_VERSION: string = '1.29.0';
-    public static readonly LATEST_CLI_VERSION_ARG: string ='latest';
+    public static readonly LATEST_CLI_VERSION_ARG: string = 'latest';
 
     public static async downloadCli(): Promise<string> {
         let version: string = core.getInput(Utils.CLI_VERSION_ARG);
         let major: string = version.split('.')[0];
-        if (version === this.LATEST_CLI_VERSION_ARG){
+        if (version === this.LATEST_CLI_VERSION_ARG) {
             version = '[RELEASE]';
             major = '2';
-        }
-        else if (semver.lt(version, this.MIN_CLI_VERSION)) {
+        } else if (semver.lt(version, this.MIN_CLI_VERSION)) {
             throw new Error('Requested to download JFrog CLI version ' + version + ' but must be at least ' + this.MIN_CLI_VERSION);
         }
         let fileName: string = Utils.getCliExecutableName();
