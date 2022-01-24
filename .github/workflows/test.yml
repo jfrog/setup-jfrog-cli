@@ -25,9 +25,9 @@ jobs:
               env:
                   JF_ARTIFACTORY_LOCAL: eyJ2ZXJzaW9uIjoxLCJ1cmwiOiJodHRwOi8vMTI3LjAuMC4xOjgwODEvYXJ0aWZhY3RvcnkvIiwidXNlciI6ImFkbWluIiwicGFzc3dvcmQiOiJBUEI3REVaUlBpSHFIRFRRb2tMa3g5aGh6S1QiLCJzZXJ2ZXJJZCI6ImxvY2FsIn0=
             - name: Version # Check that the correct CLI version was downloaded
-              run: jfrog --version
+              run: jf --version
             - name: Sanity # Check local server successfully configured
-              run: jfrog c show local
+              run: jf c show local
             - name: Check build URL
               uses: wei/curl@master
               with:
