@@ -75,7 +75,7 @@ export class Utils {
     }
 
     public static async removeArtifactoryServers(cliPath: string) {
-            await Utils.runCli(cliPath, ['c', 'rm', '--quiet']);
+        await Utils.runCli(cliPath, ['c', 'rm', '--quiet']);
     }
 
     public static getArchitecture() {

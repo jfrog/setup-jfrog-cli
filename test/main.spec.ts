@@ -23,7 +23,12 @@ describe('JFrog CLI action Tests', () => {
     describe('JFrog CLI V2 (jf) URL Tests', () => {
         const myOs: jest.Mocked<typeof os> = os as any;
         let cases: string[][] = [
-            ['win32' as NodeJS.Platform, 'amd64', 'jf.exe', 'https://releases.jfrog.io/artifactory/jfrog-cli/v2-jf/2.6.0/jfrog-cli-windows-amd64/jf.exe'],
+            [
+                'win32' as NodeJS.Platform,
+                'amd64',
+                'jf.exe',
+                'https://releases.jfrog.io/artifactory/jfrog-cli/v2-jf/2.6.0/jfrog-cli-windows-amd64/jf.exe',
+            ],
             ['darwin' as NodeJS.Platform, 'amd64', 'jf', 'https://releases.jfrog.io/artifactory/jfrog-cli/v2-jf/2.6.0/jfrog-cli-mac-386/jf'],
             ['linux' as NodeJS.Platform, 'amd64', 'jf', 'https://releases.jfrog.io/artifactory/jfrog-cli/v2-jf/2.6.0/jfrog-cli-linux-amd64/jf'],
             ['linux' as NodeJS.Platform, 'arm64', 'jf', 'https://releases.jfrog.io/artifactory/jfrog-cli/v2-jf/2.6.0/jfrog-cli-linux-arm64/jf'],
