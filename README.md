@@ -6,7 +6,7 @@ This GitHub Action downloads, installs and configures JFrog CLI, so that it can 
 
 In addition, the Action includes the following features, when using JFrog CLI to work with Artifactory.
 * The connection details of the Artifactory servers used by JFrog CLI can be stored as secrets. Read more about it [here](#storing-artifactory-servers-details-as-secrets).
-* There's no need to add the *build name* and *build number* options and arguments to commands which accpet them.
+* There's no need to add the *build name* and *build number* options and arguments to commands which accept them.
 All build related operations will be automatically recorded with the *Workflow Name* as build name and *Run Number* as build number.
 
 # Usage
@@ -50,11 +50,11 @@ If you have multiple Artifactory servers configured as secrets, you can use all 
     JF_ARTIFACTORY_2: ${{ secrets.JF_ARTIFACTORY_SECRET_2 }}
 - run: |
     # Set the Artifactory server to use by providing the server ID (configured by the 'jfrog c add' command).
-    jfrog rt use local-1
+    jfrog c use local-1
     # Ping local-1
     jfrog rt ping
     # Now use the second sever configuration exposed to the Action.
-    jfrog rt use local-2
+    jfrog c use local-2
     # Ping local-2
     jfrog rt ping
 ```
@@ -66,7 +66,7 @@ The Action automatically sets the following environment variables:
 *JFROG_CLI_BUILD_NAME* and *JFROG_CLI_BUILD_NUMBER* with the workflow name and run number respectively.
 You therefore don't need to specify the build name and build number on any of the build related JFrog CLI commands.
 
-In the following example, all downloaded files are registered as depedencies of the build and all uploaded files
+In the following example, all downloaded files are registered as dependencies of the build and all uploaded files
 are registered as the build artifacts. 
 ```yml
 - run: |
@@ -83,6 +83,15 @@ By default the JFrog CLI version set in [action.yml](https://github.com/jfrog/se
   with:
     version: X.Y.Z
 ```
+
+It is also possible to set the latest JFrog CLI version by adding the *version* input as follows:
+
+```yml
+- uses: jfrog/setup-jfrog-cli@v2
+  with:
+    version: latest
+```
+
 | Important: Only JFrog CLI versions 1.29.0 or above are supported. |
 | --- |
 
