@@ -7,6 +7,7 @@ jobs:
         strategy:
             matrix:
                 os: [ubuntu-latest, windows-latest, macOS-latest]
+                version: ['latest','2.11.1']
             fail-fast: false
         steps:
             - name: Checkout
@@ -14,7 +15,7 @@ jobs:
             - name: Setup JFrog CLI
               uses: ./
               with:
-                  version: 'latest'
+                  version: ${{ matrix.version }}
               env:
                   JF_ARTIFACTORY_LOCAL: eyJ2ZXJzaW9uIjoxLCJ1cmwiOiJodHRwOi8vMTI3LjAuMC4xOjgwODEvYXJ0aWZhY3RvcnkvIiwidXNlciI6ImFkbWluIiwicGFzc3dvcmQiOiJBUEI3REVaUlBpSHFIRFRRb2tMa3g5aGh6S1QiLCJzZXJ2ZXJJZCI6ImxvY2FsIn0=
             - name: Version # Check that the correct CLI version was downloaded
@@ -36,20 +37,4 @@ jobs:
               run: npm i
             - name: Unit tests
               run: npm t
-    test-version:
-          runs-on: ${{ matrix.os }}
-          strategy:
-              matrix:
-                  os: [ubuntu-latest, windows-latest, macOS-latest]
-              fail-fast: false
-          steps:
-              - name: Checkout
-                uses: actions/checkout@v2
-              - name: Setup JFrog CLI
-                uses: ./
-                with:
-                    version: '2.3.0'
-                env:
-                    JF_ARTIFACTORY_LOCAL: eyJ2ZXJzaW9uIjoxLCJ1cmwiOiJodHRwOi8vMTI3LjAuMC4xOjgwODEvYXJ0aWZhY3RvcnkvIiwidXNlciI6ImFkbWluIiwicGFzc3dvcmQiOiJBUEI3REVaUlBpSHFIRFRRb2tMa3g5aGh6S1QiLCJzZXJ2ZXJJZCI6ImxvY2FsIn0=
-              - name: Version # Check that the correct CLI version was downloaded
-                run: jfrog --version
+
