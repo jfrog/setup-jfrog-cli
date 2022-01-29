@@ -7,7 +7,7 @@ jobs:
         strategy:
             matrix:
                 os: [ubuntu-latest, windows-latest, macOS-latest]
-                version: ['','latest','2.11.1']
+                version: ['', 'latest', '2.11.1']
             fail-fast: false
         steps:
             - name: Checkout
@@ -16,7 +16,7 @@ jobs:
               if: matrix.version != ''
               uses: ./
               with:
-                    version: ${{ matrix.version }}
+                  version: ${{ matrix.version }}
             - name: Setup default JFrog CLI
               if: matrix.version == ''
               uses: ./
