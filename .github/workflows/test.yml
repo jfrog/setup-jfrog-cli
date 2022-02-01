@@ -7,15 +7,26 @@ jobs:
         strategy:
             matrix:
                 os: [ubuntu-latest, windows-latest, macOS-latest]
+                version: ['', 'latest', '2.11.1']
             fail-fast: false
         steps:
             - name: Checkout
               uses: actions/checkout@v2
             - name: Setup JFrog CLI
+              if: matrix.version != ''
+              uses: ./
+              with:
+                  version: ${{ matrix.version }}
+              env:
+                  JF_ARTIFACTORY_LOCAL: eyJ2ZXJzaW9uIjoxLCJ1cmwiOiJodHRwOi8vMTI3LjAuMC4xOjgwODEvYXJ0aWZhY3RvcnkvIiwidXNlciI6ImFkbWluIiwicGFzc3dvcmQiOiJBUEI3REVaUlBpSHFIRFRRb2tMa3g5aGh6S1QiLCJzZXJ2ZXJJZCI6ImxvY2FsIn0=
+            - name: Setup default JFrog CLI
+              if: matrix.version == ''
               uses: ./
               env:
                   JF_ARTIFACTORY_LOCAL: eyJ2ZXJzaW9uIjoxLCJ1cmwiOiJodHRwOi8vMTI3LjAuMC4xOjgwODEvYXJ0aWZhY3RvcnkvIiwidXNlciI6ImFkbWluIiwicGFzc3dvcmQiOiJBUEI3REVaUlBpSHFIRFRRb2tMa3g5aGh6S1QiLCJzZXJ2ZXJJZCI6ImxvY2FsIn0=
-            - name: Sanity # Check that the correct CLI downloaded and local server successfully configured
+            - name: Version # Check that the correct CLI version was downloaded
+              run: jfrog --version
+            - name: Sanity # Check local server successfully configured
               run: jfrog c show local
             - name: Check build URL
               uses: wei/curl@master
@@ -32,3 +43,4 @@ jobs:
               run: npm i
             - name: Unit tests
               run: npm t
+

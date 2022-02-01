@@ -39,7 +39,7 @@ describe('JFrog CLI action Tests', () => {
         test.each(cases)('CLI Url for %s-%s', (platform, arch, fileName, expectedUrl) => {
             myOs.platform.mockImplementation(() => <NodeJS.Platform>platform);
             myOs.arch.mockImplementation(() => arch);
-            let cliUrl: string = Utils.getCliUrl('1.2.3', fileName);
+            let cliUrl: string = Utils.getCliUrl('1', '1.2.3', fileName);
             expect(cliUrl).toBe(expectedUrl);
         });
     });
@@ -63,7 +63,7 @@ describe('JFrog CLI action Tests', () => {
         test.each(cases)('CLI Url for %s-%s', (platform, arch, fileName, expectedUrl) => {
             myOs.platform.mockImplementation(() => <NodeJS.Platform>platform);
             myOs.arch.mockImplementation(() => arch);
-            let cliUrl: string = Utils.getCliUrl('2.3.4', fileName);
+            let cliUrl: string = Utils.getCliUrl('2', '2.3.4', fileName);
             expect(cliUrl).toBe(expectedUrl);
         });
     });
