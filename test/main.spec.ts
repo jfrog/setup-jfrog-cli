@@ -27,19 +27,19 @@ describe('JFrog CLI action Tests', () => {
                 'win32' as NodeJS.Platform,
                 'amd64',
                 'jf.exe',
-                'https://releases.jfrog.io/artifactory/jfrog-cli/v2-jf/2.6.0/jfrog-cli-windows-amd64/jf.exe',
+                'https://releases.jfrog.io/artifactory/jfrog-cli/v2-jf/2.12.0/jfrog-cli-windows-amd64/jf.exe',
             ],
-            ['darwin' as NodeJS.Platform, 'amd64', 'jf', 'https://releases.jfrog.io/artifactory/jfrog-cli/v2-jf/2.6.0/jfrog-cli-mac-386/jf'],
-            ['linux' as NodeJS.Platform, 'amd64', 'jf', 'https://releases.jfrog.io/artifactory/jfrog-cli/v2-jf/2.6.0/jfrog-cli-linux-amd64/jf'],
-            ['linux' as NodeJS.Platform, 'arm64', 'jf', 'https://releases.jfrog.io/artifactory/jfrog-cli/v2-jf/2.6.0/jfrog-cli-linux-arm64/jf'],
-            ['linux' as NodeJS.Platform, '386', 'jf', 'https://releases.jfrog.io/artifactory/jfrog-cli/v2-jf/2.6.0/jfrog-cli-linux-386/jf'],
-            ['linux' as NodeJS.Platform, 'arm', 'jf', 'https://releases.jfrog.io/artifactory/jfrog-cli/v2-jf/2.6.0/jfrog-cli-linux-arm/jf'],
+            ['darwin' as NodeJS.Platform, 'amd64', 'jf', 'https://releases.jfrog.io/artifactory/jfrog-cli/v2-jf/2.12.0/jfrog-cli-mac-386/jf'],
+            ['linux' as NodeJS.Platform, 'amd64', 'jf', 'https://releases.jfrog.io/artifactory/jfrog-cli/v2-jf/2.12.0/jfrog-cli-linux-amd64/jf'],
+            ['linux' as NodeJS.Platform, 'arm64', 'jf', 'https://releases.jfrog.io/artifactory/jfrog-cli/v2-jf/2.12.0/jfrog-cli-linux-arm64/jf'],
+            ['linux' as NodeJS.Platform, '386', 'jf', 'https://releases.jfrog.io/artifactory/jfrog-cli/v2-jf/2.12.0/jfrog-cli-linux-386/jf'],
+            ['linux' as NodeJS.Platform, 'arm', 'jf', 'https://releases.jfrog.io/artifactory/jfrog-cli/v2-jf/2.12.0/jfrog-cli-linux-arm/jf'],
         ];
 
         test.each(cases)('CLI Url for %s-%s', (platform, arch, fileName, expectedUrl) => {
             myOs.platform.mockImplementation(() => <NodeJS.Platform>platform);
             myOs.arch.mockImplementation(() => arch);
-            let cliUrl: string = Utils.getCliUrl('2.6.0', fileName);
+            let cliUrl: string = Utils.getCliUrl('2.12.0', fileName);
             expect(cliUrl).toBe(expectedUrl);
         });
     });

@@ -4,7 +4,7 @@ author: 'JFrog'
 inputs:
     version:
         description: 'JFrog CLI Version'
-        default: '2.6.1'
+        default: '2.12.0'
         required: false
 runs:
     using: 'node12'

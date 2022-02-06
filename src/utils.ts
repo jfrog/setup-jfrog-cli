@@ -11,7 +11,7 @@ export class Utils {
     public static readonly SERVER_TOKEN_PREFIX: RegExp = /^JFROG_SERVER.*$/;
 
     public static readonly CLI_VERSION_ARG: string = 'version';
-    public static readonly MIN_CLI_VERSION: string = '2.6.0';
+    public static readonly MIN_CLI_VERSION: string = '2.12.0';
     public static readonly LATEST_CLI_VERSION_ARG: string = 'latest';
 
     public static async downloadCli(): Promise<string> {
@@ -68,13 +68,13 @@ export class Utils {
         core.exportVariable('JFROG_CLI_USER_AGENT', Utils.USER_AGENT);
     }
 
-    public static async configArtifactoryServers(cliPath: string) {
+    public static async configJFrogServers(cliPath: string) {
         for (let serverToken of Utils.getServerTokens()) {
             await Utils.runCli(cliPath, ['c', 'import', serverToken]);
         }
     }
 
-    public static async removeArtifactoryServers(cliPath: string) {
+    public static async removeJFrogServers(cliPath: string) {
         await Utils.runCli(cliPath, ['c', 'rm', '--quiet']);
     }
 

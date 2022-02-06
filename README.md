@@ -22,7 +22,7 @@ All build related operations will be automatically recorded with the *Workflow N
 The connection details of the JFrog platform servers used by JFrog CLI can be stored as secrets.
 
 ### Creating the configuration on your local machine 
-1. Make sure JFrog CLI version **2.6.0** or above is installed on your local machine by running ```jf -v```.
+1. Make sure JFrog CLI version **2.12.0** or above is installed on your local machine by running ```jf -v```.
 2. Configure the details of the JFrog platform server by running ```jf c add```.
 3. Export the details of the JFrog platform server you configured, using the server ID you chose. Do this by running ```jf c export <SERVER ID>```.
 4. Copy the generated token to the clipboard and save it as a secret on GitHub.
@@ -92,7 +92,7 @@ It is also possible to set the latest JFrog CLI version by adding the *version* 
     version: latest
 ```
 
-| Important: Only JFrog CLI versions 2.6.0 or above are supported. |
+| Important: Only JFrog CLI versions 2.12.0 or above are supported. |
 | --- |
 
 ## Example projects
