@@ -1,6 +1,12 @@
-[![Build status](https://github.com/jfrog/setup-jfrog-cli/workflows/Main%20workflow/badge.svg)](https://github.com/jfrog/setup-jfrog-cli/actions)
+[![JFrog CLI](readme_image.png)](#readme)
+
+<div align="center">
 
 # Setup JFrog CLI
+
+[![Build status](https://github.com/jfrog/setup-jfrog-cli/workflows/Main%20workflow/badge.svg)](https://github.com/jfrog/setup-jfrog-cli/actions)
+
+</div>
 
 This GitHub Action downloads, installs and configures JFrog CLI, so that it can be used as part of the workflow.
 
