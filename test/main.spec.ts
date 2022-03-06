@@ -3,21 +3,42 @@ import { Utils } from '../src/utils';
 jest.mock('os');
 
 describe('JFrog CLI action Tests', () => {
-    test('Get server tokens', async () => {
-        let serverTokens: string[] = Utils.getServerTokens();
-        expect(serverTokens).toStrictEqual([]);
+    beforeEach(() => {
+        ['JF_ARTIFACTORY_1', 'JF_ARTIFACTORY_2', 'ARTIFACTORY_JF_1', 'JF_ENV_1', 'JF_ENV_2', 'ENV_JF_1', 'JF_ENV_LOCAL'].forEach((envKey) => {
+            delete process.env[envKey];
+        });
+    });
 
-        process.env['ARTIFACTORY_JF_1'] = 'ILLEGAL_SERVER_TOKEN';
+    test('Get server tokens', async () => {
+        let serverTokens: Set<string> = Utils.getServerTokens();
+        expect(serverTokens.size).toBe(0);
+
+        process.env['ENV_JF_1'] = 'ILLEGAL_SERVER_TOKEN';
         serverTokens = Utils.getServerTokens();
-        expect(serverTokens).toStrictEqual([]);
+        expect(serverTokens.size).toBe(0);
+
+        process.env['JF_ENV_1'] = 'DUMMY_SERVER_TOKEN_1';
+        serverTokens = Utils.getServerTokens();
+        expect(serverTokens).toStrictEqual(new Set(['DUMMY_SERVER_TOKEN_1']));
+
+        process.env['JF_ENV_2'] = 'DUMMY_SERVER_TOKEN_2';
+        serverTokens = Utils.getServerTokens();
+        expect(serverTokens).toStrictEqual(new Set(['DUMMY_SERVER_TOKEN_1', 'DUMMY_SERVER_TOKEN_2']));
+    });
+
+    test('Get legacy server tokens', async () => {
+        process.env['ARTIFACTORY_JF_1'] = 'ILLEGAL_SERVER_TOKEN';
+        expect(Utils.getServerTokens().size).toBe(0);
 
         process.env['JF_ARTIFACTORY_1'] = 'DUMMY_SERVER_TOKEN_1';
-        serverTokens = Utils.getServerTokens();
-        expect(serverTokens).toStrictEqual(['DUMMY_SERVER_TOKEN_1']);
+        expect(Utils.getServerTokens()).toStrictEqual(new Set(['DUMMY_SERVER_TOKEN_1']));
 
         process.env['JF_ARTIFACTORY_2'] = 'DUMMY_SERVER_TOKEN_2';
-        serverTokens = Utils.getServerTokens();
-        expect(serverTokens).toStrictEqual(['DUMMY_SERVER_TOKEN_1', 'DUMMY_SERVER_TOKEN_2']);
+        expect(Utils.getServerTokens()).toStrictEqual(new Set(['DUMMY_SERVER_TOKEN_1', 'DUMMY_SERVER_TOKEN_2']));
+
+        process.env['JF_ENV_1'] = 'DUMMY_SERVER_TOKEN_1';
+        process.env['JF_ENV_2'] = 'DUMMY_SERVER_TOKEN_3';
+        expect(Utils.getServerTokens()).toStrictEqual(new Set(['DUMMY_SERVER_TOKEN_1', 'DUMMY_SERVER_TOKEN_2', 'DUMMY_SERVER_TOKEN_3']));
     });
 
     describe('JFrog CLI V1 URL Tests', () => {

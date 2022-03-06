@@ -4,10 +4,10 @@ import { Utils } from './utils';
 async function cleanup() {
     try {
         core.startGroup('Cleanup JFrog CLI servers configuration');
-        let cliPath: string = await Utils.downloadCli();
-        await Utils.removeArtifactoryServers(cliPath);
+        await Utils.addCliToPath();
+        await Utils.removeArtifactoryServers();
     } catch (error) {
-        core.setFailed(error.message);
+        core.setFailed((<any>error).message);
     } finally {
         core.endGroup();
     }
