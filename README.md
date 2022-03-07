@@ -38,7 +38,7 @@ To use the saved JFrog platform configuration in the workflow, all you need to d
 The secret should be exposed as an environment variable with the *JFROG_ENV_* prefix.
 Here's how you do this:
 ```yml
-- uses: jfrog/setup-jfrog-cli@v2-jf
+- uses: jfrog/setup-jfrog-cli@v2
   env:
     JFROG_ENV_1: ${{ secrets.JFROG_SECRET_ENV_1 }}
 - run: |
@@ -50,7 +50,7 @@ as the *JFROG_ENV_1* environment variable. That's it - the ping command will now
 
 If you have multiple JFrog platform configurations as secrets, you can use all of the in the workflow as follows:
 ```yml
-- uses: jfrog/setup-jfrog-cli@v2-jf
+- uses: jfrog/setup-jfrog-cli@v2
   env:
     JFROG_ENV_1: ${{ secrets.JFROG_SECRET_ENV_1 }}
     JFROG_ENV_2: ${{ secrets.JFROG_SECRET_ENV_2 }}

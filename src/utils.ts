@@ -176,6 +176,12 @@ export class Utils {
         return os.platform().startsWith('win');
     }
 
+    /**
+     * Execute JFrog CLI command. 
+     * This GitHub Action downloads the requested 'jfrog' executable and stores it as 'jfrog' and 'jf'. 
+     * Therefore the 'jf' executable is expected to be in the path also for older CLI versions.
+     * @param args - CLI arguments
+     */
     public static async runCli(args: string[]) {
         let res: number = await exec('jf', args);
         if (res !== core.ExitCode.Success) {
