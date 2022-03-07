@@ -35,25 +35,25 @@ The connection details of the JFrog platform used by JFrog CLI can be stored as 
 
 ### Using the secret in the workflow
 To use the saved JFrog platform configuration in the workflow, all you need to do it to expose the secret to the workflow.
-The secret should be exposed as an environment variable with the *JFROG_ENV_* prefix.
+The secret should be exposed as an environment variable with the *JF_ENV_* prefix.
 Here's how you do this:
 ```yml
 - uses: jfrog/setup-jfrog-cli@v2
   env:
-    JFROG_ENV_1: ${{ secrets.JFROG_SECRET_ENV_1 }}
+    JF_ENV_1: ${{ secrets.JF_SECRET_ENV_1 }}
 - run: |
     # Ping the server
     jfrog rt ping
 ```
-As you can see in the example above, we created a secret named *JFROG_SECRET_ENV_1* and we exposed it to the workflow 
-as the *JFROG_ENV_1* environment variable. That's it - the ping command will now ping the configured Artifactory server.
+As you can see in the example above, we created a secret named *JF_SECRET_ENV_1* and we exposed it to the workflow 
+as the *JF_ENV_1* environment variable. That's it - the ping command will now ping the configured Artifactory server.
 
 If you have multiple JFrog platform configurations as secrets, you can use all of the in the workflow as follows:
 ```yml
 - uses: jfrog/setup-jfrog-cli@v2
   env:
-    JFROG_ENV_1: ${{ secrets.JFROG_SECRET_ENV_1 }}
-    JFROG_ENV_2: ${{ secrets.JFROG_SECRET_ENV_2 }}
+    JF_ENV_1: ${{ secrets.JF_SECRET_ENV_1 }}
+    JF_ENV_2: ${{ secrets.JF_SECRET_ENV_2 }}
 - run: |
     # Set the JFrog configuration to use by providing the server ID (configured by the 'jf c add' command).
     jf c use local-1
