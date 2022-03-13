@@ -43,7 +43,7 @@ Here's how you do this:
     JF_ENV_1: ${{ secrets.JF_SECRET_ENV_1 }}
 - run: |
     # Ping the server
-    jfrog rt ping
+    jf rt ping
 ```
 As you can see in the example above, we created a secret named *JF_SECRET_ENV_1* and we exposed it to the workflow 
 as the *JF_ENV_1* environment variable. That's it - the ping command will now ping the configured Artifactory server.
