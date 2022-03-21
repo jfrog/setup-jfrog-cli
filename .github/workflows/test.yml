@@ -34,9 +34,9 @@ jobs:
                   args: -I ${JFROG_CLI_BUILD_URL}
               if: runner.os == 'Linux'
             - name: Setup NodeJS # Download NodeJS to allow running the tests on macOS
-              uses: actions/setup-node@v1
+              uses: actions/setup-node@v3
               with:
-                  node-version: '12.x'
+                  node-version: '16.x'
             - name: Check action environment
               run: node scripts/check-env.js
             - name: Install

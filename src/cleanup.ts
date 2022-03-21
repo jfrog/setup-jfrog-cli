@@ -7,7 +7,7 @@ async function cleanup() {
         let cliPath: string = await Utils.downloadCli();
         await Utils.removeArtifactoryServers(cliPath);
     } catch (error) {
-        core.setFailed(error.message);
+        core.setFailed((<any>error).message);
     } finally {
         core.endGroup();
     }

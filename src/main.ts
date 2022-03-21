@@ -8,7 +8,7 @@ async function main() {
         let cliPath: string = await Utils.downloadCli();
         await Utils.configArtifactoryServers(cliPath);
     } catch (error) {
-        core.setFailed(error.message);
+        core.setFailed((<any>error).message);
     } finally {
         core.endGroup();
     }
