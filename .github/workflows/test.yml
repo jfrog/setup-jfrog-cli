@@ -1,46 +1,57 @@
-name: 'Test'
+name: "Test"
 on: [push, pull_request]
 
 jobs:
-    test:
-        runs-on: ${{ matrix.os }}
-        strategy:
-            matrix:
-                os: [ubuntu-latest, windows-latest, macOS-latest]
-                version: ['', 'latest', '2.11.1']
-            fail-fast: false
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v2
-            - name: Setup JFrog CLI
-              if: matrix.version != ''
-              uses: ./
-              with:
-                  version: ${{ matrix.version }}
-              env:
-                  JF_ARTIFACTORY_LOCAL: eyJ2ZXJzaW9uIjoxLCJ1cmwiOiJodHRwOi8vMTI3LjAuMC4xOjgwODEvYXJ0aWZhY3RvcnkvIiwidXNlciI6ImFkbWluIiwicGFzc3dvcmQiOiJBUEI3REVaUlBpSHFIRFRRb2tMa3g5aGh6S1QiLCJzZXJ2ZXJJZCI6ImxvY2FsIn0=
-            - name: Setup default JFrog CLI
-              if: matrix.version == ''
-              uses: ./
-              env:
-                  JF_ARTIFACTORY_LOCAL: eyJ2ZXJzaW9uIjoxLCJ1cmwiOiJodHRwOi8vMTI3LjAuMC4xOjgwODEvYXJ0aWZhY3RvcnkvIiwidXNlciI6ImFkbWluIiwicGFzc3dvcmQiOiJBUEI3REVaUlBpSHFIRFRRb2tMa3g5aGh6S1QiLCJzZXJ2ZXJJZCI6ImxvY2FsIn0=
-            - name: Version # Check that the correct CLI version was downloaded
-              run: jfrog --version
-            - name: Sanity # Check local server successfully configured
-              run: jfrog c show local
-            - name: Check build URL
-              uses: wei/curl@master
-              with:
-                  args: -I ${JFROG_CLI_BUILD_URL}
-              if: runner.os == 'Linux'
-            - name: Setup NodeJS # Download NodeJS to allow running the tests on macOS
-              uses: actions/setup-node@v3
-              with:
-                  node-version: '16.x'
-            - name: Check action environment
-              run: node scripts/check-env.js
-            - name: Install
-              run: npm i
-            - name: Unit tests
-              run: npm t
+  test:
+    runs-on: ${{ matrix.os }}
+    env:
+      JF_ENV_LOCAL: eyJ2ZXJzaW9uIjoxLCJ1cmwiOiJodHRwOi8vMTI3LjAuMC4xOjgwODEvYXJ0aWZhY3RvcnkvIiwidXNlciI6ImFkbWluIiwicGFzc3dvcmQiOiJBUEI3REVaUlBpSHFIRFRRb2tMa3g5aGh6S1QiLCJzZXJ2ZXJJZCI6ImxvY2FsIn0=
 
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+        version: ["", "latest", "1.29.0"]
+      fail-fast: false
+    steps:
+      # Checkout and install prerequisites
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup NodeJS
+        uses: actions/setup-node@v3
+        with:
+          node-version: "16.x"
+
+      # Run action according to the input version
+      - name: Setup JFrog CLI
+        if: matrix.version != ''
+        uses: ./
+        with:
+          version: ${{ matrix.version }}
+      - name: Setup default JFrog CLI
+        if: matrix.version == ''
+        uses: ./
+
+      # Run --version
+      - name: Check versions
+        run: jf --version && jfrog --version
+
+      # Check local server successfully configured
+      - name: Sanity
+        run: jf c show local || jfrog rt config show local
+
+      # Check build URL
+      - name: Check build URL
+        uses: wei/curl@master
+        with:
+          args: -I ${JFROG_CLI_BUILD_URL}
+        if: runner.os == 'Linux'
+
+      # Check environment variables
+      - name: Check action environment
+        run: node scripts/check-env.js
+
+      # Install and run tests
+      - name: Install
+        run: npm i
+      - name: Unit tests
+        run: npm t
