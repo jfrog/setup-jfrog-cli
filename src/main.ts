@@ -6,7 +6,7 @@ async function main() {
         core.startGroup('Setup JFrog CLI');
         Utils.setCliEnv();
         await Utils.addCliToPath();
-        await Utils.configArtifactoryServers();
+        await Utils.configJFrogServers();
     } catch (error) {
         core.setFailed((<any>error).message);
     } finally {

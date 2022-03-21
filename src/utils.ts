@@ -104,8 +104,8 @@ export class Utils {
 
         if (legacyServerTokens.size > 0) {
             core.warning(
-                'Using "JF_ARTIFACTORY_" prefix environment variable for Artifactory server configuration is ' +
-                    'deprecated and expected to be removed in v3. Please use "JF_ENV_" prefix instead, using the same value.'
+                'The "JF_ARTIFACTORY_" prefix for environment variables is deprecated and is expected to be removed in v3. ' +
+                'Please use the "JF_ENV_" prefix instead. The environment variables value should not be changed.'
             );
         }
 
@@ -116,6 +116,7 @@ export class Utils {
     public static setCliEnv() {
         core.exportVariable('JFROG_CLI_ENV_EXCLUDE', '*password*;*secret*;*key*;*token*;*auth*;JF_ARTIFACTORY_*;JF_ENV_*');
         core.exportVariable('JFROG_CLI_OFFER_CONFIG', 'false');
+        core.exportVariable('CI', 'true');
         let buildNameEnv: string | undefined = process.env.GITHUB_WORKFLOW;
         if (buildNameEnv) {
             core.exportVariable('JFROG_CLI_BUILD_NAME', buildNameEnv);
@@ -131,7 +132,7 @@ export class Utils {
         core.exportVariable('JFROG_CLI_USER_AGENT', Utils.USER_AGENT);
     }
 
-    public static async configArtifactoryServers() {
+    public static async configJFrogServers() {
         let useOldConfig: boolean = Utils.useOldConfig();
         if (useOldConfig) {
             let version: string = core.getInput(Utils.CLI_VERSION_ARG);
@@ -143,7 +144,7 @@ export class Utils {
         }
     }
 
-    public static async removeArtifactoryServers() {
+    public static async removeJFrogServers() {
         if (Utils.useOldConfig()) {
             await Utils.runCli(['rt', 'c', 'clear', '--interactive=false']);
         } else {

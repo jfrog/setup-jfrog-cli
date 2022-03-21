@@ -5,7 +5,7 @@ async function cleanup() {
     try {
         core.startGroup('Cleanup JFrog CLI servers configuration');
         await Utils.addCliToPath();
-        await Utils.removeArtifactoryServers();
+        await Utils.removeJFrogServers();
     } catch (error) {
         core.setFailed((<any>error).message);
     } finally {
