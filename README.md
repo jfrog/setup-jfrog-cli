@@ -23,12 +23,28 @@ All build related operations will be automatically recorded with the *Workflow N
 - run: jf --version
 ```
 
-## Storing JFrog details as secrets
+## Set Up a FREE JFrog Environment in the Cloud
+Need a FREE JFrog environment in the cloud to use with this GitHub Action? Just run one of the following commands in your terminal. The commands will do the following:
+
+1. Install JFrog CLI on your machine.
+2. Create a FREE JFrog environment in the cloud for you.
+
+**MacOS and Linux using cUrl**
+```
+curl -fL https://getcli.jfrog.io?setup | sh
+```
+
+**Windows using PowerShell**
+```
+powershell "Start-Process -Wait -Verb RunAs powershell '-NoProfile iwr https://releases.jfrog.io/artifactory/jfrog-cli/v2-jf/[RELEASE]/jfrog-cli-windows-amd64/jf.exe -OutFile $env:SYSTEMROOT\system32\jf.exe'" ; jf setup
+```
+
+## Storing JFrog connection details as secrets
 ### General
 The connection details of the JFrog platform used by JFrog CLI can be stored as secrets.
 
 ### Creating the configuration on your local machine 
-1. Make sure JFrog CLI version **1.29.0** or above is installed on your local machine by running ```jf -v```.
+1. Make sure JFrog CLI is installed on your local machine by running ```jf -v```.
 2. Configure the details of the JFrog platform by running ```jf c add```.
 3. Export the details of the JFrog platform you configured, using the server ID you chose. Do this by running ```jf c export <SERVER ID>```.
 4. Copy the generated token to the clipboard and save it as a secret on GitHub.
