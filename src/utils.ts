@@ -7,6 +7,7 @@ import * as path from 'path';
 import * as semver from 'semver';
 
 export class Utils {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     public static readonly USER_AGENT: string = 'setup-jfrog-cli-github-action/' + require('../package.json').version;
     public static readonly SERVER_TOKEN_LEGACY_PREFIX: RegExp = /^JF_ARTIFACTORY_.*$/;
     public static readonly SERVER_TOKEN_PREFIX: RegExp = /^JF_ENV_.*$/;
@@ -105,7 +106,7 @@ export class Utils {
         if (legacyServerTokens.size > 0) {
             core.warning(
                 'The "JF_ARTIFACTORY_" prefix for environment variables is deprecated and is expected to be removed in v3. ' +
-                'Please use the "JF_ENV_" prefix instead. The environment variables value should not be changed.'
+                    'Please use the "JF_ENV_" prefix instead. The environment variables value should not be changed.'
             );
         }
 
@@ -178,8 +179,8 @@ export class Utils {
     }
 
     /**
-     * Execute JFrog CLI command. 
-     * This GitHub Action downloads the requested 'jfrog' executable and stores it as 'jfrog' and 'jf'. 
+     * Execute JFrog CLI command.
+     * This GitHub Action downloads the requested 'jfrog' executable and stores it as 'jfrog' and 'jf'.
      * Therefore the 'jf' executable is expected to be in the path also for older CLI versions.
      * @param args - CLI arguments
      */
