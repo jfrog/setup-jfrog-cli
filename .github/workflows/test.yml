@@ -19,7 +19,7 @@ jobs:
       - name: Setup NodeJS
         uses: actions/setup-node@v3
         with:
-          node-version: "16.x"
+          node-version: "12.x"
 
       # Run action according to the input version
       - name: Setup JFrog CLI
