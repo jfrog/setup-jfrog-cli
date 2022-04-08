@@ -1,15 +1,18 @@
-name: 'Setup JFrog CLI'
-description: 'Install and configure JFrog CLI.'
-author: 'JFrog'
+name: "Setup JFrog CLI"
+description: "Install and configure JFrog CLI."
+author: "JFrog"
 inputs:
     version:
-        description: 'JFrog CLI Version'
-        default: '2.14.0'
+        description: "JFrog CLI Version"
+        default: "2.14.0"
+        required: false
+    download-repository:
+        description: "Remote repository in Artifactory pointing to 'https://releases.jfrog.io/artifactory/jfrog-cli'. Use this parameter in case you don't have an Internet access."
         required: false
 runs:
-    using: 'node12'
-    main: 'lib/main.js'
-    post: 'lib/cleanup.js'
+    using: "node12"
+    main: "lib/main.js"
+    post: "lib/cleanup.js"
 branding:
-    icon: 'terminal'
-    color: 'green'
+    icon: "terminal"
+    color: "green"

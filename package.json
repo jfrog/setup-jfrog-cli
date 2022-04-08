@@ -11,13 +11,13 @@
     "scripts": {
         "build": "tsc",
         "prepublishOnly": "npm prune --production && npm run build",
-        "format": "prettier --write **/*.ts",
-        "format-check": "prettier --check **/*.ts",
-        "lint": "eslint -c .eslintrc.js --ext .ts src",
+        "format": "npx prettier --write **/*.ts",
+        "format-check": "npx prettier --check **/*.ts",
+        "lint": "npx eslint -c .eslintrc.js --ext .ts src",
         "compile": "tsc",
         "postinstall": "npm run compile",
-        "test": "jest --colors",
-        "prepare": "husky install .husky"
+        "test": "npx jest --colors",
+        "prepare": "npx husky install .husky"
     },
     "repository": {
         "type": "git",
