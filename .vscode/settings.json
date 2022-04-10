@@ -1,0 +1,16 @@
+{
+    "files.exclude": {
+        "dist": true, // set this to true to hide the "dist" folder with the compiled JS files
+        "node_modules": true,
+        "coverage": true
+    },
+    "search.exclude": {
+        "dist": true // set this to false to include "dist" folder in search results
+    },
+    // Turn off tsc task auto detection since we have the necessary tasks as npm scripts
+    "typescript.tsc.autoDetect": "off",
+    "workbench.editor.enablePreview": false,
+    "workbench.editor.enablePreviewFromQuickOpen": false,
+    "workbench.editor.showTabs": true,
+    "files.autoSave": "afterDelay"
+}

@@ -117,6 +117,16 @@ It is also possible to set the latest JFrog CLI version by adding the *version* 
 | Important: Only JFrog CLI versions 1.29.0 or above are supported. |
 | --- |
 
+## Downloading JFrog CLI From JFrog Artifactory
+If your agent has no internet access, you can configure the workflow to download JFrog CLI from a JFrog Artifactory instance, which is configured to proxy the download repository:
+1. Create a remote repository in Artifactory. Name the repository jfrog-cli-remote and set its URL to https://releases.jfrog.io/artifactory/jfrog-cli/
+2. Set *download-repository* input to jfrog-cli-remote:
+    ```yml
+    - uses: jfrog/setup-jfrog-cli@v2
+      with:
+        download-repository: jfrog-cli-remote
+    ```
+
 ## Example projects
 To help you get started, you can use [these](https://github.com/jfrog/project-examples/tree/master/github-action-examples) sample projects on GitHub.
 
