@@ -132,22 +132,28 @@ export class Utils {
     }
 
     public static setCliEnv() {
-        core.exportVariable('JFROG_CLI_ENV_EXCLUDE', '*password*;*secret*;*key*;*token*;*auth*;JF_ARTIFACTORY_*;JF_ENV_*');
-        core.exportVariable('JFROG_CLI_OFFER_CONFIG', 'false');
-        core.exportVariable('CI', 'true');
+        Utils.exportVariableIfNotSet('JFROG_CLI_ENV_EXCLUDE', '*password*;*secret*;*key*;*token*;*auth*;JF_ARTIFACTORY_*;JF_ENV_*');
+        Utils.exportVariableIfNotSet('JFROG_CLI_OFFER_CONFIG', 'false');
+        Utils.exportVariableIfNotSet('CI', 'true');
         let buildNameEnv: string | undefined = process.env.GITHUB_WORKFLOW;
         if (buildNameEnv) {
-            core.exportVariable('JFROG_CLI_BUILD_NAME', buildNameEnv);
+            Utils.exportVariableIfNotSet('JFROG_CLI_BUILD_NAME', buildNameEnv);
         }
         let buildNumberEnv: string | undefined = process.env.GITHUB_RUN_NUMBER;
         if (buildNumberEnv) {
-            core.exportVariable('JFROG_CLI_BUILD_NUMBER', buildNumberEnv);
+            Utils.exportVariableIfNotSet('JFROG_CLI_BUILD_NUMBER', buildNumberEnv);
         }
-        core.exportVariable(
+        Utils.exportVariableIfNotSet(
             'JFROG_CLI_BUILD_URL',
             process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY + '/actions/runs/' + process.env.GITHUB_RUN_ID
         );
-        core.exportVariable('JFROG_CLI_USER_AGENT', Utils.USER_AGENT);
+        Utils.exportVariableIfNotSet('JFROG_CLI_USER_AGENT', Utils.USER_AGENT);
+    }
+
+    private static exportVariableIfNotSet(key: string, value: string) {
+        if (!process.env[key]) {
+            core.exportVariable(key, value);
+        }
     }
 
     public static async configJFrogServers() {
@@ -231,7 +237,9 @@ export class Utils {
             }
             return results;
         }
-        throw new Error(`'download-repository' input provided, but no Artifactory server found. Hint - make sure an environment variable with the JF_EN_ prefix is configured.`);
+        throw new Error(
+            `'download-repository' input provided, but no Artifactory server found. Hint - make sure an environment variable with the JF_EN_ prefix is configured.`
+        );
     }
 
     /**
