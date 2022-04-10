@@ -9,26 +9,36 @@ import * as semver from 'semver';
 export class Utils {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     public static readonly USER_AGENT: string = 'setup-jfrog-cli-github-action/' + require('../package.json').version;
+    // Default artifactory URL and repository for downloading JFrog CLI
     public static readonly DEFAULT_DOWNLOAD_DETAILS: DownloadDetails = {
         artifactoryUrl: 'https://releases.jfrog.io/artifactory',
         repository: 'jfrog-cli',
     } as DownloadDetails;
 
+    // The old JF_ARTIFACTORY_* prefix for server tokens
     private static readonly SERVER_TOKEN_LEGACY_PREFIX: RegExp = /^JF_ARTIFACTORY_.*$/;
+    // The JF_ENV_* prefix for server tokens
     private static readonly SERVER_TOKEN_PREFIX: RegExp = /^JF_ENV_.*$/;
     // Since 1.45.0, 'jfrog rt c' command changed to 'jfrog c add'
     private static readonly NEW_CONFIG_CLI_VERSION: string = '1.45.0';
-    private static readonly CLI_VERSION_ARG: string = 'version';
+    // Minimum JFrog CLI version supported
     private static readonly MIN_CLI_VERSION: string = '1.29.0';
-    private static readonly LATEST_CLI_VERSION_ARG: string = 'latest';
+    // The value in "version" argument to set to get the latest JFrog CLI version
+    private static readonly LATEST_CLI_VERSION: string = 'latest';
+    // The value in the download URL to set to get the latest version
     private static readonly LATEST_RELEASE_VERSION: string = '[RELEASE]';
+
+    // Inputs
+    // Version input
+    private static readonly CLI_VERSION_ARG: string = 'version';
+    // Download repository input
     private static readonly CLI_REMOTE_ARG: string = 'download-repository';
 
     public static async addCliToPath() {
         let version: string = core.getInput(Utils.CLI_VERSION_ARG);
         let cliRemote: string = core.getInput(Utils.CLI_REMOTE_ARG);
         let major: string = version.split('.')[0];
-        if (version === this.LATEST_CLI_VERSION_ARG) {
+        if (version === this.LATEST_CLI_VERSION) {
             version = Utils.LATEST_RELEASE_VERSION;
             major = '2';
         } else if (semver.lt(version, this.MIN_CLI_VERSION)) {
@@ -200,7 +210,7 @@ export class Utils {
 
     /**
      * If repository input was set, extract CLI download details from the first JF_ENV_* environment variable.
-     * @param repository - Remote repository in Artifactory pointing to https://releases.jfrog.io/artifactory/jfrog-cli/
+     * @param repository - Remote repository in Artifactory pointing to https://releases.jfrog.io/artifactory/jfrog-cli/. If empty, use the default download details.
      * @returns the download details.
      */
     public static extractDownloadDetails(repository: string): DownloadDetails {
@@ -221,7 +231,7 @@ export class Utils {
             }
             return results;
         }
-        throw new Error(`'download-repository' input provided, but no Artifactory server found`);
+        throw new Error(`'download-repository' input provided, but no Artifactory server found. Hint - make sure an environment variable with the JF_EN_ prefix is configured.`);
     }
 
     /**
@@ -230,7 +240,7 @@ export class Utils {
      */
     private static useOldConfig(): boolean {
         let version: string = core.getInput(Utils.CLI_VERSION_ARG);
-        if (version === this.LATEST_CLI_VERSION_ARG) {
+        if (version === this.LATEST_CLI_VERSION) {
             return false;
         }
         return semver.lt(version, this.NEW_CONFIG_CLI_VERSION);
