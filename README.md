@@ -117,7 +117,7 @@ It is also possible to set the latest JFrog CLI version by adding the *version* 
 | Important: Only JFrog CLI versions 1.29.0 or above are supported. |
 | --- |
 
-## Downloading JFrog CLI from JFrog Artifactory
+## Downloading JFrog CLI from Artifactory
 If your agent has no Internet access, you can configure the workflow to download JFrog CLI from a [remote repository](https://www.jfrog.com/confluence/display/JFROG/Remote+Repositories) in your JFrog Artifactory, which is configured to proxy the official download URL.
 
 Here's how you do this:
@@ -133,7 +133,7 @@ Here's how you do this:
         download-repository: jfrog-cli-remote
     ```
 
-* See instructions for configuring the _JF_ENV_1_ secret under [Storing JFrog Connection Details as Secrets](#storing-jfrog-connection-details-as-secrets).
+* See instructions for configuring the _JF_SECRET_ENV_1_ secret under [Storing JFrog Connection Details as Secrets](#storing-jfrog-connection-details-as-secrets).
 
 ## Example projects
 To help you get started, you can use [these](https://github.com/jfrog/project-examples/tree/master/github-action-examples) sample projects on GitHub.
