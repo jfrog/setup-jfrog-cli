@@ -39,7 +39,7 @@ curl -fL https://getcli.jfrog.io?setup | sh
 powershell "Start-Process -Wait -Verb RunAs powershell '-NoProfile iwr https://releases.jfrog.io/artifactory/jfrog-cli/v2-jf/[RELEASE]/jfrog-cli-windows-amd64/jf.exe -OutFile $env:SYSTEMROOT\system32\jf.exe'" ; jf setup
 ```
 
-## Storing JFrog connection details as secrets
+## Storing JFrog Connection Details as Secrets
 ### General
 The connection details of the JFrog platform used by JFrog CLI can be stored as secrets.
 
@@ -117,15 +117,23 @@ It is also possible to set the latest JFrog CLI version by adding the *version* 
 | Important: Only JFrog CLI versions 1.29.0 or above are supported. |
 | --- |
 
-## Downloading JFrog CLI From JFrog Artifactory
-If your agent has no internet access, you can configure the workflow to download JFrog CLI from a JFrog Artifactory instance, which is configured to proxy the download repository:
+## Downloading JFrog CLI from Artifactory
+If your agent has no Internet access, you can configure the workflow to download JFrog CLI from a [remote repository](https://www.jfrog.com/confluence/display/JFROG/Remote+Repositories) in your JFrog Artifactory, which is configured to proxy the official download URL.
+
+Here's how you do this:
+
 1. Create a remote repository in Artifactory. Name the repository jfrog-cli-remote and set its URL to https://releases.jfrog.io/artifactory/jfrog-cli/
 2. Set *download-repository* input to jfrog-cli-remote:
     ```yml
     - uses: jfrog/setup-jfrog-cli@v2
+      env:
+        # The JFrog CLI will be downloaded from the configured Artifactory server in JF_ENV_1
+        JF_ENV_1: ${{ secrets.JF_SECRET_ENV_1 }}
       with:
         download-repository: jfrog-cli-remote
     ```
+
+* See instructions for configuring the _JF_SECRET_ENV_1_ secret under [Storing JFrog Connection Details as Secrets](#storing-jfrog-connection-details-as-secrets).
 
 ## Example projects
 To help you get started, you can use [these](https://github.com/jfrog/project-examples/tree/master/github-action-examples) sample projects on GitHub.

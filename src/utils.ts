@@ -238,7 +238,7 @@ export class Utils {
             return results;
         }
         throw new Error(
-            `'download-repository' input provided, but no Artifactory server found. Hint - make sure an environment variable with the JF_EN_ prefix is configured.`
+            `'download-repository' input provided, but no Artifactory server found. Hint - make sure an environment variable with the JF_ENV_ prefix is configured.`
         );
     }
 
