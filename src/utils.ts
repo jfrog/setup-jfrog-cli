@@ -27,6 +27,8 @@ export class Utils {
     private static readonly LATEST_CLI_VERSION: string = 'latest';
     // The value in the download URL to set to get the latest version
     private static readonly LATEST_RELEASE_VERSION: string = '[RELEASE]';
+    // The value in the download URL to set to get the latest version
+    private static readonly DEFAULT_SERVER_ID: string = 'default-server-id';
 
     // Inputs
     // Version input
@@ -138,7 +140,7 @@ export class Utils {
         let accessToken: string | undefined = process.env.JF_ACCESS_TOKEN;
 
         if (url) {
-            let configCmd: string[] = ['c', 'add', '--url', url];
+            let configCmd: string[] = ['c', 'add', Utils.DEFAULT_SERVER_ID, '--url', url, '--interactive=false'];
 
             if (user && password) {
                 configCmd.push('--user', user, '--password', password)
