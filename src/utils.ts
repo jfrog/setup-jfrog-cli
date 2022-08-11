@@ -27,8 +27,8 @@ export class Utils {
     private static readonly LATEST_CLI_VERSION: string = 'latest';
     // The value in the download URL to set to get the latest version
     private static readonly LATEST_RELEASE_VERSION: string = '[RELEASE]';
-    // The value in the download URL to set to get the latest version
-    private static readonly DEFAULT_SERVER_ID: string = 'default-server-id';
+    // The default server id name for direct env credentials config
+    private static readonly DEFAULT_SERVER_ID: string = 'setup-jfrog-cli-server';
 
     // Inputs
     // Version input
@@ -191,7 +191,6 @@ export class Utils {
         let configCommand: string[] | undefined = Utils.configServerCredentials()
         if (configCommand) {
             await Utils.runCli(configCommand);
-            // todo c use?
         }
     }
 
