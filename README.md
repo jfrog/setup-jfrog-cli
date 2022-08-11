@@ -102,10 +102,9 @@ You can use them in the workflow as follows:
 - run: |
     jf rt ping
     
-    # In case both JF_URL and JF_ENV_ connection types are provided, the default server id will be the JF_ENV_ config.
-    # To make the JF_URL the default server id use the following command:
+    # If both local config(JF_ENV_*) and direct connection details(JF_URL) are provided, the default config will be the local config.
+    # To make the direct connection details config as the default config use the following command:
     jf c use setup-jfrog-cil-server
-    
 ```
 
 ## Setting the build name and build number when publishing build-info to Artifactory
