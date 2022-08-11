@@ -40,8 +40,10 @@ powershell "Start-Process -Wait -Verb RunAs powershell '-NoProfile iwr https://r
 ```
 
 ## Storing JFrog Connection Details as Secrets
-### General
 The connection details of the JFrog platform used by JFrog CLI can be stored as secrets.
+There are 2 ways to forward the connection details:
+1. [Creating the configuration on your local machine](#creating-the-configuration-on-your-local-machine).
+2. [Setting direct connection details environment variables](#setting-direct-connection-details-environment-variables).
 
 ### Creating the configuration on your local machine 
 1. Make sure JFrog CLI is installed on your local machine by running ```jf -v```.
@@ -49,7 +51,6 @@ The connection details of the JFrog platform used by JFrog CLI can be stored as 
 3. Export the details of the JFrog platform you configured, using the server ID you chose. Do this by running ```jf c export <SERVER ID>```.
 4. Copy the generated token to the clipboard and save it as a secret on GitHub.
 
-### Using the secret in the workflow
 To use the saved JFrog platform configuration in the workflow, all you need to do it to expose the secret to the workflow.
 The secret should be exposed as an environment variable with the *JF_ENV_* prefix.
 Here's how you do this:
@@ -82,6 +83,30 @@ If you have multiple JFrog Platform configurations as secrets, you can use all o
 ```
 | Important: When exposing more than one JFrog configuration to the Action, you should always add the ```jf c use``` command to specify the server to use. |
 | --- |
+
+### Setting direct connection details environment variables
+You can use connection details directly by settings one of the following environment variables combinations:
+1. JF_URL (anonymous)
+2. JF_URL + JF_USER + JF_PASSWORD (basic auth)
+3. JF_URL + JF_ACCESS_TOKEN (access token)
+
+You can use them in the workflow as follows:
+```yml
+- uses: jfrog/setup-jfrog-cli@v2
+  env:
+    JF_URL: ${{ secrets.JF_URL }}
+    JF_USER: ${{ secrets.JF_USER }}
+    JF_PASSWORD: ${{ secrets.JF_PASSWORD }}
+    # Access token if JF_USER and JF_PASSWORD are not provided
+    # JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
+- run: |
+    jf rt ping
+    
+    # In case both JF_URL and JF_ENV_ connection types are provided, the default server id will be the JF_ENV_ config.
+    # To make the JF_URL the default server id use the following command:
+    jf c use setup-jfrog-cil-server
+    
+```
 
 ## Setting the build name and build number when publishing build-info to Artifactory
 The Action automatically sets the following environment variables:
