@@ -104,7 +104,8 @@ export class Utils {
 
     public static getCliUrl(major: string, version: string, fileName: string, downloadDetails: DownloadDetails): string {
         let architecture: string = 'jfrog-cli-' + Utils.getArchitecture();
-        return `${downloadDetails.artifactoryUrl}/${downloadDetails.repository}/v${major}/${version}/${architecture}/${fileName}`;
+        let artifactoryUrl : string = downloadDetails.artifactoryUrl.replace(/\/$/, '')
+        return `${artifactoryUrl}/${downloadDetails.repository}/v${major}/${version}/${architecture}/${fileName}`;
     }
 
     public static getServerTokens(): Set<string> {
@@ -133,7 +134,7 @@ export class Utils {
         return serverTokens;
     }
 
-    public static configDirectServerCredentials(): string[] | undefined {
+    public static getDirectServerConfigCommand(): string[] | undefined {
         let url: string | undefined = process.env.JF_URL;
         let user: string | undefined = process.env.JF_USER;
         let password: string | undefined = process.env.JF_PASSWORD;
@@ -143,7 +144,7 @@ export class Utils {
             // Add server config with direct connection details using one of the following methods:
             // 1. url + accessToken
             // 2. url + basicAuth
-            // 3. url (unanimous)
+            // 3. url (anonymous)
             let configCmd: string[] = ['c', 'add', Utils.SETUP_JFROG_CLI_SERVER_ID, '--url', url];
             if (accessToken) {
                 configCmd.push('--access-token', accessToken);
@@ -190,7 +191,7 @@ export class Utils {
             await Utils.runCli(importCmd);
         }
 
-        let configCommand: string[] | undefined = Utils.configDirectServerCredentials()
+        let configCommand: string[] | undefined = Utils.getDirectServerConfigCommand()
         if (configCommand) {
             await Utils.runCli(configCommand);
         }
@@ -251,23 +252,41 @@ export class Utils {
         if (repository === '') {
             return Utils.DEFAULT_DOWNLOAD_DETAILS;
         }
+        let results: DownloadDetails = { repository: repository } as DownloadDetails;
+        let serverObj: any = {}
+
         for (let serverToken of Utils.getServerTokens()) {
-            let serverObj: any = JSON.parse(Buffer.from(serverToken, 'base64').toString());
-            if (!serverObj || !serverObj.artifactoryUrl) {
-                continue;
-            }
-            let artifactoryUrl: string = serverObj.artifactoryUrl.replace(/\/$/, '');
-            let results: DownloadDetails = { artifactoryUrl, repository } as DownloadDetails;
-            if (serverObj.user && serverObj.password) {
-                results.auth = 'Basic ' + Buffer.from(serverObj.user + ':' + serverObj.password).toString('base64');
-            } else if (serverObj.accessToken) {
-                results.auth = 'Bearer ' + Buffer.from(serverObj.accessToken).toString('base64');
-            }
-            return results;
+            serverObj = JSON.parse(Buffer.from(serverToken, 'base64').toString());
         }
-        throw new Error(
-            `'download-repository' input provided, but no Artifactory server found. Hint - make sure an environment variable with the JF_ENV_ prefix is configured.`
-        );
+        if (!serverObj.artifactoryUrl) {
+            // No Server Tokens found, check if direct connection envs exist.
+            if (!process.env.JF_URL) {
+                throw new Error(
+                    `'download-repository' input provided, but no Artifactory server found. ` +
+                    `Hint - make sure that the connection config environment variables are configured: ` +
+                    `Server Token(JF_ENV_ prefix) or direct connection details(JF_URL + JF_USER/JF_PASSWORD/JF_ACCESS_TOKEN)`
+                );
+            }
+            serverObj.artifactoryUrl = process.env.JF_URL;
+            serverObj.user = process.env.JF_USER;
+            serverObj.password = process.env.JF_PASSWORD;
+            serverObj.accessToken = process.env.JF_ACCESS_TOKEN;
+        }
+        results.artifactoryUrl = serverObj.artifactoryUrl;
+        let authString : string | undefined = Utils.generateAuthString(serverObj)
+        if (authString) {
+            results.auth = authString
+        }
+        return results;
+    }
+
+    private static generateAuthString(serverObj: any): string | undefined{
+        if (serverObj.user && serverObj.password) {
+           return 'Basic ' + Buffer.from(serverObj.user + ':' + serverObj.password).toString('base64');
+        } else if (serverObj.accessToken) {
+           return 'Bearer ' + Buffer.from(serverObj.accessToken).toString('base64');
+        }
+        return
     }
 
     /**
