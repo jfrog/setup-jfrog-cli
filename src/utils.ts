@@ -28,7 +28,7 @@ export class Utils {
     // The value in the download URL to set to get the latest version
     private static readonly LATEST_RELEASE_VERSION: string = '[RELEASE]';
     // The default server id name for direct env credentials config
-    private static readonly DEFAULT_SERVER_ID: string = 'setup-jfrog-cli-server';
+    public static readonly SETUP_JFROG_CLI_SERVER_ID: string = 'setup-jfrog-cli-server';
 
     // Inputs
     // Version input
@@ -133,14 +133,18 @@ export class Utils {
         return serverTokens;
     }
 
-    public static configServerCredentials(): string[] | undefined {
+    public static configDirectServerCredentials(): string[] | undefined {
         let url: string | undefined = process.env.JF_URL;
         let user: string | undefined = process.env.JF_USER;
         let password: string | undefined = process.env.JF_PASSWORD;
         let accessToken: string | undefined = process.env.JF_ACCESS_TOKEN;
 
         if (url) {
-            let configCmd: string[] = ['c', 'add', Utils.DEFAULT_SERVER_ID, '--url', url];
+            // Add server config with direct connection details using one of the following methods:
+            // 1. url + accessToken
+            // 2. url + basicAuth
+            // 3. url (unanimous)
+            let configCmd: string[] = ['c', 'add', Utils.SETUP_JFROG_CLI_SERVER_ID, '--url', url];
             if (accessToken) {
                 configCmd.push('--access-token', accessToken);
             } else if (user && password) {
@@ -186,7 +190,7 @@ export class Utils {
             await Utils.runCli(importCmd);
         }
 
-        let configCommand: string[] | undefined = Utils.configServerCredentials()
+        let configCommand: string[] | undefined = Utils.configDirectServerCredentials()
         if (configCommand) {
             await Utils.runCli(configCommand);
         }

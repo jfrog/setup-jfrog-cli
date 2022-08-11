@@ -62,6 +62,31 @@ test('Get legacy server tokens', async () => {
     expect(Utils.getServerTokens()).toStrictEqual(new Set(['DUMMY_SERVER_TOKEN_1', 'DUMMY_SERVER_TOKEN_2', 'DUMMY_SERVER_TOKEN_3']));
 });
 
+test('Get direct config env credentials', async () => {
+    // No url
+    let configCommand: string[] | undefined = Utils.configDirectServerCredentials()
+    expect(configCommand).toBe(undefined);
+
+    process.env['JF_URL'] = DEFAULT_CLI_URL;
+
+    // No credentials
+    configCommand = Utils.configDirectServerCredentials()
+    expect(configCommand).toStrictEqual(['c', 'add', Utils.SETUP_JFROG_CLI_SERVER_ID, '--url', DEFAULT_CLI_URL]);
+
+    // Basic Auth
+    process.env['JF_USER'] = 'user';
+    process.env['JF_PASSWORD'] = 'password';
+    configCommand = Utils.configDirectServerCredentials()
+    expect(configCommand).toStrictEqual(['c', 'add', Utils.SETUP_JFROG_CLI_SERVER_ID, '--url', DEFAULT_CLI_URL, '--user', 'user', '--password', 'password']);
+
+    // Access Token
+    process.env['JF_USER'] = '';
+    process.env['JF_PASSWORD'] = '';
+    process.env['JF_ACCESS_TOKEN'] = 'accessToken';
+    configCommand = Utils.configDirectServerCredentials()
+    expect(configCommand).toStrictEqual(['c', 'add', Utils.SETUP_JFROG_CLI_SERVER_ID, '--url', DEFAULT_CLI_URL, '--access-token', 'accessToken']);
+});
+
 describe('JFrog CLI V1 URL Tests', () => {
     const myOs: jest.Mocked<typeof os> = os as any;
     let cases: string[][] = [
