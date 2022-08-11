@@ -140,15 +140,13 @@ export class Utils {
         let accessToken: string | undefined = process.env.JF_ACCESS_TOKEN;
 
         if (url) {
-            let configCmd: string[] = ['c', 'add', Utils.DEFAULT_SERVER_ID, '--url', url, '--interactive=false'];
-
-            if (user && password) {
-                configCmd.push('--user', user, '--password', password)
-                return configCmd
-            } else if (accessToken) {
-                configCmd.push('--access-token', accessToken)
-                return configCmd
+            let configCmd: string[] = ['c', 'add', Utils.DEFAULT_SERVER_ID, '--url', url];
+            if (accessToken) {
+                configCmd.push('--access-token', accessToken);
+            } else if (user && password) {
+                configCmd.push('--user', user, '--password', password);
             }
+            return configCmd;
         }
     }
 
