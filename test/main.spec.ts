@@ -64,19 +64,19 @@ test('Get legacy Config Tokens', async () => {
 
 test('Get separate env config', async () => {
     // No url
-    let configCommand: string[] | undefined = Utils.getDirectServerConfigCommand();
+    let configCommand: string[] | undefined = Utils.getSeparateEnvConfigCommand();
     expect(configCommand).toBe(undefined);
 
     process.env['JF_URL'] = DEFAULT_CLI_URL;
 
     // No credentials
-    configCommand = Utils.getDirectServerConfigCommand();
+    configCommand = Utils.getSeparateEnvConfigCommand();
     expect(configCommand).toStrictEqual(['c', 'add', Utils.SETUP_JFROG_CLI_SERVER_ID, '--url', DEFAULT_CLI_URL]);
 
     // Basic authentication
     process.env['JF_USER'] = 'user';
     process.env['JF_PASSWORD'] = 'password';
-    configCommand = Utils.getDirectServerConfigCommand();
+    configCommand = Utils.getSeparateEnvConfigCommand();
     expect(configCommand).toStrictEqual([
         'c',
         'add',
@@ -93,7 +93,7 @@ test('Get separate env config', async () => {
     process.env['JF_USER'] = '';
     process.env['JF_PASSWORD'] = '';
     process.env['JF_ACCESS_TOKEN'] = 'accessToken';
-    configCommand = Utils.getDirectServerConfigCommand();
+    configCommand = Utils.getSeparateEnvConfigCommand();
     expect(configCommand).toStrictEqual(['c', 'add', Utils.SETUP_JFROG_CLI_SERVER_ID, '--url', DEFAULT_CLI_URL, '--access-token', 'accessToken']);
 });
 

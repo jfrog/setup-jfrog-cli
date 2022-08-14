@@ -155,13 +155,23 @@ Here's how you do this:
     ```yml
     - uses: jfrog/setup-jfrog-cli@v2
       env:
-        # The JFrog CLI will be downloaded from the configured Artifactory server in JF_ENV_1
-        JF_ENV_1: ${{ secrets.JF_SECRET_ENV_1 }}
+       # JFrog platform url (for example: https://acme.jfrog.io) 
+        JF_URL: ${{ secrets.JF_URL }}
+    
+        # Basic authentication credentials
+        JF_USER: ${{ secrets.JF_USER }}
+        JF_PASSWORD: ${{ secrets.JF_PASSWORD }}
+    
+        # JFrog platform access token (if JF_USER and JF_PASSWORD are not provided)
+        # JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
+   
+        # Same can be achieved with a Config Token using JF_ENV_1 environment variable
+        # JF_ENV_1: ${{ secrets.JF_SECRET_ENV_1 }}
       with:
         download-repository: jfrog-cli-remote
     ```
 
-* See instructions for configuring the _JF_SECRET_ENV_1_ secret under [Storing JFrog Connection Details as Secrets](#storing-jfrog-connection-details-as-secrets).
+* See instructions for configuring the JFrog connection details under [Storing JFrog connection details as secrets](#storing-jfrog-connection-details-as-secrets).
 
 ## Example projects
 To help you get started, you can use [these](https://github.com/jfrog/project-examples/tree/master/github-action-examples) sample projects on GitHub.
