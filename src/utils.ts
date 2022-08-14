@@ -15,10 +15,10 @@ export class Utils {
         repository: 'jfrog-cli',
     } as DownloadDetails;
 
-    // The old JF_ARTIFACTORY_* prefix for server tokens
-    private static readonly SERVER_TOKEN_LEGACY_PREFIX: RegExp = /^JF_ARTIFACTORY_.*$/;
-    // The JF_ENV_* prefix for server tokens
-    private static readonly SERVER_TOKEN_PREFIX: RegExp = /^JF_ENV_.*$/;
+    // The old JF_ARTIFACTORY_* prefix for Config Tokens
+    private static readonly CONFIG_TOKEN_LEGACY_PREFIX: RegExp = /^JF_ARTIFACTORY_.*$/;
+    // The JF_ENV_* prefix for Config Tokens
+    private static readonly CONFIG_TOKEN_PREFIX: RegExp = /^JF_ENV_.*$/;
     // Since 1.45.0, 'jfrog rt c' command changed to 'jfrog c add'
     private static readonly NEW_CONFIG_CLI_VERSION: string = '1.45.0';
     // Minimum JFrog CLI version supported
@@ -27,7 +27,7 @@ export class Utils {
     private static readonly LATEST_CLI_VERSION: string = 'latest';
     // The value in the download URL to set to get the latest version
     private static readonly LATEST_RELEASE_VERSION: string = '[RELEASE]';
-    // The default server id name for direct env credentials config
+    // The default server id name for separate env config
     public static readonly SETUP_JFROG_CLI_SERVER_ID: string = 'setup-jfrog-cli-server';
 
     // Inputs
@@ -107,36 +107,36 @@ export class Utils {
         let artifactoryUrl: string = downloadDetails.artifactoryUrl.replace(/\/$/, '');
         return `${artifactoryUrl}/${downloadDetails.repository}/v${major}/${version}/${architecture}/${fileName}`;
     }
-    // Get Server Tokens created on your local machine using JFrog CLI.
+    // Get Config Tokens created on your local machine using JFrog CLI.
     // The Tokens configured with JF_ENV_ environment variables.
-    public static getServerTokens(): Set<string> {
-        let serverTokens: Set<string> = new Set(
+    public static getConfigTokens(): Set<string> {
+        let configTokens: Set<string> = new Set(
             Object.keys(process.env)
-                .filter((envKey) => envKey.match(Utils.SERVER_TOKEN_PREFIX))
+                .filter((envKey) => envKey.match(Utils.CONFIG_TOKEN_PREFIX))
                 .filter((envKey) => process.env[envKey])
                 .map((envKey) => process.env[envKey]?.trim() || '')
         );
 
-        let legacyServerTokens: Set<string> = new Set(
+        let legacyConfigTokens: Set<string> = new Set(
             Object.keys(process.env)
-                .filter((envKey) => envKey.match(Utils.SERVER_TOKEN_LEGACY_PREFIX))
+                .filter((envKey) => envKey.match(Utils.CONFIG_TOKEN_LEGACY_PREFIX))
                 .filter((envKey) => process.env[envKey])
                 .map((envKey) => process.env[envKey]?.trim() || '')
         );
 
-        if (legacyServerTokens.size > 0) {
+        if (legacyConfigTokens.size > 0) {
             core.warning(
                 'The "JF_ARTIFACTORY_" prefix for environment variables is deprecated and is expected to be removed in v3. ' +
                     'Please use the "JF_ENV_" prefix instead. The environment variables value should not be changed.'
             );
         }
 
-        legacyServerTokens.forEach((serverToken) => serverTokens.add(serverToken));
-        return serverTokens;
+        legacyConfigTokens.forEach((configToken) => configTokens.add(configToken));
+        return configTokens;
     }
 
-    // Get specific secrets for the URL and connection details
-    public static getDirectServerConfigCommand(): string[] | undefined {
+    // Get separate env config for the URL and connection details
+    public static getSeparateEnvConfigCommand(): string[] | undefined {
         /**
          * @name url - JFrog Platform URL
          * @name user&password - JFrog Platform basic authentication
@@ -192,12 +192,12 @@ export class Utils {
             let version: string = core.getInput(Utils.CLI_VERSION_ARG);
             core.warning('JFrog CLI ' + version + ' on Setup JFrog CLI GitHub Action is deprecated. Please use version 1.46.4 or above.');
         }
-        for (let serverToken of Utils.getServerTokens()) {
-            let importCmd: string[] = useOldConfig ? ['rt', 'c', 'import', serverToken] : ['c', 'import', serverToken];
+        for (let configToken of Utils.getConfigTokens()) {
+            let importCmd: string[] = useOldConfig ? ['rt', 'c', 'import', configToken] : ['c', 'import', configToken];
             await Utils.runCli(importCmd);
         }
 
-        let configCommand: string[] | undefined = Utils.getDirectServerConfigCommand();
+        let configCommand: string[] | undefined = Utils.getSeparateEnvConfigCommand();
         if (configCommand) {
             await Utils.runCli(configCommand);
         }
@@ -251,7 +251,7 @@ export class Utils {
 
     /**
      * If repository input was set, extract CLI download details,
-     * from either a server token with a JF_ENV_ prefix or direct connection details (JF_URL, JF_USER, JF_PASSWORD, JF_ACCESS_TOKEN).
+     * from either a Config Token with a JF_ENV_ prefix or separate env config (JF_URL, JF_USER, JF_PASSWORD, JF_ACCESS_TOKEN).
      * @param repository - Remote repository in Artifactory pointing to https://releases.jfrog.io/artifactory/jfrog-cli/. If empty, use the default download details.
      * @returns the download details.
      */
@@ -262,19 +262,19 @@ export class Utils {
         let results: DownloadDetails = { repository: repository } as DownloadDetails;
         let serverObj: any = {};
 
-        for (let serverToken of Utils.getServerTokens()) {
-            serverObj = JSON.parse(Buffer.from(serverToken, 'base64').toString());
+        for (let configToken of Utils.getConfigTokens()) {
+            serverObj = JSON.parse(Buffer.from(configToken, 'base64').toString());
             if (serverObj && serverObj.artifactoryUrl) {
                 break;
             }
         }
         if (!serverObj.artifactoryUrl) {
-            // No Server Tokens found, check if direct connection envs exist.
+            // No Config Tokens found, check if Separate Env config exist.
             if (!process.env.JF_URL) {
                 throw new Error(
                     `'download-repository' input provided, but no JFrog environment details found. ` +
                         `Hint - Ensure that the JFrog connection details environment variables are set: ` +
-                        `either a server token with a JF_ENV_ prefix or direct connection details (JF_URL, JF_USER, JF_PASSWORD, JF_ACCESS_TOKEN)`
+                        `either a Config Token with a JF_ENV_ prefix or separate env config (JF_URL, JF_USER, JF_PASSWORD, JF_ACCESS_TOKEN)`
                 );
             }
             serverObj.artifactoryUrl = process.env.JF_URL.replace(/\/$/, '') + '/artifactory';
