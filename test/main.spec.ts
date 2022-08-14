@@ -64,26 +64,36 @@ test('Get legacy server tokens', async () => {
 
 test('Get direct config env config', async () => {
     // No url
-    let configCommand: string[] | undefined = Utils.getDirectServerConfigCommand()
+    let configCommand: string[] | undefined = Utils.getDirectServerConfigCommand();
     expect(configCommand).toBe(undefined);
 
     process.env['JF_URL'] = DEFAULT_CLI_URL;
 
     // No credentials
-    configCommand = Utils.getDirectServerConfigCommand()
+    configCommand = Utils.getDirectServerConfigCommand();
     expect(configCommand).toStrictEqual(['c', 'add', Utils.SETUP_JFROG_CLI_SERVER_ID, '--url', DEFAULT_CLI_URL]);
 
-    // Basic Auth
+    // Basic authentication
     process.env['JF_USER'] = 'user';
     process.env['JF_PASSWORD'] = 'password';
-    configCommand = Utils.getDirectServerConfigCommand()
-    expect(configCommand).toStrictEqual(['c', 'add', Utils.SETUP_JFROG_CLI_SERVER_ID, '--url', DEFAULT_CLI_URL, '--user', 'user', '--password', 'password']);
+    configCommand = Utils.getDirectServerConfigCommand();
+    expect(configCommand).toStrictEqual([
+        'c',
+        'add',
+        Utils.SETUP_JFROG_CLI_SERVER_ID,
+        '--url',
+        DEFAULT_CLI_URL,
+        '--user',
+        'user',
+        '--password',
+        'password',
+    ]);
 
     // Access Token
     process.env['JF_USER'] = '';
     process.env['JF_PASSWORD'] = '';
     process.env['JF_ACCESS_TOKEN'] = 'accessToken';
-    configCommand = Utils.getDirectServerConfigCommand()
+    configCommand = Utils.getDirectServerConfigCommand();
     expect(configCommand).toStrictEqual(['c', 'add', Utils.SETUP_JFROG_CLI_SERVER_ID, '--url', DEFAULT_CLI_URL, '--access-token', 'accessToken']);
 });
 
@@ -138,14 +148,14 @@ test('Extract download details Tests', () => {
     for (let config of [V1_CONFIG, V2_CONFIG]) {
         process.env.JF_ENV_LOCAL = config;
         let downloadDetails: DownloadDetails = Utils.extractDownloadDetails('jfrog-cli-remote');
-        expect(downloadDetails.artifactoryUrl).toBe('http://127.0.0.1:8081/artifactory/');
+        expect(downloadDetails.jfrogUrl).toBe('http://127.0.0.1:8081/');
         expect(downloadDetails.repository).toBe('jfrog-cli-remote');
         expect(downloadDetails.auth).toBe('Basic YWRtaW46cGFzc3dvcmQ=');
     }
 
     process.env.JF_ENV_LOCAL = V2_CONFIG_TOKEN;
     let downloadDetails: DownloadDetails = Utils.extractDownloadDetails('jfrog-cli-remote');
-    expect(downloadDetails.artifactoryUrl).toBe('http://127.0.0.1:8081/artifactory/');
+    expect(downloadDetails.jfrogUrl).toBe('http://127.0.0.1:8081/');
     expect(downloadDetails.repository).toBe('jfrog-cli-remote');
     expect(downloadDetails.auth).toBe(`Bearer ZXlKMlpYSWlPaUl5SWl3aWRIbHdJam9pU2xkVUlpd2lZV3huSWpvaVVsTXlOVFlpTENKcmFXUWlPaUkzWms1cmRYUnpVemR1WDB\
 oaVlUTkVkMkZSU1RaTWFUTjNjazlyVkZSRk4wWkZhRFZKUkVoRk56VjNJbjAuZXlKbGVIUWlPaUo3WENKeVpYWnZZMkZpYkdWY0lqcGNJblJ5ZFdWY0luMGlMQ0p6ZFdJaU9pSnFabUZqUURBeFpu\
@@ -162,7 +172,7 @@ kxPZE1IVEtmNWR3M2xDN2pJeTNKZ250LVZB`);
     process.env['JF_PASSWORD'] = 'password';
 
     downloadDetails = Utils.extractDownloadDetails('jfrog-cli-remote');
-    expect(downloadDetails.artifactoryUrl).toBe(DEFAULT_CLI_URL);
+    expect(downloadDetails.jfrogUrl).toBe(DEFAULT_CLI_URL);
     expect(downloadDetails.repository).toBe('jfrog-cli-remote');
     expect(downloadDetails.auth).toBe('Basic dXNlcjpwYXNzd29yZA==');
 
@@ -171,7 +181,7 @@ kxPZE1IVEtmNWR3M2xDN2pJeTNKZ250LVZB`);
     process.env['JF_ACCESS_TOKEN'] = 'accessToken';
 
     downloadDetails = Utils.extractDownloadDetails('jfrog-cli-remote');
-    expect(downloadDetails.artifactoryUrl).toBe(DEFAULT_CLI_URL);
+    expect(downloadDetails.jfrogUrl).toBe(DEFAULT_CLI_URL);
     expect(downloadDetails.repository).toBe('jfrog-cli-remote');
     expect(downloadDetails.auth).toBe(`Bearer YWNjZXNzVG9rZW4=`);
 });

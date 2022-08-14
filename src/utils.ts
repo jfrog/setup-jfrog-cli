@@ -11,7 +11,7 @@ export class Utils {
     public static readonly USER_AGENT: string = 'setup-jfrog-cli-github-action/' + require('../package.json').version;
     // Default artifactory URL and repository for downloading JFrog CLI
     public static readonly DEFAULT_DOWNLOAD_DETAILS: DownloadDetails = {
-        artifactoryUrl: 'https://releases.jfrog.io/artifactory',
+        jfrogUrl: 'https://releases.jfrog.io/',
         repository: 'jfrog-cli',
     } as DownloadDetails;
 
@@ -104,11 +104,11 @@ export class Utils {
 
     public static getCliUrl(major: string, version: string, fileName: string, downloadDetails: DownloadDetails): string {
         let architecture: string = 'jfrog-cli-' + Utils.getArchitecture();
-        let artifactoryUrl : string = downloadDetails.artifactoryUrl.replace(/\/$/, '')
-        return `${artifactoryUrl}/${downloadDetails.repository}/v${major}/${version}/${architecture}/${fileName}`;
+        let jfrogUrl: string = downloadDetails.jfrogUrl.replace(/\/$/, '');
+        return `${jfrogUrl}/artifactory/${downloadDetails.repository}/v${major}/${version}/${architecture}/${fileName}`;
     }
-     // Get Server Tokens created on your local machine using JFrog CLI.
-     // The Tokens configured with JF_ENV_ environment variables.
+    // Get Server Tokens created on your local machine using JFrog CLI.
+    // The Tokens configured with JF_ENV_ environment variables.
     public static getServerTokens(): Set<string> {
         let serverTokens: Set<string> = new Set(
             Object.keys(process.env)
@@ -134,7 +134,13 @@ export class Utils {
         legacyServerTokens.forEach((serverToken) => serverTokens.add(serverToken));
         return serverTokens;
     }
-    // Get direct connection details passed by environment variables
+
+    /**
+     * Get specific secrets for the URL and connection details
+     * @param url - JFrog Platform URL
+     * @param user&password - JFrog Platform basic authentication
+     * @param accessToken - Jfrog Platform access token
+     */
     public static getDirectServerConfigCommand(): string[] | undefined {
         let url: string | undefined = process.env.JF_URL;
         let user: string | undefined = process.env.JF_USER;
@@ -142,10 +148,6 @@ export class Utils {
         let accessToken: string | undefined = process.env.JF_ACCESS_TOKEN;
 
         if (url) {
-            // Add server config with direct connection details using one of the following methods:
-            // 1. url + accessToken
-            // 2. url + basicAuth
-            // 3. url (anonymous)
             let configCmd: string[] = ['c', 'add', Utils.SETUP_JFROG_CLI_SERVER_ID, '--url', url];
             if (accessToken) {
                 configCmd.push('--access-token', accessToken);
@@ -157,7 +159,10 @@ export class Utils {
     }
 
     public static setCliEnv() {
-        Utils.exportVariableIfNotSet('JFROG_CLI_ENV_EXCLUDE', '*password*;*secret*;*key*;*token*;*auth*;JF_ARTIFACTORY_*;JF_ENV_*');
+        Utils.exportVariableIfNotSet(
+            'JFROG_CLI_ENV_EXCLUDE',
+            '*password*;*secret*;*key*;*token*;*auth*;JF_ARTIFACTORY_*;JF_ENV_*;JF_URL;JF_USER;JF_PASSWORD;JF_ACCESS_TOKEN'
+        );
         Utils.exportVariableIfNotSet('JFROG_CLI_OFFER_CONFIG', 'false');
         Utils.exportVariableIfNotSet('CI', 'true');
         let buildNameEnv: string | undefined = process.env.GITHUB_WORKFLOW;
@@ -192,7 +197,7 @@ export class Utils {
             await Utils.runCli(importCmd);
         }
 
-        let configCommand: string[] | undefined = Utils.getDirectServerConfigCommand()
+        let configCommand: string[] | undefined = Utils.getDirectServerConfigCommand();
         if (configCommand) {
             await Utils.runCli(configCommand);
         }
@@ -211,7 +216,7 @@ export class Utils {
             return 'windows-amd64';
         }
         if (os.platform().includes('darwin')) {
-            return os.arch() === "arm64" ? 'mac-arm64':  'mac-386';
+            return os.arch() === 'arm64' ? 'mac-arm64' : 'mac-386';
         }
         if (os.arch().includes('arm')) {
             return os.arch().includes('64') ? 'linux-arm64' : 'linux-arm';
@@ -245,7 +250,8 @@ export class Utils {
     }
 
     /**
-     * If repository input was set, extract CLI download details from the first JF_ENV_* environment variable.
+     * If repository input was set, extract CLI download details,
+     * from either a server token with a JF_ENV_ prefix or direct connection details (JF_URL, JF_USER, JF_PASSWORD, JF_ACCESS_TOKEN).
      * @param repository - Remote repository in Artifactory pointing to https://releases.jfrog.io/artifactory/jfrog-cli/. If empty, use the default download details.
      * @returns the download details.
      */
@@ -254,40 +260,40 @@ export class Utils {
             return Utils.DEFAULT_DOWNLOAD_DETAILS;
         }
         let results: DownloadDetails = { repository: repository } as DownloadDetails;
-        let serverObj: any = {}
+        let serverObj: any = {};
 
         for (let serverToken of Utils.getServerTokens()) {
             serverObj = JSON.parse(Buffer.from(serverToken, 'base64').toString());
         }
-        if (!serverObj.artifactoryUrl) {
+        if (!serverObj.url) {
             // No Server Tokens found, check if direct connection envs exist.
             if (!process.env.JF_URL) {
                 throw new Error(
-                    `'download-repository' input provided, but no Artifactory server found. ` +
-                    `Hint - make sure that the connection config environment variables are configured: ` +
-                    `Server Token(JF_ENV_ prefix) or direct connection details(JF_URL + JF_USER/JF_PASSWORD/JF_ACCESS_TOKEN)`
+                    `'download-repository' input provided, but no JFrog environment details found. ` +
+                        `Hint - Ensure that the JFrog connection details environment variables are set: ` +
+                        `either a server token with a JF_ENV_ prefix or direct connection details (JF_URL, JF_USER, JF_PASSWORD, JF_ACCESS_TOKEN)`
                 );
             }
-            serverObj.artifactoryUrl = process.env.JF_URL;
+            serverObj.url = process.env.JF_URL;
             serverObj.user = process.env.JF_USER;
             serverObj.password = process.env.JF_PASSWORD;
             serverObj.accessToken = process.env.JF_ACCESS_TOKEN;
         }
-        results.artifactoryUrl = serverObj.artifactoryUrl;
-        let authString : string | undefined = Utils.generateAuthString(serverObj)
+        results.jfrogUrl = serverObj.jfrogUrl;
+        let authString: string | undefined = Utils.generateAuthString(serverObj);
         if (authString) {
-            results.auth = authString
+            results.auth = authString;
         }
         return results;
     }
 
-    private static generateAuthString(serverObj: any): string | undefined{
+    private static generateAuthString(serverObj: any): string | undefined {
         if (serverObj.user && serverObj.password) {
-           return 'Basic ' + Buffer.from(serverObj.user + ':' + serverObj.password).toString('base64');
+            return 'Basic ' + Buffer.from(serverObj.user + ':' + serverObj.password).toString('base64');
         } else if (serverObj.accessToken) {
-           return 'Bearer ' + Buffer.from(serverObj.accessToken).toString('base64');
+            return 'Bearer ' + Buffer.from(serverObj.accessToken).toString('base64');
         }
-        return
+        return;
     }
 
     /**
@@ -304,7 +310,7 @@ export class Utils {
 }
 
 export interface DownloadDetails {
-    artifactoryUrl: string;
+    jfrogUrl: string;
     repository: string;
     auth: string;
 }

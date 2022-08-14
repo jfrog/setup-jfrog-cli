@@ -10,7 +10,7 @@
 
 This GitHub Action downloads, installs and configures JFrog CLI, so that it can be used as part of the workflow.
 
-In addition, the Action includes the following features, when using JFrog CLI to work with Artifactory.
+In addition, the Action includes the following features, when using JFrog CLI to work with JFrog Platform.
 * The connection details of the JFrog platform used by JFrog CLI can be stored as secrets. Read more about it [here](#storing-JFrog-details-as-secrets).
 * There's no need to add the *build name* and *build number* options and arguments to commands which accept them.
 All build related operations will be automatically recorded with the *Workflow Name* as build name and *Run Number* as build number.
@@ -41,9 +41,9 @@ powershell "Start-Process -Wait -Verb RunAs powershell '-NoProfile iwr https://r
 
 ## Storing JFrog Connection Details as Secrets
 The connection details of the JFrog platform used by JFrog CLI can be stored as secrets.
-There are 2 ways to forward the connection details:
+You can use one of the following two methods to define and store the JFrog Platform connection details as secrets.
 1. [Creating the configuration on your local machine](#creating-the-configuration-on-your-local-machine).
-2. [Setting direct connection details environment variables](#setting-direct-connection-details-environment-variables).
+2. [Using specific secrets for the URL and connection details](#Using-specific-secrets-for-the-URL-and-connection-details).
 
 ### Creating the configuration on your local machine 
 1. Make sure JFrog CLI is installed on your local machine by running ```jf -v```.
@@ -84,20 +84,24 @@ If you have multiple JFrog Platform configurations as secrets, you can use all o
 | Important: When exposing more than one JFrog configuration to the Action, you should always add the ```jf c use``` command to specify the server to use. |
 | --- |
 
-### Setting direct connection details environment variables
-You can use connection details directly by settings one of the following environment variables combinations:
-1. JF_URL (anonymous)
-2. JF_URL + JF_USER + JF_PASSWORD (basic auth)
-3. JF_URL + JF_ACCESS_TOKEN (access token)
+### Using specific secrets for the URL and connection details
+You can set the connection details to your JFrog Platform by using one of the following environment variables combinations:
+1. JF_URL (no authentication) 
+2. JF_URL + JF_USER + JF_PASSWORD (basic authentication)
+3. JF_URL + JF_ACCESS_TOKEN (authentication using a JFrog Access Token)
 
-You can use them in the workflow as follows:
+You can use these environment variable in your workflow as follows:
 ```yml
 - uses: jfrog/setup-jfrog-cli@v2
   env:
+    # JFrog platform url (for example: https://acme.jfrog.io) 
     JF_URL: ${{ secrets.JF_URL }}
+    
+    # Basic authentication credentials
     JF_USER: ${{ secrets.JF_USER }}
     JF_PASSWORD: ${{ secrets.JF_PASSWORD }}
-    # Access token if JF_USER and JF_PASSWORD are not provided
+    
+    # JFrog platform access token (if JF_USER and JF_PASSWORD are not provided)
     # JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
 - run: |
     jf rt ping
