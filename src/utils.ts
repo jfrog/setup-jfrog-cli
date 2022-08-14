@@ -206,7 +206,7 @@ export class Utils {
             return 'windows-amd64';
         }
         if (os.platform().includes('darwin')) {
-            return 'mac-386';
+            return os.arch() === "arm64" ? 'mac-arm64':  'mac-386';
         }
         if (os.arch().includes('arm')) {
             return os.arch().includes('64') ? 'linux-arm64' : 'linux-arm';
