@@ -108,7 +108,7 @@ You can use these environment variable in your workflow as follows:
     
     # If both local config(JF_ENV_*) and direct connection details(JF_URL) are provided, the default config will be the local config.
     # To make the direct connection details config as the default config use the following command:
-    jf c use setup-jfrog-cil-server
+    jf c use setup-jfrog-cli-server
 ```
 
 ## Setting the build name and build number when publishing build-info to Artifactory
