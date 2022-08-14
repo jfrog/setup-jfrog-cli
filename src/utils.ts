@@ -279,7 +279,7 @@ export class Utils {
             serverObj.password = process.env.JF_PASSWORD;
             serverObj.accessToken = process.env.JF_ACCESS_TOKEN;
         }
-        results.jfrogUrl = serverObj.jfrogUrl;
+        results.jfrogUrl = serverObj.url;
         let authString: string | undefined = Utils.generateAuthString(serverObj);
         if (authString) {
             results.auth = authString;
