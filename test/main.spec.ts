@@ -167,12 +167,12 @@ MXZ1SWRpaWlia2dhN0NtTk1mV285VEdLZk9VTlM2SVBtbzUyOF9KREd1VXJlYWNKWWxudXhwNDlkZGdn
 kxPZE1IVEtmNWR3M2xDN2pJeTNKZ250LVZB`);
 
     process.env.JF_ENV_LOCAL = '';
-    process.env['JF_URL'] = DEFAULT_CLI_URL;
+    process.env['JF_URL'] = "http://127.0.0.1:8081";
     process.env['JF_USER'] = 'user';
     process.env['JF_PASSWORD'] = 'password';
 
     downloadDetails = Utils.extractDownloadDetails('jfrog-cli-remote');
-    expect(downloadDetails.artifactoryUrl).toBe(DEFAULT_CLI_URL + "/artifactory");
+    expect(downloadDetails.artifactoryUrl).toBe('http://127.0.0.1:8081/artifactory');
     expect(downloadDetails.repository).toBe('jfrog-cli-remote');
     expect(downloadDetails.auth).toBe('Basic dXNlcjpwYXNzd29yZA==');
 
@@ -181,7 +181,7 @@ kxPZE1IVEtmNWR3M2xDN2pJeTNKZ250LVZB`);
     process.env['JF_ACCESS_TOKEN'] = 'accessToken';
 
     downloadDetails = Utils.extractDownloadDetails('jfrog-cli-remote');
-    expect(downloadDetails.artifactoryUrl).toBe(DEFAULT_CLI_URL + "/artifactory");
+    expect(downloadDetails.artifactoryUrl).toBe('http://127.0.0.1:8081/artifactory');
     expect(downloadDetails.repository).toBe('jfrog-cli-remote');
     expect(downloadDetails.auth).toBe(`Bearer YWNjZXNzVG9rZW4=`);
 });
