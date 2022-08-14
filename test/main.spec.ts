@@ -148,14 +148,14 @@ test('Extract download details Tests', () => {
     for (let config of [V1_CONFIG, V2_CONFIG]) {
         process.env.JF_ENV_LOCAL = config;
         let downloadDetails: DownloadDetails = Utils.extractDownloadDetails('jfrog-cli-remote');
-        expect(downloadDetails.artifactoryUrl).toBe('http://127.0.0.1:8081/');
+        expect(downloadDetails.artifactoryUrl).toBe('http://127.0.0.1:8081/artifactory');
         expect(downloadDetails.repository).toBe('jfrog-cli-remote');
         expect(downloadDetails.auth).toBe('Basic YWRtaW46cGFzc3dvcmQ=');
     }
 
     process.env.JF_ENV_LOCAL = V2_CONFIG_TOKEN;
     let downloadDetails: DownloadDetails = Utils.extractDownloadDetails('jfrog-cli-remote');
-    expect(downloadDetails.artifactoryUrl).toBe('http://127.0.0.1:8081/');
+    expect(downloadDetails.artifactoryUrl).toBe('http://127.0.0.1:8081/artifactory');
     expect(downloadDetails.repository).toBe('jfrog-cli-remote');
     expect(downloadDetails.auth).toBe(`Bearer ZXlKMlpYSWlPaUl5SWl3aWRIbHdJam9pU2xkVUlpd2lZV3huSWpvaVVsTXlOVFlpTENKcmFXUWlPaUkzWms1cmRYUnpVemR1WDB\
 oaVlUTkVkMkZSU1RaTWFUTjNjazlyVkZSRk4wWkZhRFZKUkVoRk56VjNJbjAuZXlKbGVIUWlPaUo3WENKeVpYWnZZMkZpYkdWY0lqcGNJblJ5ZFdWY0luMGlMQ0p6ZFdJaU9pSnFabUZqUURBeFpu\

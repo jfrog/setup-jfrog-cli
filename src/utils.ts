@@ -11,7 +11,7 @@ export class Utils {
     public static readonly USER_AGENT: string = 'setup-jfrog-cli-github-action/' + require('../package.json').version;
     // Default artifactory URL and repository for downloading JFrog CLI
     public static readonly DEFAULT_DOWNLOAD_DETAILS: DownloadDetails = {
-        artifactoryUrl: 'https://releases.jfrog.io/',
+        artifactoryUrl: 'https://releases.jfrog.io/artifactory',
         repository: 'jfrog-cli',
     } as DownloadDetails;
 
