@@ -64,7 +64,7 @@ Here's how you do this:
 As you can see in the example above, we created a secret named *JF_SECRET_ENV_1* and we exposed it to the workflow 
 as the *JF_ENV_1* environment variable. That's it - the ping command will now ping the configured Artifactory server.
 
-If you have multiple JFrog Platform configurations as secrets, you can use all of them in the workflow as follows:
+If you have multiple JFrog platform configurations as secrets, you can use all of the in the workflow as follows:
 ```yml
 - uses: jfrog/setup-jfrog-cli@v2
   env:
@@ -98,7 +98,7 @@ are registered as the build artifacts.
 ```
 
 ## Setting JFrog CLI version
-By default, the JFrog CLI version set in [action.yml](https://github.com/jfrog/setup-jfrog-cli/blob/master/action.yml) is used. To set a specific version, add the *version* input as follows:
+By default the JFrog CLI version set in [action.yml](https://github.com/jfrog/setup-jfrog-cli/blob/master/action.yml) is used. To set a specific version, add the *version* input as follows:
 
 ```yml
 - uses: jfrog/setup-jfrog-cli@v2

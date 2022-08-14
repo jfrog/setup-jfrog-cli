@@ -131,25 +131,6 @@ export class Utils {
         return serverTokens;
     }
 
-    public static configServerCredentials(): string[] | undefined {
-        let url: string | undefined = process.env.JF_URL;
-        let user: string | undefined = process.env.JF_USER;
-        let password: string | undefined = process.env.JF_PASSWORD;
-        let accessToken: string | undefined = process.env.JF_ACCESS_TOKEN;
-
-        if (url) {
-            let configCmd: string[] = ['c', 'add', '--url', url];
-
-            if (user && password) {
-                configCmd.push('--user', user, '--password', password)
-                return configCmd
-            } else if (accessToken) {
-                configCmd.push('--access-token', accessToken)
-                return configCmd
-            }
-        }
-    }
-
     public static setCliEnv() {
         Utils.exportVariableIfNotSet('JFROG_CLI_ENV_EXCLUDE', '*password*;*secret*;*key*;*token*;*auth*;JF_ARTIFACTORY_*;JF_ENV_*');
         Utils.exportVariableIfNotSet('JFROG_CLI_OFFER_CONFIG', 'false');
@@ -184,12 +165,6 @@ export class Utils {
         for (let serverToken of Utils.getServerTokens()) {
             let importCmd: string[] = useOldConfig ? ['rt', 'c', 'import', serverToken] : ['c', 'import', serverToken];
             await Utils.runCli(importCmd);
-        }
-
-        let configCommand: string[] | undefined = Utils.configServerCredentials()
-        if (configCommand) {
-            await Utils.runCli(configCommand);
-            // todo c use?
         }
     }
 
