@@ -51,7 +51,7 @@ You can set the connection details to your JFrog Platform by using one of the fo
 2. JF_URL + JF_USER + JF_PASSWORD (basic authentication)
 3. JF_URL + JF_ACCESS_TOKEN (authentication using a JFrog Access Token)
 
-You can use these environment variable in your workflow as follows:
+You can use these environment variables in your workflow as follows:
 ```yml
 - uses: jfrog/setup-jfrog-cli@v2
   env:
