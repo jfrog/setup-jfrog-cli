@@ -135,13 +135,13 @@ export class Utils {
         return serverTokens;
     }
 
-    /**
-     * Get specific secrets for the URL and connection details
-     * @param url - JFrog Platform URL
-     * @param user&password - JFrog Platform basic authentication
-     * @param accessToken - Jfrog Platform access token
-     */
+    // Get specific secrets for the URL and connection details
     public static getDirectServerConfigCommand(): string[] | undefined {
+        /**
+         * @name url - JFrog Platform URL
+         * @name user&password - JFrog Platform basic authentication
+         * @name accessToken - Jfrog Platform access token
+         */
         let url: string | undefined = process.env.JF_URL;
         let user: string | undefined = process.env.JF_USER;
         let password: string | undefined = process.env.JF_PASSWORD;
@@ -282,7 +282,7 @@ export class Utils {
             serverObj.password = process.env.JF_PASSWORD;
             serverObj.accessToken = process.env.JF_ACCESS_TOKEN;
         }
-        results.artifactoryUrl = serverObj.artifactoryUrl
+        results.artifactoryUrl = serverObj.artifactoryUrl;
         let authString: string | undefined = Utils.generateAuthString(serverObj);
         if (authString) {
             results.auth = authString;
