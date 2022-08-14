@@ -267,7 +267,6 @@ export class Utils {
             if (serverObj && serverObj.artifactoryUrl) {
                 break;
             }
-            results.artifactoryUrl = serverObj.artifactoryUrl
         }
         if (!serverObj.artifactoryUrl) {
             // No Server Tokens found, check if direct connection envs exist.
@@ -283,6 +282,7 @@ export class Utils {
             serverObj.password = process.env.JF_PASSWORD;
             serverObj.accessToken = process.env.JF_ACCESS_TOKEN;
         }
+        results.artifactoryUrl = serverObj.artifactoryUrl
         let authString: string | undefined = Utils.generateAuthString(serverObj);
         if (authString) {
             results.auth = authString;
