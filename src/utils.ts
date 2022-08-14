@@ -107,7 +107,8 @@ export class Utils {
         let artifactoryUrl : string = downloadDetails.artifactoryUrl.replace(/\/$/, '')
         return `${artifactoryUrl}/${downloadDetails.repository}/v${major}/${version}/${architecture}/${fileName}`;
     }
-
+     // Get Server Tokens created on your local machine using JFrog CLI.
+     // The Tokens configured with JF_ENV_ environment variables.
     public static getServerTokens(): Set<string> {
         let serverTokens: Set<string> = new Set(
             Object.keys(process.env)
@@ -133,7 +134,7 @@ export class Utils {
         legacyServerTokens.forEach((serverToken) => serverTokens.add(serverToken));
         return serverTokens;
     }
-
+    // Get direct connection details passed by environment variables
     public static getDirectServerConfigCommand(): string[] | undefined {
         let url: string | undefined = process.env.JF_URL;
         let user: string | undefined = process.env.JF_USER;
@@ -210,7 +211,7 @@ export class Utils {
             return 'windows-amd64';
         }
         if (os.platform().includes('darwin')) {
-            return 'mac-386';
+            return os.arch() === "arm64" ? 'mac-arm64':  'mac-386';
         }
         if (os.arch().includes('arm')) {
             return os.arch().includes('64') ? 'linux-arm64' : 'linux-arm';
