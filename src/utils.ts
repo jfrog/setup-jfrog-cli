@@ -57,7 +57,7 @@ export class Utils {
         // Download JFrog CLI
         let downloadDetails: DownloadDetails = Utils.extractDownloadDetails(cliRemote);
         let url: string = Utils.getCliUrl(major, version, jfrogFileName, downloadDetails);
-        core.debug('Downloading JFrog CLI from ' + url);
+        core.info('Downloading JFrog CLI from ' + url);
         let downloadDir: string = await toolCache.downloadTool(url, undefined, downloadDetails.auth);
 
         // Cache 'jf' and 'jfrog' executables
