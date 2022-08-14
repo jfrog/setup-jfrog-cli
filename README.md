@@ -31,7 +31,7 @@ Need a FREE JFrog environment in the cloud to use with this GitHub Action? Just 
 
 **MacOS and Linux using cUrl**
 ```
-curl -fL https://getcli.jfrog.io?setup | sh
+curl -fL "https://getcli.jfrog.io?setup" | sh
 ```
 
 **Windows using PowerShell**
