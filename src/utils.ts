@@ -135,8 +135,8 @@ export class Utils {
         return configTokens;
     }
 
-    // Get separate env config for the URL and connection details
-    public static getSeparateEnvConfigCommand(): string[] | undefined {
+    // Get separate env config for the URL and connection details and return args to add to the config add command
+    public static getSeparateEnvConfigArgs(): string[] | undefined {
         /**
          * @name url - JFrog Platform URL
          * @name user&password - JFrog Platform basic authentication
@@ -148,7 +148,7 @@ export class Utils {
         let accessToken: string | undefined = process.env.JF_ACCESS_TOKEN;
 
         if (url) {
-            let configCmd: string[] = ['c', 'add', Utils.SETUP_JFROG_CLI_SERVER_ID, '--url', url];
+            let configCmd: string[] = [Utils.SETUP_JFROG_CLI_SERVER_ID, '--url', url];
             if (accessToken) {
                 configCmd.push('--access-token', accessToken);
             } else if (user && password) {
@@ -187,19 +187,21 @@ export class Utils {
     }
 
     public static async configJFrogServers() {
+        let cliConfigCmd: string[] = ['config'];
         let useOldConfig: boolean = Utils.useOldConfig();
         if (useOldConfig) {
+            // Add 'rt' prefix to the beginning of the config command
+            cliConfigCmd.unshift('rt');
             let version: string = core.getInput(Utils.CLI_VERSION_ARG);
             core.warning('JFrog CLI ' + version + ' on Setup JFrog CLI GitHub Action is deprecated. Please use version 1.46.4 or above.');
         }
         for (let configToken of Utils.getConfigTokens()) {
-            let importCmd: string[] = useOldConfig ? ['rt', 'c', 'import', configToken] : ['c', 'import', configToken];
-            await Utils.runCli(importCmd);
+            await Utils.runCli(cliConfigCmd.concat('import', configToken));
         }
 
-        let configCommand: string[] | undefined = Utils.getSeparateEnvConfigCommand();
-        if (configCommand) {
-            await Utils.runCli(configCommand);
+        let configArgs: string[] | undefined = Utils.getSeparateEnvConfigArgs();
+        if (configArgs) {
+            await Utils.runCli(cliConfigCmd.concat('add', ...configArgs));
         }
     }
 

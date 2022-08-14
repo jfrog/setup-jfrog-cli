@@ -64,37 +64,27 @@ test('Get legacy Config Tokens', async () => {
 
 test('Get separate env config', async () => {
     // No url
-    let configCommand: string[] | undefined = Utils.getSeparateEnvConfigCommand();
+    let configCommand: string[] | undefined = Utils.getSeparateEnvConfigArgs();
     expect(configCommand).toBe(undefined);
 
     process.env['JF_URL'] = DEFAULT_CLI_URL;
 
     // No credentials
-    configCommand = Utils.getSeparateEnvConfigCommand();
-    expect(configCommand).toStrictEqual(['c', 'add', Utils.SETUP_JFROG_CLI_SERVER_ID, '--url', DEFAULT_CLI_URL]);
+    configCommand = Utils.getSeparateEnvConfigArgs();
+    expect(configCommand).toStrictEqual([Utils.SETUP_JFROG_CLI_SERVER_ID, '--url', DEFAULT_CLI_URL]);
 
     // Basic authentication
     process.env['JF_USER'] = 'user';
     process.env['JF_PASSWORD'] = 'password';
-    configCommand = Utils.getSeparateEnvConfigCommand();
-    expect(configCommand).toStrictEqual([
-        'c',
-        'add',
-        Utils.SETUP_JFROG_CLI_SERVER_ID,
-        '--url',
-        DEFAULT_CLI_URL,
-        '--user',
-        'user',
-        '--password',
-        'password',
-    ]);
+    configCommand = Utils.getSeparateEnvConfigArgs();
+    expect(configCommand).toStrictEqual([Utils.SETUP_JFROG_CLI_SERVER_ID, '--url', DEFAULT_CLI_URL, '--user', 'user', '--password', 'password']);
 
     // Access Token
     process.env['JF_USER'] = '';
     process.env['JF_PASSWORD'] = '';
     process.env['JF_ACCESS_TOKEN'] = 'accessToken';
-    configCommand = Utils.getSeparateEnvConfigCommand();
-    expect(configCommand).toStrictEqual(['c', 'add', Utils.SETUP_JFROG_CLI_SERVER_ID, '--url', DEFAULT_CLI_URL, '--access-token', 'accessToken']);
+    configCommand = Utils.getSeparateEnvConfigArgs();
+    expect(configCommand).toStrictEqual([Utils.SETUP_JFROG_CLI_SERVER_ID, '--url', DEFAULT_CLI_URL, '--access-token', 'accessToken']);
 });
 
 describe('JFrog CLI V1 URL Tests', () => {
@@ -167,7 +157,7 @@ MXZ1SWRpaWlia2dhN0NtTk1mV285VEdLZk9VTlM2SVBtbzUyOF9KREd1VXJlYWNKWWxudXhwNDlkZGdn
 kxPZE1IVEtmNWR3M2xDN2pJeTNKZ250LVZB`);
 
     process.env.JF_ENV_LOCAL = '';
-    process.env['JF_URL'] = "http://127.0.0.1:8081";
+    process.env['JF_URL'] = 'http://127.0.0.1:8081';
     process.env['JF_USER'] = 'user';
     process.env['JF_PASSWORD'] = 'password';
 
