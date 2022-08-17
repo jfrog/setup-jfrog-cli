@@ -23,22 +23,6 @@ All build related operations will be automatically recorded with the *Workflow N
 - run: jf --version
 ```
 
-## Set up a FREE JFrog Environment in the Cloud
-Need a FREE JFrog environment in the cloud to use with this GitHub Action? Just run one of the following commands in your terminal. The commands will do the following:
-
-1. Install JFrog CLI on your machine.
-2. Create a FREE JFrog environment in the cloud for you.
-
-**MacOS and Linux using cUrl**
-```
-curl -fL "https://getcli.jfrog.io?setup" | sh
-```
-
-**Windows using PowerShell**
-```
-powershell "Start-Process -Wait -Verb RunAs powershell '-NoProfile iwr https://releases.jfrog.io/artifactory/jfrog-cli/v2-jf/[RELEASE]/jfrog-cli-windows-amd64/jf.exe -OutFile $env:SYSTEMROOT\system32\jf.exe'" ; jf setup
-```
-
 ## Storing JFrog connection details as secrets
 The connection details of the JFrog platform used by JFrog CLI can be stored as secrets.
 You can use one of the following two methods to define and store the JFrog Platform connection details as secrets.
@@ -61,16 +45,15 @@ You can use these environment variables in your workflow as follows:
     # Basic authentication credentials
     JF_USER: ${{ secrets.JF_USER }}
     JF_PASSWORD: ${{ secrets.JF_PASSWORD }}
-    
-    # JFrog platform access token (if JF_USER and JF_PASSWORD are not provided)
-    # JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
+    or
+    # JFrog Platform access token
+    JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
 - run: |
     jf rt ping
-    
-    # If both Config Token(JF_ENV_*) and separate environment variables(JF_URL, ...) are provided, the default config will be the Config Token.
-    # To make the separate environment variables as the default config use the following command:
-    jf c use setup-jfrog-cli-server
 ```
+
+| Important: If both Config Token(JF_ENV_*) and separate environment variables(JF_URL, ...) are provided, the default config will be the Config Token. To make the above separate environment variables as the default config use ```jf c use setup-jfrog-cli-server``` |
+|----------------------------------------------------------------------------------------------------------------------------------------------------------|
 
 ### Storing the connection details using single Config Token
 1. Make sure JFrog CLI is installed on your local machine by running ```jf -v```.
@@ -172,6 +155,23 @@ Here's how you do this:
     ```
 
 * See instructions for configuring the JFrog connection details under [Storing JFrog connection details as secrets](#storing-jfrog-connection-details-as-secrets).
+
+
+## Set up a FREE JFrog Environment in the Cloud
+Need a FREE JFrog environment in the cloud to use with this GitHub Action? Just run one of the following commands in your terminal. The commands will do the following:
+
+1. Install JFrog CLI on your machine.
+2. Create a FREE JFrog environment in the cloud for you.
+
+**MacOS and Linux using cUrl**
+```
+curl -fL "https://getcli.jfrog.io?setup" | sh
+```
+
+**Windows using PowerShell**
+```
+powershell "Start-Process -Wait -Verb RunAs powershell '-NoProfile iwr https://releases.jfrog.io/artifactory/jfrog-cli/v2-jf/[RELEASE]/jfrog-cli-windows-amd64/jf.exe -OutFile $env:SYSTEMROOT\system32\jf.exe'" ; jf setup
+```
 
 ## Example projects
 To help you get started, you can use [these](https://github.com/jfrog/project-examples/tree/master/github-action-examples) sample projects on GitHub.
