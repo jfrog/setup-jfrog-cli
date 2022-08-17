@@ -148,14 +148,7 @@ test('Extract download details Tests', () => {
     let downloadDetails: DownloadDetails = Utils.extractDownloadDetails('jfrog-cli-remote');
     expect(downloadDetails.artifactoryUrl).toBe('http://127.0.0.1:8081/artifactory/');
     expect(downloadDetails.repository).toBe('jfrog-cli-remote');
-    expect(downloadDetails.auth).toBe(`Bearer ZXlKMlpYSWlPaUl5SWl3aWRIbHdJam9pU2xkVUlpd2lZV3huSWpvaVVsTXlOVFlpTENKcmFXUWlPaUkzWms1cmRYUnpVemR1WDB\
-oaVlUTkVkMkZSU1RaTWFUTjNjazlyVkZSRk4wWkZhRFZKUkVoRk56VjNJbjAuZXlKbGVIUWlPaUo3WENKeVpYWnZZMkZpYkdWY0lqcGNJblJ5ZFdWY0luMGlMQ0p6ZFdJaU9pSnFabUZqUURBeFpu\
-TnphRzR5WTJKck0zSjVNVEV4TUhaa1pHUXhlbm8xWEM5MWMyVnljMXd2WVdSdGFXNGlMQ0p6WTNBaU9pSmhjSEJzYVdWa0xYQmxjbTFwYzNOcGIyNXpYQzloWkcxcGJpSXNJbUYxWkNJNklpcEFLa\
-UlzSW1semN5STZJbXBtWm1WQU1EQXdJaXdpWlhod0lqb3hOamd3T1RZMk1Ea3hMQ0pwWVhRaU9qRTJORGswTXpBd09URXNJbXAwYVNJNklqQmpNalExT1RObExUbGtZalV0TkRZeFl5MDVZbUl5TF\
-dObVlqVXdaV0kzWTJGaVppSjkuVnE0bXlDd0tpdVVQb1MyMU1lbFJtckoyb2plWVZBUVNTYXc1UXk5TG1yMUx6TjB2bEY4bmJWbFhfVVgyRXg4Z0ZLRW9Gd2UzZEIwNG9PUDQ5WVlCV1BaMDB4WXB\
-kUVd6dFpIQ0x6Nkc5QmhnWmtXb1B0cTcyMnZvTVk5MDRGTzFwdDZHOWVkQk1DX2h0Uk1FUzJoY2xBZHd2VUktbkU3cGtBYTVoVU5kVDE0RTdvUmdrUzR1MzlqdTZfWmhnY1ZsaFZQNnkwTkJCVFJy\
-MXZ1SWRpaWlia2dhN0NtTk1mV285VEdLZk9VTlM2SVBtbzUyOF9KREd1VXJlYWNKWWxudXhwNDlkZGdnY1VzNHlmTjd5TEdoc0ZJTE96LUdodDFtcWtRaURvaVp4Qkx1aVh4YTN1R2toX0JPdmt4Y\
-kxPZE1IVEtmNWR3M2xDN2pJeTNKZ250LVZB`);
+    expect(downloadDetails.auth).toBe(`Bearer eyJ2ZXIiOiIyIiwidHlwIjoiSldUIiwiYWxnIjoiUlMyNTYiLCJraWQiOiI3Zk5rdXRzUzduX0hiYTNEd2FRSTZMaTN3ck9rVFRFN0ZFaDVJREhFNzV3In0.eyJleHQiOiJ7XCJyZXZvY2FibGVcIjpcInRydWVcIn0iLCJzdWIiOiJqZmFjQDAxZnNzaG4yY2JrM3J5MTExMHZkZGQxeno1XC91c2Vyc1wvYWRtaW4iLCJzY3AiOiJhcHBsaWVkLXBlcm1pc3Npb25zXC9hZG1pbiIsImF1ZCI6IipAKiIsImlzcyI6ImpmZmVAMDAwIiwiZXhwIjoxNjgwOTY2MDkxLCJpYXQiOjE2NDk0MzAwOTEsImp0aSI6IjBjMjQ1OTNlLTlkYjUtNDYxYy05YmIyLWNmYjUwZWI3Y2FiZiJ9.Vq4myCwKiuUPoS21MelRmrJ2ojeYVAQSSaw5Qy9Lmr1LzN0vlF8nbVlX_UX2Ex8gFKEoFwe3dB04oOP49YYBWPZ00xYpdQWztZHCLz6G9BhgZkWoPtq722voMY904FO1pt6G9edBMC_htRMES2hclAdwvUI-nE7pkAa5hUNdT14E7oRgkS4u39ju6_ZhgcVlhVP6y0NBBTRr1vuIdiiibkga7CmNMfWo9TGKfOUNS6IPmo528_JDGuUreacJYlnuxp49ddggcUs4yfN7yLGhsFILOz-Ght1mqkQiDoiZxBLuiXxa3uGkh_BOvkxbLOdMHTKf5dw3lC7jIy3Jgnt-VA`);
 
     process.env.JF_ENV_LOCAL = '';
     process.env['JF_URL'] = 'http://127.0.0.1:8081';
@@ -169,7 +162,7 @@ kxPZE1IVEtmNWR3M2xDN2pJeTNKZ250LVZB`);
 
     process.env['JF_USER'] = '';
     process.env['JF_PASSWORD'] = '';
-    process.env['JF_ACCESS_TOKEN'] = 'accessToken';
+    process.env['JF_ACCESS_TOKEN'] = 'YWNjZXNzVG9rZW4=';
 
     downloadDetails = Utils.extractDownloadDetails('jfrog-cli-remote');
     expect(downloadDetails.artifactoryUrl).toBe('http://127.0.0.1:8081/artifactory');
