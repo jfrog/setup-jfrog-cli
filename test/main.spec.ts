@@ -76,6 +76,7 @@ test('Get separate env config', async () => {
     // Basic authentication
     process.env['JF_USER'] = 'user';
     process.env['JF_PASSWORD'] = 'password';
+    process.env['JF_ACCESS_TOKEN'] = ''
     configCommand = Utils.getSeparateEnvConfigArgs();
     expect(configCommand).toStrictEqual([Utils.SETUP_JFROG_CLI_SERVER_ID, '--url', DEFAULT_CLI_URL, '--user', 'user', '--password', 'password']);
 
@@ -152,9 +153,10 @@ test('Extract download details Tests', () => {
 
     process.env.JF_ENV_LOCAL = '';
     process.env['JF_URL'] = 'http://127.0.0.1:8081';
+
     process.env['JF_USER'] = 'user';
     process.env['JF_PASSWORD'] = 'password';
-
+    process.env['JF_ACCESS_TOKEN'] = ''
     downloadDetails = Utils.extractDownloadDetails('jfrog-cli-remote');
     expect(downloadDetails.artifactoryUrl).toBe('http://127.0.0.1:8081/artifactory');
     expect(downloadDetails.repository).toBe('jfrog-cli-remote');
@@ -163,7 +165,6 @@ test('Extract download details Tests', () => {
     process.env['JF_USER'] = '';
     process.env['JF_PASSWORD'] = '';
     process.env['JF_ACCESS_TOKEN'] = 'YWNjZXNzVG9rZW4=';
-
     downloadDetails = Utils.extractDownloadDetails('jfrog-cli-remote');
     expect(downloadDetails.artifactoryUrl).toBe('http://127.0.0.1:8081/artifactory');
     expect(downloadDetails.repository).toBe('jfrog-cli-remote');
