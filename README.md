@@ -105,8 +105,8 @@ If you have multiple Config Tokens as secrets, you can use all of them in the wo
     jf rt ping
     # Now use the second sever configuration exposed to the Action.
     jf c use local-2
-    # Ping local-2 Xray server
-    jf xr ping
+    # Ping local-2 Artifactory server
+    jf rt ping
 ```
 | Important: When exposing more than one JFrog configuration to the Action, you should always add the ```jf c use``` command to specify the server to use. |
 |----------------------------------------------------------------------------------------------------------------------------------------------------------|
