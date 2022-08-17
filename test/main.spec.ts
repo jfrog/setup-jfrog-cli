@@ -30,36 +30,61 @@ beforeEach(() => {
     });
 });
 
-test('Get server tokens', async () => {
-    let serverTokens: Set<string> = Utils.getServerTokens();
-    expect(serverTokens.size).toBe(0);
+test('Get Config Tokens', async () => {
+    let configTokens: Set<string> = Utils.getConfigTokens();
+    expect(configTokens.size).toBe(0);
 
-    process.env['ENV_JF_1'] = 'ILLEGAL_SERVER_TOKEN';
-    serverTokens = Utils.getServerTokens();
-    expect(serverTokens.size).toBe(0);
+    process.env['ENV_JF_1'] = 'ILLEGAL_CONFIG_TOKEN';
+    configTokens = Utils.getConfigTokens();
+    expect(configTokens.size).toBe(0);
 
-    process.env['JF_ENV_1'] = 'DUMMY_SERVER_TOKEN_1';
-    serverTokens = Utils.getServerTokens();
-    expect(serverTokens).toStrictEqual(new Set(['DUMMY_SERVER_TOKEN_1']));
+    process.env['JF_ENV_1'] = 'DUMMY_CONFIG_TOKEN_1';
+    configTokens = Utils.getConfigTokens();
+    expect(configTokens).toStrictEqual(new Set(['DUMMY_CONFIG_TOKEN_1']));
 
-    process.env['JF_ENV_2'] = 'DUMMY_SERVER_TOKEN_2';
-    serverTokens = Utils.getServerTokens();
-    expect(serverTokens).toStrictEqual(new Set(['DUMMY_SERVER_TOKEN_1', 'DUMMY_SERVER_TOKEN_2']));
+    process.env['JF_ENV_2'] = 'DUMMY_CONFIG_TOKEN_2';
+    configTokens = Utils.getConfigTokens();
+    expect(configTokens).toStrictEqual(new Set(['DUMMY_CONFIG_TOKEN_1', 'DUMMY_CONFIG_TOKEN_2']));
 });
 
-test('Get legacy server tokens', async () => {
-    process.env['ARTIFACTORY_JF_1'] = 'ILLEGAL_SERVER_TOKEN';
-    expect(Utils.getServerTokens().size).toBe(0);
+test('Get legacy Config Tokens', async () => {
+    process.env['ARTIFACTORY_JF_1'] = 'ILLEGAL_CONFIG_TOKEN';
+    expect(Utils.getConfigTokens().size).toBe(0);
 
-    process.env['JF_ARTIFACTORY_1'] = 'DUMMY_SERVER_TOKEN_1';
-    expect(Utils.getServerTokens()).toStrictEqual(new Set(['DUMMY_SERVER_TOKEN_1']));
+    process.env['JF_ARTIFACTORY_1'] = 'DUMMY_CONFIG_TOKEN_1';
+    expect(Utils.getConfigTokens()).toStrictEqual(new Set(['DUMMY_CONFIG_TOKEN_1']));
 
-    process.env['JF_ARTIFACTORY_2'] = 'DUMMY_SERVER_TOKEN_2';
-    expect(Utils.getServerTokens()).toStrictEqual(new Set(['DUMMY_SERVER_TOKEN_1', 'DUMMY_SERVER_TOKEN_2']));
+    process.env['JF_ARTIFACTORY_2'] = 'DUMMY_CONFIG_TOKEN_2';
+    expect(Utils.getConfigTokens()).toStrictEqual(new Set(['DUMMY_CONFIG_TOKEN_1', 'DUMMY_CONFIG_TOKEN_2']));
 
-    process.env['JF_ENV_1'] = 'DUMMY_SERVER_TOKEN_1';
-    process.env['JF_ENV_2'] = 'DUMMY_SERVER_TOKEN_3';
-    expect(Utils.getServerTokens()).toStrictEqual(new Set(['DUMMY_SERVER_TOKEN_1', 'DUMMY_SERVER_TOKEN_2', 'DUMMY_SERVER_TOKEN_3']));
+    process.env['JF_ENV_1'] = 'DUMMY_CONFIG_TOKEN_1';
+    process.env['JF_ENV_2'] = 'DUMMY_CONFIG_TOKEN_3';
+    expect(Utils.getConfigTokens()).toStrictEqual(new Set(['DUMMY_CONFIG_TOKEN_1', 'DUMMY_CONFIG_TOKEN_2', 'DUMMY_CONFIG_TOKEN_3']));
+});
+
+test('Get separate env config', async () => {
+    // No url
+    let configCommand: string[] | undefined = Utils.getSeparateEnvConfigArgs();
+    expect(configCommand).toBe(undefined);
+
+    process.env['JF_URL'] = DEFAULT_CLI_URL;
+
+    // No credentials
+    configCommand = Utils.getSeparateEnvConfigArgs();
+    expect(configCommand).toStrictEqual([Utils.SETUP_JFROG_CLI_SERVER_ID, '--url', DEFAULT_CLI_URL]);
+
+    // Basic authentication
+    process.env['JF_USER'] = 'user';
+    process.env['JF_PASSWORD'] = 'password';
+    configCommand = Utils.getSeparateEnvConfigArgs();
+    expect(configCommand).toStrictEqual([Utils.SETUP_JFROG_CLI_SERVER_ID, '--url', DEFAULT_CLI_URL, '--user', 'user', '--password', 'password']);
+
+    // Access Token
+    process.env['JF_USER'] = '';
+    process.env['JF_PASSWORD'] = '';
+    process.env['JF_ACCESS_TOKEN'] = 'accessToken';
+    configCommand = Utils.getSeparateEnvConfigArgs();
+    expect(configCommand).toStrictEqual([Utils.SETUP_JFROG_CLI_SERVER_ID, '--url', DEFAULT_CLI_URL, '--access-token', 'accessToken']);
 });
 
 describe('JFrog CLI V1 URL Tests', () => {
@@ -90,6 +115,7 @@ describe('JFrog CLI V2 URL Tests', () => {
     let cases: string[][] = [
         ['win32' as NodeJS.Platform, 'amd64', 'jfrog.exe', 'v2/2.3.4/jfrog-cli-windows-amd64/jfrog.exe'],
         ['darwin' as NodeJS.Platform, 'amd64', 'jfrog', 'v2/2.3.4/jfrog-cli-mac-386/jfrog'],
+        ['darwin' as NodeJS.Platform, 'arm64', 'jfrog', 'v2/2.3.4/jfrog-cli-mac-arm64/jfrog'],
         ['linux' as NodeJS.Platform, 'amd64', 'jfrog', 'v2/2.3.4/jfrog-cli-linux-amd64/jfrog'],
         ['linux' as NodeJS.Platform, 'arm64', 'jfrog', 'v2/2.3.4/jfrog-cli-linux-arm64/jfrog'],
         ['linux' as NodeJS.Platform, '386', 'jfrog', 'v2/2.3.4/jfrog-cli-linux-386/jfrog'],
@@ -113,14 +139,14 @@ test('Extract download details Tests', () => {
     for (let config of [V1_CONFIG, V2_CONFIG]) {
         process.env.JF_ENV_LOCAL = config;
         let downloadDetails: DownloadDetails = Utils.extractDownloadDetails('jfrog-cli-remote');
-        expect(downloadDetails.artifactoryUrl).toBe('http://127.0.0.1:8081/artifactory');
+        expect(downloadDetails.artifactoryUrl).toBe('http://127.0.0.1:8081/artifactory/');
         expect(downloadDetails.repository).toBe('jfrog-cli-remote');
         expect(downloadDetails.auth).toBe('Basic YWRtaW46cGFzc3dvcmQ=');
     }
 
     process.env.JF_ENV_LOCAL = V2_CONFIG_TOKEN;
     let downloadDetails: DownloadDetails = Utils.extractDownloadDetails('jfrog-cli-remote');
-    expect(downloadDetails.artifactoryUrl).toBe('http://127.0.0.1:8081/artifactory');
+    expect(downloadDetails.artifactoryUrl).toBe('http://127.0.0.1:8081/artifactory/');
     expect(downloadDetails.repository).toBe('jfrog-cli-remote');
     expect(downloadDetails.auth).toBe(`Bearer ZXlKMlpYSWlPaUl5SWl3aWRIbHdJam9pU2xkVUlpd2lZV3huSWpvaVVsTXlOVFlpTENKcmFXUWlPaUkzWms1cmRYUnpVemR1WDB\
 oaVlUTkVkMkZSU1RaTWFUTjNjazlyVkZSRk4wWkZhRFZKUkVoRk56VjNJbjAuZXlKbGVIUWlPaUo3WENKeVpYWnZZMkZpYkdWY0lqcGNJblJ5ZFdWY0luMGlMQ0p6ZFdJaU9pSnFabUZqUURBeFpu\
@@ -130,6 +156,25 @@ dObVlqVXdaV0kzWTJGaVppSjkuVnE0bXlDd0tpdVVQb1MyMU1lbFJtckoyb2plWVZBUVNTYXc1UXk5TG
 kUVd6dFpIQ0x6Nkc5QmhnWmtXb1B0cTcyMnZvTVk5MDRGTzFwdDZHOWVkQk1DX2h0Uk1FUzJoY2xBZHd2VUktbkU3cGtBYTVoVU5kVDE0RTdvUmdrUzR1MzlqdTZfWmhnY1ZsaFZQNnkwTkJCVFJy\
 MXZ1SWRpaWlia2dhN0NtTk1mV285VEdLZk9VTlM2SVBtbzUyOF9KREd1VXJlYWNKWWxudXhwNDlkZGdnY1VzNHlmTjd5TEdoc0ZJTE96LUdodDFtcWtRaURvaVp4Qkx1aVh4YTN1R2toX0JPdmt4Y\
 kxPZE1IVEtmNWR3M2xDN2pJeTNKZ250LVZB`);
+
+    process.env.JF_ENV_LOCAL = '';
+    process.env['JF_URL'] = 'http://127.0.0.1:8081';
+    process.env['JF_USER'] = 'user';
+    process.env['JF_PASSWORD'] = 'password';
+
+    downloadDetails = Utils.extractDownloadDetails('jfrog-cli-remote');
+    expect(downloadDetails.artifactoryUrl).toBe('http://127.0.0.1:8081/artifactory');
+    expect(downloadDetails.repository).toBe('jfrog-cli-remote');
+    expect(downloadDetails.auth).toBe('Basic dXNlcjpwYXNzd29yZA==');
+
+    process.env['JF_USER'] = '';
+    process.env['JF_PASSWORD'] = '';
+    process.env['JF_ACCESS_TOKEN'] = 'accessToken';
+
+    downloadDetails = Utils.extractDownloadDetails('jfrog-cli-remote');
+    expect(downloadDetails.artifactoryUrl).toBe('http://127.0.0.1:8081/artifactory');
+    expect(downloadDetails.repository).toBe('jfrog-cli-remote');
+    expect(downloadDetails.auth).toBe(`Bearer YWNjZXNzVG9rZW4=`);
 });
 
 test('User agent', () => {
