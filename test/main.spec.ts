@@ -153,7 +153,6 @@ test('Extract download details Tests', () => {
 
     process.env.JF_ENV_LOCAL = '';
     process.env['JF_URL'] = 'http://127.0.0.1:8081';
-
     process.env['JF_USER'] = 'user';
     process.env['JF_PASSWORD'] = 'password';
     process.env['JF_ACCESS_TOKEN'] = ''
