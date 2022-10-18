@@ -4,7 +4,7 @@
 
 # Setup JFrog CLI
 
-[![Build status](https://github.com/jfrog/setup-jfrog-cli/workflows/Main%20workflow/badge.svg)](https://github.com/jfrog/setup-jfrog-cli/actions)
+[![Build status](https://github.com/jfrog/setup-jfrog-cli/workflows/Test/badge.svg)](https://github.com/jfrog/setup-jfrog-cli/actions)
 
 </div>
 
@@ -19,7 +19,7 @@ All build related operations will be automatically recorded with the *Workflow N
 ## General
 
 ```yml
-- uses: jfrog/setup-jfrog-cli@v2
+- uses: jfrog/setup-jfrog-cli@v3
 - run: jf --version
 ```
 
@@ -37,7 +37,7 @@ You can set the connection details to your JFrog Platform by using one of the fo
 
 You can use these environment variables in your workflow as follows:
 ```yml
-- uses: jfrog/setup-jfrog-cli@v2
+- uses: jfrog/setup-jfrog-cli@v3
   env:
     # JFrog platform url (for example: https://acme.jfrog.io) 
     JF_URL: ${{ secrets.JF_URL }}
@@ -65,7 +65,7 @@ To use the saved JFrog platform configuration in the workflow, all you need to d
 The secret should be exposed as an environment variable with the *JF_ENV_* prefix.
 Here's how you do this:
 ```yml
-- uses: jfrog/setup-jfrog-cli@v2
+- uses: jfrog/setup-jfrog-cli@v3
   env:
     JF_ENV_1: ${{ secrets.JF_SECRET_ENV_1 }}
 - run: |
@@ -77,7 +77,7 @@ as the *JF_ENV_1* environment variable. That's it - the ping command will now pi
 
 If you have multiple Config Tokens as secrets, you can use all of them in the workflow as follows:
 ```yml
-- uses: jfrog/setup-jfrog-cli@v2
+- uses: jfrog/setup-jfrog-cli@v3
   env:
     JF_ENV_1: ${{ secrets.JF_SECRET_ENV_1 }}
     JF_ENV_2: ${{ secrets.JF_SECRET_ENV_2 }}
@@ -112,7 +112,7 @@ are registered as the build artifacts.
 By default, the JFrog CLI version set in [action.yml](https://github.com/jfrog/setup-jfrog-cli/blob/master/action.yml) is used. To set a specific version, add the *version* input as follows:
 
 ```yml
-- uses: jfrog/setup-jfrog-cli@v2
+- uses: jfrog/setup-jfrog-cli@v3
   with:
     version: X.Y.Z
 ```
@@ -120,7 +120,7 @@ By default, the JFrog CLI version set in [action.yml](https://github.com/jfrog/s
 It is also possible to set the latest JFrog CLI version by adding the *version* input as follows:
 
 ```yml
-- uses: jfrog/setup-jfrog-cli@v2
+- uses: jfrog/setup-jfrog-cli@v3
   with:
     version: latest
 ```
@@ -136,7 +136,7 @@ Here's how you do this:
 1. Create a remote repository in Artifactory. Name the repository jfrog-cli-remote and set its URL to https://releases.jfrog.io/artifactory/jfrog-cli/
 2. Set *download-repository* input to jfrog-cli-remote:
     ```yml
-    - uses: jfrog/setup-jfrog-cli@v2
+    - uses: jfrog/setup-jfrog-cli@v3
       env:
        # JFrog platform url (for example: https://acme.jfrog.io) 
         JF_URL: ${{ secrets.JF_URL }}
