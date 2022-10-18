@@ -10,8 +10,8 @@
 
 This GitHub Action downloads, installs and configures JFrog CLI, so that it can be used as part of the workflow.
 
-In addition, the Action includes the following features, when using JFrog CLI to work with Artifactory.
-* The connection details of the JFrog platform used by JFrog CLI can be stored as secrets. Read more about it [here](#storing-JFrog-details-as-secrets).
+In addition, the Action includes the following features, when using JFrog CLI to work with JFrog Platform.
+* The connection details of the JFrog platform used by JFrog CLI can be stored as secrets. Read more about it [here](#Storing-JFrog-Connection-Details-as-Secrets).
 * There's no need to add the *build name* and *build number* options and arguments to commands which accept them.
 All build related operations will be automatically recorded with the *Workflow Name* as build name and *Run Number* as build number.
 
@@ -23,33 +23,44 @@ All build related operations will be automatically recorded with the *Workflow N
 - run: jf --version
 ```
 
-## Set Up a FREE JFrog Environment in the Cloud
-Need a FREE JFrog environment in the cloud to use with this GitHub Action? Just run one of the following commands in your terminal. The commands will do the following:
-
-1. Install JFrog CLI on your machine.
-2. Create a FREE JFrog environment in the cloud for you.
-
-**MacOS and Linux using cUrl**
-```
-curl -fL https://getcli.jfrog.io?setup | sh
-```
-
-**Windows using PowerShell**
-```
-powershell "Start-Process -Wait -Verb RunAs powershell '-NoProfile iwr https://releases.jfrog.io/artifactory/jfrog-cli/v2-jf/[RELEASE]/jfrog-cli-windows-amd64/jf.exe -OutFile $env:SYSTEMROOT\system32\jf.exe'" ; jf setup
-```
-
-## Storing JFrog Connection Details as Secrets
-### General
+## Storing JFrog connection details as secrets
 The connection details of the JFrog platform used by JFrog CLI can be stored as secrets.
+You can use one of the following two methods to define and store the JFrog Platform connection details as secrets.
+1. [Storing the connection details using separate environment variables](#Storing-the-connection-details-using-separate-environment-variables).
+2. [Storing the connection details using single Config Token](#Storing-the-connection-details-using-single-Config-Token).
 
-### Creating the configuration on your local machine 
+### Storing the connection details using separate environment variables
+You can set the connection details to your JFrog Platform by using one of the following environment variables combinations:
+1. JF_URL (no authentication)
+2. JF_URL + JF_USER + JF_PASSWORD (basic authentication)
+3. JF_URL + JF_ACCESS_TOKEN (authentication using a JFrog Access Token)
+
+You can use these environment variables in your workflow as follows:
+```yml
+- uses: jfrog/setup-jfrog-cli@v2
+  env:
+    # JFrog platform url (for example: https://acme.jfrog.io) 
+    JF_URL: ${{ secrets.JF_URL }}
+    
+    # Basic authentication credentials
+    JF_USER: ${{ secrets.JF_USER }}
+    JF_PASSWORD: ${{ secrets.JF_PASSWORD }}
+    or
+    # JFrog Platform access token
+    JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
+- run: |
+    jf rt ping
+```
+
+| Important: If both Config Token(JF_ENV_*) and separate environment variables(JF_URL, ...) are provided, the default config will be the Config Token. To make the above separate environment variables as the default config use ```jf c use setup-jfrog-cli-server``` |
+|----------------------------------------------------------------------------------------------------------------------------------------------------------|
+
+### Storing the connection details using single Config Token
 1. Make sure JFrog CLI is installed on your local machine by running ```jf -v```.
 2. Configure the details of the JFrog platform by running ```jf c add```.
 3. Export the details of the JFrog platform you configured, using the server ID you chose. Do this by running ```jf c export <SERVER ID>```.
-4. Copy the generated token to the clipboard and save it as a secret on GitHub.
+4. Copy the generated Config Token to the clipboard and save it as a secret on GitHub.
 
-### Using the secret in the workflow
 To use the saved JFrog platform configuration in the workflow, all you need to do it to expose the secret to the workflow.
 The secret should be exposed as an environment variable with the *JF_ENV_* prefix.
 Here's how you do this:
@@ -61,10 +72,10 @@ Here's how you do this:
     # Ping the server
     jf rt ping
 ```
-As you can see in the example above, we created a secret named *JF_SECRET_ENV_1* and we exposed it to the workflow 
+As you can see in the example above, we created a secret named *JF_SECRET_ENV_1* and exposed it to the workflow 
 as the *JF_ENV_1* environment variable. That's it - the ping command will now ping the configured Artifactory server.
 
-If you have multiple JFrog Platform configurations as secrets, you can use all of them in the workflow as follows:
+If you have multiple Config Tokens as secrets, you can use all of them in the workflow as follows:
 ```yml
 - uses: jfrog/setup-jfrog-cli@v2
   env:
@@ -77,11 +88,11 @@ If you have multiple JFrog Platform configurations as secrets, you can use all o
     jf rt ping
     # Now use the second sever configuration exposed to the Action.
     jf c use local-2
-    # Ping local-2 Xray server
-    jf xr ping
+    # Ping local-2 Artifactory server
+    jf rt ping
 ```
 | Important: When exposing more than one JFrog configuration to the Action, you should always add the ```jf c use``` command to specify the server to use. |
-| --- |
+|----------------------------------------------------------------------------------------------------------------------------------------------------------|
 
 ## Setting the build name and build number when publishing build-info to Artifactory
 The Action automatically sets the following environment variables:
@@ -127,13 +138,40 @@ Here's how you do this:
     ```yml
     - uses: jfrog/setup-jfrog-cli@v2
       env:
-        # The JFrog CLI will be downloaded from the configured Artifactory server in JF_ENV_1
-        JF_ENV_1: ${{ secrets.JF_SECRET_ENV_1 }}
+       # JFrog platform url (for example: https://acme.jfrog.io) 
+        JF_URL: ${{ secrets.JF_URL }}
+    
+        # Basic authentication credentials
+        JF_USER: ${{ secrets.JF_USER }}
+        JF_PASSWORD: ${{ secrets.JF_PASSWORD }}
+    
+        # JFrog platform access token (if JF_USER and JF_PASSWORD are not provided)
+        # JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
+   
+        # Same can be achieved with a Config Token using JF_ENV_1 environment variable
+        # JF_ENV_1: ${{ secrets.JF_SECRET_ENV_1 }}
       with:
         download-repository: jfrog-cli-remote
     ```
 
-* See instructions for configuring the _JF_SECRET_ENV_1_ secret under [Storing JFrog Connection Details as Secrets](#storing-jfrog-connection-details-as-secrets).
+* See instructions for configuring the JFrog connection details under [Storing JFrog connection details as secrets](#storing-jfrog-connection-details-as-secrets).
+
+
+## Set up a FREE JFrog Environment in the Cloud
+Need a FREE JFrog environment in the cloud to use with this GitHub Action? Just run one of the following commands in your terminal. The commands will do the following:
+
+1. Install JFrog CLI on your machine.
+2. Create a FREE JFrog environment in the cloud for you.
+
+**MacOS and Linux using cUrl**
+```
+curl -fL "https://getcli.jfrog.io?setup" | sh
+```
+
+**Windows using PowerShell**
+```
+powershell "Start-Process -Wait -Verb RunAs powershell '-NoProfile iwr https://releases.jfrog.io/artifactory/jfrog-cli/v2-jf/[RELEASE]/jfrog-cli-windows-amd64/jf.exe -OutFile $env:SYSTEMROOT\system32\jf.exe'" ; jf setup
+```
 
 ## Example projects
 To help you get started, you can use [these](https://github.com/jfrog/project-examples/tree/master/github-action-examples) sample projects on GitHub.
