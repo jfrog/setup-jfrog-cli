@@ -1,6 +1,6 @@
 {
     "name": "@jfrog/setup-jfrog-cli",
-    "version": "3.0.0",
+    "version": "3.3.0",
     "private": true,
     "description": "Setup JFrog CLI in GitHub Actions",
     "main": "lib/main.js",
