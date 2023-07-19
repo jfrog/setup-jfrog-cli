@@ -82,7 +82,7 @@ test('Get separate env config', async () => {
 
     // No credentials
     configCommand = Utils.getSeparateEnvConfigArgs();
-    expect(configCommand).toStrictEqual([Utils.SETUP_JFROG_CLI_SERVER_ID, '--url', '--interactive=false', '--overwrite=true', DEFAULT_CLI_URL]);
+    expect(configCommand).toStrictEqual([Utils.SETUP_JFROG_CLI_SERVER_ID, '--url', DEFAULT_CLI_URL, '--interactive=false', '--overwrite=true',]);
 
     // Basic authentication
     process.env['JF_USER'] = 'user';
