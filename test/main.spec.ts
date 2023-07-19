@@ -88,14 +88,14 @@ test('Get separate env config', async () => {
     process.env['JF_USER'] = 'user';
     process.env['JF_PASSWORD'] = 'password';
     configCommand = Utils.getSeparateEnvConfigArgs();
-    expect(configCommand).toStrictEqual([Utils.SETUP_JFROG_CLI_SERVER_ID, '--url', DEFAULT_CLI_URL, '--user', 'user', '--password', 'password']);
+    expect(configCommand).toStrictEqual([Utils.SETUP_JFROG_CLI_SERVER_ID, '--url', DEFAULT_CLI_URL, '--interactive=false', '--overwrite=true', '--user', 'user', '--password', 'password']);
 
     // Access Token
     process.env['JF_USER'] = '';
     process.env['JF_PASSWORD'] = '';
     process.env['JF_ACCESS_TOKEN'] = 'accessToken';
     configCommand = Utils.getSeparateEnvConfigArgs();
-    expect(configCommand).toStrictEqual([Utils.SETUP_JFROG_CLI_SERVER_ID, '--url', DEFAULT_CLI_URL, '--access-token', 'accessToken']);
+    expect(configCommand).toStrictEqual([Utils.SETUP_JFROG_CLI_SERVER_ID, '--url', DEFAULT_CLI_URL, '--interactive=false', '--overwrite=true', '--access-token', 'accessToken']);
 });
 
 describe('JFrog CLI V1 URL Tests', () => {
