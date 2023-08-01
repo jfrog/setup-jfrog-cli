@@ -1,4 +1,4 @@
-import os from 'os';
+import * as os from 'os';
 import { Utils, DownloadDetails } from '../src/utils';
 jest.mock('os');
 
@@ -82,20 +82,38 @@ test('Get separate env config', async () => {
 
     // No credentials
     configCommand = Utils.getSeparateEnvConfigArgs();
-    expect(configCommand).toStrictEqual([Utils.SETUP_JFROG_CLI_SERVER_ID, '--url', DEFAULT_CLI_URL]);
+    expect(configCommand).toStrictEqual([Utils.SETUP_JFROG_CLI_SERVER_ID, '--url', DEFAULT_CLI_URL, '--interactive=false', '--overwrite=true']);
 
     // Basic authentication
     process.env['JF_USER'] = 'user';
     process.env['JF_PASSWORD'] = 'password';
     configCommand = Utils.getSeparateEnvConfigArgs();
-    expect(configCommand).toStrictEqual([Utils.SETUP_JFROG_CLI_SERVER_ID, '--url', DEFAULT_CLI_URL, '--user', 'user', '--password', 'password']);
+    expect(configCommand).toStrictEqual([
+        Utils.SETUP_JFROG_CLI_SERVER_ID,
+        '--url',
+        DEFAULT_CLI_URL,
+        '--interactive=false',
+        '--overwrite=true',
+        '--user',
+        'user',
+        '--password',
+        'password',
+    ]);
 
     // Access Token
     process.env['JF_USER'] = '';
     process.env['JF_PASSWORD'] = '';
     process.env['JF_ACCESS_TOKEN'] = 'accessToken';
     configCommand = Utils.getSeparateEnvConfigArgs();
-    expect(configCommand).toStrictEqual([Utils.SETUP_JFROG_CLI_SERVER_ID, '--url', DEFAULT_CLI_URL, '--access-token', 'accessToken']);
+    expect(configCommand).toStrictEqual([
+        Utils.SETUP_JFROG_CLI_SERVER_ID,
+        '--url',
+        DEFAULT_CLI_URL,
+        '--interactive=false',
+        '--overwrite=true',
+        '--access-token',
+        'accessToken',
+    ]);
 });
 
 describe('JFrog CLI V1 URL Tests', () => {
@@ -160,7 +178,7 @@ test('Extract download details Tests', () => {
     expect(downloadDetails.artifactoryUrl).toBe('http://127.0.0.1:8081/artifactory/');
     expect(downloadDetails.repository).toBe('jfrog-cli-remote');
     expect(downloadDetails.auth).toBe(
-        `Bearer eyJ2ZXIiOiIyIiwidHlwIjoiSldUIiwiYWxnIjoiUlMyNTYiLCJraWQiOiI3Zk5rdXRzUzduX0hiYTNEd2FRSTZMaTN3ck9rVFRFN0ZFaDVJREhFNzV3In0.eyJleHQiOiJ7XCJyZXZvY2FibGVcIjpcInRydWVcIn0iLCJzdWIiOiJqZmFjQDAxZnNzaG4yY2JrM3J5MTExMHZkZGQxeno1XC91c2Vyc1wvYWRtaW4iLCJzY3AiOiJhcHBsaWVkLXBlcm1pc3Npb25zXC9hZG1pbiIsImF1ZCI6IipAKiIsImlzcyI6ImpmZmVAMDAwIiwiZXhwIjoxNjgwOTY2MDkxLCJpYXQiOjE2NDk0MzAwOTEsImp0aSI6IjBjMjQ1OTNlLTlkYjUtNDYxYy05YmIyLWNmYjUwZWI3Y2FiZiJ9.Vq4myCwKiuUPoS21MelRmrJ2ojeYVAQSSaw5Qy9Lmr1LzN0vlF8nbVlX_UX2Ex8gFKEoFwe3dB04oOP49YYBWPZ00xYpdQWztZHCLz6G9BhgZkWoPtq722voMY904FO1pt6G9edBMC_htRMES2hclAdwvUI-nE7pkAa5hUNdT14E7oRgkS4u39ju6_ZhgcVlhVP6y0NBBTRr1vuIdiiibkga7CmNMfWo9TGKfOUNS6IPmo528_JDGuUreacJYlnuxp49ddggcUs4yfN7yLGhsFILOz-Ght1mqkQiDoiZxBLuiXxa3uGkh_BOvkxbLOdMHTKf5dw3lC7jIy3Jgnt-VA`
+        `Bearer eyJ2ZXIiOiIyIiwidHlwIjoiSldUIiwiYWxnIjoiUlMyNTYiLCJraWQiOiI3Zk5rdXRzUzduX0hiYTNEd2FRSTZMaTN3ck9rVFRFN0ZFaDVJREhFNzV3In0.eyJleHQiOiJ7XCJyZXZvY2FibGVcIjpcInRydWVcIn0iLCJzdWIiOiJqZmFjQDAxZnNzaG4yY2JrM3J5MTExMHZkZGQxeno1XC91c2Vyc1wvYWRtaW4iLCJzY3AiOiJhcHBsaWVkLXBlcm1pc3Npb25zXC9hZG1pbiIsImF1ZCI6IipAKiIsImlzcyI6ImpmZmVAMDAwIiwiZXhwIjoxNjgwOTY2MDkxLCJpYXQiOjE2NDk0MzAwOTEsImp0aSI6IjBjMjQ1OTNlLTlkYjUtNDYxYy05YmIyLWNmYjUwZWI3Y2FiZiJ9.Vq4myCwKiuUPoS21MelRmrJ2ojeYVAQSSaw5Qy9Lmr1LzN0vlF8nbVlX_UX2Ex8gFKEoFwe3dB04oOP49YYBWPZ00xYpdQWztZHCLz6G9BhgZkWoPtq722voMY904FO1pt6G9edBMC_htRMES2hclAdwvUI-nE7pkAa5hUNdT14E7oRgkS4u39ju6_ZhgcVlhVP6y0NBBTRr1vuIdiiibkga7CmNMfWo9TGKfOUNS6IPmo528_JDGuUreacJYlnuxp49ddggcUs4yfN7yLGhsFILOz-Ght1mqkQiDoiZxBLuiXxa3uGkh_BOvkxbLOdMHTKf5dw3lC7jIy3Jgnt-VA`,
     );
 
     process.env.JF_ENV_LOCAL = '';

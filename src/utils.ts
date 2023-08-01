@@ -1,10 +1,10 @@
 import * as core from '@actions/core';
 import { exec } from '@actions/exec';
 import * as toolCache from '@actions/tool-cache';
-import * as fs from 'fs';
-import * as os from 'os';
-import * as path from 'path';
-import * as semver from 'semver';
+import { chmodSync } from 'fs';
+import { platform, arch } from 'os';
+import { join } from 'path';
+import { lt } from 'semver';
 
 export class Utils {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -43,7 +43,7 @@ export class Utils {
         if (version === this.LATEST_CLI_VERSION) {
             version = Utils.LATEST_RELEASE_VERSION;
             major = '2';
-        } else if (semver.lt(version, this.MIN_CLI_VERSION)) {
+        } else if (lt(version, this.MIN_CLI_VERSION)) {
             throw new Error('Requested to download JFrog CLI version ' + version + ' but must be at least ' + this.MIN_CLI_VERSION);
         }
 
@@ -97,7 +97,7 @@ export class Utils {
         let cliDir: string = await toolCache.cacheFile(downloadDir, fileName, fileName, version);
 
         if (!Utils.isWindows()) {
-            fs.chmodSync(path.join(cliDir, fileName), 0o555);
+            chmodSync(join(cliDir, fileName), 0o555);
         }
         core.addPath(cliDir);
     }
@@ -114,20 +114,20 @@ export class Utils {
             Object.keys(process.env)
                 .filter((envKey) => envKey.match(Utils.CONFIG_TOKEN_PREFIX))
                 .filter((envKey) => process.env[envKey])
-                .map((envKey) => process.env[envKey]?.trim() || '')
+                .map((envKey) => process.env[envKey]?.trim() || ''),
         );
 
         let legacyConfigTokens: Set<string> = new Set(
             Object.keys(process.env)
                 .filter((envKey) => envKey.match(Utils.CONFIG_TOKEN_LEGACY_PREFIX))
                 .filter((envKey) => process.env[envKey])
-                .map((envKey) => process.env[envKey]?.trim() || '')
+                .map((envKey) => process.env[envKey]?.trim() || ''),
         );
 
         if (legacyConfigTokens.size > 0) {
             core.warning(
                 'The "JF_ARTIFACTORY_" prefix for environment variables is deprecated and is expected to be removed in v3. ' +
-                    'Please use the "JF_ENV_" prefix instead. The environment variables value should not be changed.'
+                    'Please use the "JF_ENV_" prefix instead. The environment variables value should not be changed.',
             );
         }
 
@@ -148,7 +148,7 @@ export class Utils {
         let accessToken: string | undefined = process.env.JF_ACCESS_TOKEN;
 
         if (url) {
-            let configCmd: string[] = [Utils.SETUP_JFROG_CLI_SERVER_ID, '--url', url];
+            let configCmd: string[] = [Utils.SETUP_JFROG_CLI_SERVER_ID, '--url', url, '--interactive=false', '--overwrite=true'];
             if (accessToken) {
                 configCmd.push('--access-token', accessToken);
             } else if (user && password) {
@@ -161,7 +161,7 @@ export class Utils {
     public static setCliEnv() {
         Utils.exportVariableIfNotSet(
             'JFROG_CLI_ENV_EXCLUDE',
-            '*password*;*secret*;*key*;*token*;*auth*;JF_ARTIFACTORY_*;JF_ENV_*;JF_URL;JF_USER;JF_PASSWORD;JF_ACCESS_TOKEN'
+            '*password*;*secret*;*key*;*token*;*auth*;JF_ARTIFACTORY_*;JF_ENV_*;JF_URL;JF_USER;JF_PASSWORD;JF_ACCESS_TOKEN',
         );
         Utils.exportVariableIfNotSet('JFROG_CLI_OFFER_CONFIG', 'false');
         Utils.exportVariableIfNotSet('CI', 'true');
@@ -175,7 +175,7 @@ export class Utils {
         }
         Utils.exportVariableIfNotSet(
             'JFROG_CLI_BUILD_URL',
-            process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY + '/actions/runs/' + process.env.GITHUB_RUN_ID
+            process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY + '/actions/runs/' + process.env.GITHUB_RUN_ID,
         );
         Utils.exportVariableIfNotSet('JFROG_CLI_USER_AGENT', Utils.USER_AGENT);
     }
@@ -217,13 +217,13 @@ export class Utils {
         if (Utils.isWindows()) {
             return 'windows-amd64';
         }
-        if (os.platform().includes('darwin')) {
-            return os.arch() === 'arm64' ? 'mac-arm64' : 'mac-386';
+        if (platform().includes('darwin')) {
+            return arch() === 'arm64' ? 'mac-arm64' : 'mac-386';
         }
-        if (os.arch().includes('arm')) {
-            return os.arch().includes('64') ? 'linux-arm64' : 'linux-arm';
+        if (arch().includes('arm')) {
+            return arch().includes('64') ? 'linux-arm64' : 'linux-arm';
         }
-        return os.arch().includes('64') ? 'linux-amd64' : 'linux-386';
+        return arch().includes('64') ? 'linux-amd64' : 'linux-386';
     }
 
     public static getJfExecutableName() {
@@ -235,7 +235,7 @@ export class Utils {
     }
 
     public static isWindows() {
-        return os.platform().startsWith('win');
+        return platform().startsWith('win');
     }
 
     /**
@@ -276,7 +276,7 @@ export class Utils {
                 throw new Error(
                     `'download-repository' input provided, but no JFrog environment details found. ` +
                         `Hint - Ensure that the JFrog connection details environment variables are set: ` +
-                        `either a Config Token with a JF_ENV_ prefix or separate env config (JF_URL, JF_USER, JF_PASSWORD, JF_ACCESS_TOKEN)`
+                        `either a Config Token with a JF_ENV_ prefix or separate env config (JF_URL, JF_USER, JF_PASSWORD, JF_ACCESS_TOKEN)`,
                 );
             }
             serverObj.artifactoryUrl = process.env.JF_URL.replace(/\/$/, '') + '/artifactory';
@@ -310,7 +310,7 @@ export class Utils {
         if (version === this.LATEST_CLI_VERSION) {
             return false;
         }
-        return semver.lt(version, this.NEW_CONFIG_CLI_VERSION);
+        return lt(version, this.NEW_CONFIG_CLI_VERSION);
     }
 }
 
