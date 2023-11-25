@@ -12,7 +12,7 @@
 This GitHub Action downloads, installs and configures JFrog CLI, so that it can be used as part of the workflow.
 
 In addition, the Action includes the following features, when using JFrog CLI to work with JFrog Platform.
-* The connection details of the JFrog platform used by JFrog CLI can be stored as secrets. Read more about it [here](#Storing-JFrog-Connection-Details-as-Secrets).
+* The connection details of the JFrog platform used by JFrog CLI can be stored as secrets and variables. Read more about it [here](#Storing-JFrog-Connection-Details-as-Secrets-and-Variables).
 * There's no need to add the *build name* and *build number* options and arguments to commands which accept them.
 All build related operations will be automatically recorded with the *Workflow Name* as build name and *Run Number* as build number.
 
@@ -24,9 +24,9 @@ All build related operations will be automatically recorded with the *Workflow N
 - run: jf --version
 ```
 
-## Storing JFrog connection details as secrets
-The connection details of the JFrog platform used by JFrog CLI can be stored as secrets.
-You can use one of the following two methods to define and store the JFrog Platform connection details as secrets.
+## Storing JFrog connection details as secrets and variables
+The connection details of the JFrog platform used by JFrog CLI can be stored as [secrets](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions#creating-secrets-for-a-repository). Not-sensitive details can alternatively be stored as [configuration variables](https://docs.github.com/en/actions/learn-github-actions/variables#creating-configuration-variables-for-a-repository). Do not store sensitive details (passwords, tokens, etc) as configuration variables!
+You can use one of the following two methods to define and store the JFrog Platform connection details as secrets and variables.
 1. [Storing the connection details using separate environment variables](#Storing-the-connection-details-using-separate-environment-variables).
 2. [Storing the connection details using single Config Token](#Storing-the-connection-details-using-single-Config-Token).
 
@@ -40,9 +40,12 @@ You can use these environment variables in your workflow as follows:
 ```yml
 - uses: jfrog/setup-jfrog-cli@v3
   env:
-    # JFrog platform url (for example: https://acme.jfrog.io) 
+    # JFrog platform url stored as a secret (for example: https://acme.jfrog.io) 
     JF_URL: ${{ secrets.JF_URL }}
-    
+    or
+    # JFrog platform url stored as a configuration variable
+    JF_URL: ${{ vars.JF_URL }}
+
     # Basic authentication credentials
     JF_USER: ${{ secrets.JF_USER }}
     JF_PASSWORD: ${{ secrets.JF_PASSWORD }}
