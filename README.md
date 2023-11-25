@@ -30,6 +30,8 @@ You can use one of the following two methods to define and store the JFrog Platf
 1. [Storing the connection details using separate environment variables](#Storing-the-connection-details-using-separate-environment-variables).
 2. [Storing the connection details using single Config Token](#Storing-the-connection-details-using-single-Config-Token).
 
+You may need to store these details on either [workflow or job level](https://docs.github.com/en/actions/learn-github-actions/variables#defining-environment-variables-for-a-single-workflow) in order to be able to refer to them in multiple workflow steps.
+
 ### Storing the connection details using separate environment variables
 You can set the connection details to your JFrog Platform by using one of the following environment variables combinations:
 1. JF_URL (no authentication)
