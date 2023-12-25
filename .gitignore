@@ -1,3 +1,4 @@
 __tests__/runner/*
 .idea/*
 node_modules/.package-lock.json
+.DS_Store
