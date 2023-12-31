@@ -9,6 +9,10 @@ inputs:
     download-repository:
         description: "Remote repository in Artifactory pointing to 'https://releases.jfrog.io/artifactory/jfrog-cli'. Use this parameter in case you don't have an Internet access."
         required: false
+    aud:
+        description: "Recipient for which the JWT is intended. This input is related to the OpenID-Connect"
+        required: false
+
 runs:
     using: "node16"
     main: "lib/main.js"
