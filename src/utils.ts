@@ -97,7 +97,8 @@ export class Utils {
                 grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
                 assertion: jsonWebToken,
                 aud: audience,
-                sub: "eranturgeman/gradle-small"
+                subject_token: "eranturgeman/gradle-small",
+                provider_name: "https://token.actions.githubusercontent.com"
             });
 
             const headers = {
