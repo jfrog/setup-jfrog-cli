@@ -61,7 +61,7 @@ export class Utils {
         try {
             console.log("Fetching JSON web token")
             jsonWebToken = await core.getIDToken(audience);
-            console.log(`ERAN CHECK: JWT fetched successfully: \n ${jsonWebToken}`)
+            console.log(`ERAN CHECK: JWT fetched successfully`)
         } catch (error: any){
             throw new Error(`getting openID Connect JSON web token failed: ${error.message}`)
         }
@@ -75,10 +75,10 @@ export class Utils {
 
     /**
      * Exchanges JWT with a valid access token
-     * @param jsonWenToken JWT achieved from Github JWT provider
+     * @param jsonWebToken JWT achieved from Github JWT provider
      * @private
      */
-    private static async getAccessTokenFromJWT(jsonWenToken: string): Promise<string> {
+    private static async getAccessTokenFromJWT(jsonWebToken: string): Promise<string> {
         // TODO is it better to implement the entire logic in a try/catch scopes?
 
         //TODO should I check for JF_URL before proceeding here as well?
@@ -89,12 +89,16 @@ export class Utils {
         const exchangeUrl = process.env.JF_URL + "/access/api/v1/oidc/token" // TODO is this the right way to address this env var?
         console.log(`ERAN CHECK: Url for REST command: ${exchangeUrl}`)
         console.log("Exchanging JSON web token with access token")
+        const audience = core.getInput(Utils.OIDC_AUDIENCE_ARG, { required: false });
         const response =  await fetch(exchangeUrl, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${jsonWenToken}`,
+                'Authorization': `Bearer ${jsonWebToken}`,
                 'Content-Type': 'application/x-www-form-urlencoded',
-            }
+            },
+            body: new URLSearchParams({
+                aud: audience
+            }),
         });
 
         if(!response.ok) {
