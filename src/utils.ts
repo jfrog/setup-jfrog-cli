@@ -35,8 +35,79 @@ export class Utils {
     private static readonly CLI_VERSION_ARG: string = 'version';
     // Download repository input
     private static readonly CLI_REMOTE_ARG: string = 'download-repository';
+    // OpenID Connect audience input
+    private static readonly OIDC_AUDIENCE_ARG: string = 'aud';
 
-    public static async addCliToPath() {
+    /**
+     * Gets access details to allow Accessing JFrog's servers
+     * Initially searches for JF_ACCESS_TOKEN or JF_USER + JF_PASSWORD in existing environment variables
+     * If none of the above found, returns an access token from the addressed Jfrog's server, if request and requester are authorized, using
+     * OpenID Connect mechanism
+     */
+    public static async getJfrogAccessToken(): Promise<string | ''> {
+        //TODO should I check for JF_URL before proceeding to the rest of the func?
+        if(!process.env.JF_URL) {
+            throw new Error(`JF_URL is not defined`)
+        }
+        console.log("ERAN CHECK: JF_URL exists")
+
+        console.log("Searching for JF_ACCESS_TOKEN or JF_USER + JF_PASSWORD in exising env variables")
+        if(process.env.JF_ACCESS_TOKEN || (process.env.JF_USER && process.env.JF_PASSWORD)) {
+            return ''
+        }
+        console.log("JF_ACCESS_TOKEN and JF_USER + JF_PASSWORD weren't found. Getting access token using OpenID Connect")
+        const audience = core.getInput(Utils.OIDC_AUDIENCE_ARG, { required: false });
+        let jsonWebToken: string | undefined
+        try {
+            console.log("Fetching JSON web token")
+            jsonWebToken = await core.getIDToken(audience);
+            console.log(`ERAN CHECK: JWT fetched successfully: \n ${jsonWebToken}`)
+        } catch (error: any){
+            throw new Error(`getting openID Connect JSON web token failed: ${error.message}`)
+        }
+
+        try {
+            return await this.getAccessTokenFromJWT(jsonWebToken)
+        } catch (error: any) {
+            throw new Error(`Exchanging JSON web token with an access token failed: ${error.message}`)
+        }
+    }
+
+    /**
+     * Exchanges JWT with a valid access token
+     * @param jsonWenToken JWT achieved from Github JWT provider
+     * @private
+     */
+    private static async getAccessTokenFromJWT(jsonWenToken: string): Promise<string> {
+        // TODO is it better to implement the entire logic in a try/catch scopes?
+
+        //TODO should I check for JF_URL before proceeding here as well?
+        if(!process.env.JF_URL) {
+            throw new Error(`JF_URL is not defined`)
+        }
+
+        const exchangeUrl = process.env.JF_URL + "/access/api/v1/oidc/token" // TODO is this the right way to address this env var?
+        console.log(`ERAN CHECK: Url for REST command: ${exchangeUrl}`)
+        console.log("Exchanging JSON web token with access token")
+        const response =  await fetch(exchangeUrl, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${jsonWenToken}`,
+                'Content-Type': 'application/x-www-form-urlencoded',
+            }
+        });
+
+        if(!response.ok) {
+            throw new Error(`POST REST command failed with status ${response.status}`)
+        }
+
+        const responseData = await response.json();
+        console.log(`ERAN CHECK: REST response JSON is: \n ${responseData}`)
+        // TODO print the json content in order to ensure the fields name
+        return responseData.access_token
+    }
+
+    public static async getAndAddCliToPath() {
         let version: string = core.getInput(Utils.CLI_VERSION_ARG);
         let cliRemote: string = core.getInput(Utils.CLI_REMOTE_ARG);
         let major: string = version.split('.')[0];
@@ -261,6 +332,7 @@ export class Utils {
         if (repository === '') {
             return Utils.DEFAULT_DOWNLOAD_DETAILS;
         }
+        // TODO: we enter here if we have no internet connection..
         let results: DownloadDetails = { repository: repository } as DownloadDetails;
         let serverObj: any = {};
 

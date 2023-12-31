@@ -4,7 +4,7 @@ import { Utils } from './utils';
 async function cleanup() {
     try {
         core.startGroup('Cleanup JFrog CLI servers configuration');
-        await Utils.addCliToPath();
+        await Utils.getAndAddCliToPath();
         await Utils.removeJFrogServers();
     } catch (error) {
         core.setFailed((<any>error).message);
