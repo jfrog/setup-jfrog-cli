@@ -93,7 +93,7 @@ export class Utils {
         try {
             const dataString: string = JSON.stringify({
                 grant_type: "urn:ietf:params:oauth:grant-type:token-exchange",
-                subject_token_type: "urn:ietf:params:oauth:token-type:id-token", //TODO try: id-token -> access_token
+                subject_token_type: "urn:ietf:params:oauth:token-type:access_token", //TODO try: id-token -> access_token
                 subject_token: jsonWebToken,
                 provider_name: "github-oidc" // https://token.actions.githubusercontent.com
                 //assertion: jsonWebToken,
