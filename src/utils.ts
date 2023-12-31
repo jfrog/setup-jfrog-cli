@@ -106,9 +106,10 @@ export class Utils {
         }
 
         const responseData = await response.json();
+        console.log(responseData)
         console.log(`ERAN CHECK: REST response JSON is: \n ${responseData}`)
         // TODO print the json content in order to ensure the fields name
-        return responseData.access_token
+        return ""
     }
 
     public static async getAndAddCliToPath() {
