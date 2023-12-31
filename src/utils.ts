@@ -96,7 +96,8 @@ export class Utils {
             const dataString: string = JSON.stringify({
                 grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
                 assertion: jsonWebToken,
-                aud: audience
+                aud: audience,
+                sub: "eranturgeman/gradle-small"
             });
 
             const headers = {
