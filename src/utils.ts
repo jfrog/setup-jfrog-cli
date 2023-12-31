@@ -94,11 +94,12 @@ export class Utils {
 
         try {
             const dataString: string = JSON.stringify({
-                grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+                grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer", // TODO try: urn:ietf:params:oauth:grant-type:token-exchange
                 assertion: jsonWebToken,
-                aud: audience,
-                subject_token: "eranturgeman/gradle-small",
-                provider_name: "https://token.actions.githubusercontent.com"
+                audience: audience,
+                subject_token: "eranturgeman/gradle-small", // MANDATORY
+                subject_token_type: "urn:ietf:params:oauth:token-type:id_token",
+                provider_name: "https://token.actions.githubusercontent.com" // MANDATORY
             });
 
             const headers = {
