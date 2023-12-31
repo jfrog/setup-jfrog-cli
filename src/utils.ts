@@ -5,6 +5,8 @@ import { chmodSync } from 'fs';
 import { platform, arch } from 'os';
 import { join } from 'path';
 import { lt } from 'semver';
+import {HttpClient, HttpClientResponse} from '@actions/http-client'
+
 
 export class Utils {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -44,30 +46,31 @@ export class Utils {
      * If none of the above found, returns an access token from the addressed Jfrog's server, if request and requester are authorized, using
      * OpenID Connect mechanism
      */
-    public static async getJfrogAccessToken(): Promise<string | ''> {
-        //TODO should I check for JF_URL before proceeding to the rest of the func?
+    public static async getJfrogAccessToken(): Promise<string> {
         if(!process.env.JF_URL) {
-            throw new Error(`JF_URL is not defined`)
+            return ""
         }
-        console.log("ERAN CHECK: JF_URL exists")
+
+        let basicUrl : string = process.env.JF_URL
+        console.log("ERAN CHECK: JF_URL exists") // TODO del
 
         console.log("Searching for JF_ACCESS_TOKEN or JF_USER + JF_PASSWORD in exising env variables")
         if(process.env.JF_ACCESS_TOKEN || (process.env.JF_USER && process.env.JF_PASSWORD)) {
-            return ''
+            return ""
         }
         console.log("JF_ACCESS_TOKEN and JF_USER + JF_PASSWORD weren't found. Getting access token using OpenID Connect")
-        const audience = core.getInput(Utils.OIDC_AUDIENCE_ARG, { required: false });
+        const audience: string = core.getInput(Utils.OIDC_AUDIENCE_ARG, { required: false });
         let jsonWebToken: string | undefined
         try {
             console.log("Fetching JSON web token")
             jsonWebToken = await core.getIDToken(audience);
-            console.log(`ERAN CHECK: JWT fetched successfully`)
+            console.log(`ERAN CHECK: JWT fetched successfully`) // TODO del
         } catch (error: any){
             throw new Error(`getting openID Connect JSON web token failed: ${error.message}`)
         }
 
         try {
-            return await this.getAccessTokenFromJWT(jsonWebToken)
+            return await this.getAccessTokenFromJWT(basicUrl, jsonWebToken)
         } catch (error: any) {
             throw new Error(`Exchanging JSON web token with an access token failed: ${error.message}`)
         }
@@ -75,21 +78,44 @@ export class Utils {
 
     /**
      * Exchanges JWT with a valid access token
-     * @param jsonWebToken JWT achieved from Github JWT provider
+     * @param basicUrl basic Url achieved as an env var
+     * @param jsonWebToken JWT achieved from GitHub JWT provider
      * @private
      */
-    private static async getAccessTokenFromJWT(jsonWebToken: string): Promise<string> {
-        // TODO is it better to implement the entire logic in a try/catch scopes?
+    private static async getAccessTokenFromJWT(basicUrl: string, jsonWebToken: string): Promise<string> {
+        const exchangeUrl : string = basicUrl.replace(/\/$/, '') + "/access/api/v1/oidc/token"
 
-        //TODO should I check for JF_URL before proceeding here as well?
-        if(!process.env.JF_URL) {
-            throw new Error(`JF_URL is not defined`)
+        console.log(`ERAN CHECK: Url for REST command: ${exchangeUrl}`) // TODO del
+
+        console.log("Exchanging JSON web token with access token")
+
+        const audience: string = core.getInput(Utils.OIDC_AUDIENCE_ARG, { required: false });
+        const httpClient = new HttpClient()
+
+        try {
+            const dataString: string = JSON.stringify({
+                grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+                assertion: jsonWebToken,
+                aud: audience
+            });
+
+            /*
+            const additionalHeaders : string = JSON.stringify({
+                'Content-Type': 'application/x-www-form-urlencoded',
+            });
+
+             */
+            console.log(`ERAN CHECK: starting POST`) // TODO del
+            const response: HttpClientResponse = await httpClient.post(exchangeUrl, dataString)
+            console.log(`ERAN CHECK: POST succeeded`) // TODO del
+            const responseData: string = await response.readBody()
+            console.log(`ERAN CHECK: response string: ${responseData}`) // TODO del
+
+        } catch (error : any) {
+            throw new Error(`POST REST command failed with error ${error.message}`)
         }
 
-        const exchangeUrl = process.env.JF_URL + "/access/api/v1/oidc/token" // TODO is this the right way to address this env var?
-        console.log(`ERAN CHECK: Url for REST command: ${exchangeUrl}`)
-        console.log("Exchanging JSON web token with access token")
-        const audience = core.getInput(Utils.OIDC_AUDIENCE_ARG, { required: false });
+        /*
         const response =  await fetch(exchangeUrl, {
             method: 'POST',
             headers: {
@@ -108,6 +134,8 @@ export class Utils {
         const responseData = await response.json();
         console.log(responseData)
         console.log(`ERAN CHECK: REST response JSON is: \n ${responseData}`)
+
+         */
         // TODO print the json content in order to ensure the fields name
         return ""
     }
