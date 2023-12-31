@@ -90,7 +90,7 @@ export class Utils {
         console.log("Exchanging JSON web token with access token")
 
         const audience: string = core.getInput(Utils.OIDC_AUDIENCE_ARG, { required: false });
-        const httpClient = new HttpClient()
+        const httpClient : HttpClient = new HttpClient()
 
         try {
             const dataString: string = JSON.stringify({
@@ -99,18 +99,10 @@ export class Utils {
                 aud: audience
             });
 
-            // #########
             const headers = {
-                'Content-Type': 'application/x-www-form-urlencoded',
+                'Content-Type': 'application/json',
             }
-            // ######
 
-            /*
-            const additionalHeaders : string = JSON.stringify({
-                'Content-Type': 'application/x-www-form-urlencoded',
-            });
-
-             */
             console.log(`ERAN CHECK: starting POST`) // TODO del
             const response: HttpClientResponse = await httpClient.post(exchangeUrl, dataString, headers)
             console.log(`ERAN CHECK: POST succeeded`) // TODO del
