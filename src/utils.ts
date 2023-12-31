@@ -103,15 +103,13 @@ export class Utils {
                 provider_name: "github-oidc" // https://token.actions.githubusercontent.com
             });
 
-            /*
             const headers: OutgoingHttpHeaders = {
                 'Content-Type': 'application/json',
             }
 
-             */
 
             console.log(`ERAN CHECK: starting POST`) // TODO del
-            const response: HttpClientResponse = await httpClient.post(exchangeUrl, dataString)
+            const response: HttpClientResponse = await httpClient.post(exchangeUrl, dataString, headers)
             console.log(`ERAN CHECK: POST succeeded`) // TODO del
             const responseData: string = await response.readBody()
             console.log(`ERAN CHECK: response string: ${responseData}`) // TODO del
