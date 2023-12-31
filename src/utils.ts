@@ -99,7 +99,7 @@ export class Utils {
                 //assertion: jsonWebToken,
                 //audience: audience,
                 subject_token: jsonWebToken, // MANDATORY
-                subject_token_type: "urn:ietf:params:oauth:token-type:access_token",
+                subject_token_type: "urn:ietf:params:oauth:token-type:id-token",
                 provider_name: "github-oidc" // https://token.actions.githubusercontent.com
             });
 
