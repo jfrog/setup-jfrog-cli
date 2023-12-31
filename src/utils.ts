@@ -6,6 +6,7 @@ import { platform, arch } from 'os';
 import { join } from 'path';
 import { lt } from 'semver';
 import {HttpClient, HttpClientResponse} from '@actions/http-client'
+import {OutgoingHttpHeaders} from "http";
 
 
 export class Utils {
@@ -94,20 +95,23 @@ export class Utils {
 
         try {
             const dataString: string = JSON.stringify({
-                grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer", // TODO try: urn:ietf:params:oauth:grant-type:token-exchange
-                assertion: jsonWebToken,
-                audience: audience,
-                subject_token: "eranturgeman/gradle-small", // MANDATORY
-                subject_token_type: "urn:ietf:params:oauth:token-type:id_token",
-                provider_name: "https://token.actions.githubusercontent.com" // MANDATORY
+                grant_type: "urn:ietf:params:oauth:grant-type:token-exchange",
+                //assertion: jsonWebToken,
+                //audience: audience,
+                subject_token: jsonWebToken, // MANDATORY
+                subject_token_type: "urn:ietf:params:oauth:token-type:access_token",
+                provider_name: "github-oidc" // https://token.actions.githubusercontent.com
             });
 
-            const headers = {
+            /*
+            const headers: OutgoingHttpHeaders = {
                 'Content-Type': 'application/json',
             }
 
+             */
+
             console.log(`ERAN CHECK: starting POST`) // TODO del
-            const response: HttpClientResponse = await httpClient.post(exchangeUrl, dataString, headers)
+            const response: HttpClientResponse = await httpClient.post(exchangeUrl, dataString)
             console.log(`ERAN CHECK: POST succeeded`) // TODO del
             const responseData: string = await response.readBody()
             console.log(`ERAN CHECK: response string: ${responseData}`) // TODO del
