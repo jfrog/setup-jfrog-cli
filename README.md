@@ -24,6 +24,9 @@ All build related operations will be automatically recorded with the *Workflow N
 - run: jf --version
 ```
 
+## Connect with OpenID Connect
+Connecting to JFrog platform can be easily performed using OpenID Connect.... CONTINUE
+
 ## Storing JFrog connection details as secrets
 The connection details of the JFrog platform used by JFrog CLI can be stored as secrets.
 You can use one of the following two methods to define and store the JFrog Platform connection details as secrets.
