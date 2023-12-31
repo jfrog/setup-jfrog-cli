@@ -53,8 +53,6 @@ export class Utils {
         }
 
         let basicUrl : string = process.env.JF_URL
-        console.log("ERAN CHECK: JF_URL exists") // TODO del
-
         console.log("Searching for JF_ACCESS_TOKEN or JF_USER + JF_PASSWORD in exising env variables")
         if(process.env.JF_ACCESS_TOKEN || (process.env.JF_USER && process.env.JF_PASSWORD)) {
             return ""
@@ -65,7 +63,6 @@ export class Utils {
         try {
             console.log("Fetching JSON web token")
             jsonWebToken = await core.getIDToken(audience);
-            console.log(`ERAN CHECK: JWT fetched successfully`) // TODO del
         } catch (error: any){
             throw new Error(`getting openID Connect JSON web token failed: ${error.message}`)
         }
@@ -96,11 +93,11 @@ export class Utils {
         try {
             const dataString: string = JSON.stringify({
                 grant_type: "urn:ietf:params:oauth:grant-type:token-exchange",
+                subject_token_type: "urn:ietf:params:oauth:token-type:id-token", //TODO try: id-token -> access_token
+                subject_token: jsonWebToken,
+                provider_name: "github-oidc" // https://token.actions.githubusercontent.com
                 //assertion: jsonWebToken,
                 //audience: audience,
-                subject_token: jsonWebToken, // MANDATORY
-                subject_token_type: "urn:ietf:params:oauth:token-type:id-token",
-                provider_name: "github-oidc" // https://token.actions.githubusercontent.com
             });
 
             const headers: OutgoingHttpHeaders = {
