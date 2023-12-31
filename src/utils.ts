@@ -99,6 +99,12 @@ export class Utils {
                 aud: audience
             });
 
+            // #########
+            const headers = {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            }
+            // ######
+
             /*
             const additionalHeaders : string = JSON.stringify({
                 'Content-Type': 'application/x-www-form-urlencoded',
@@ -106,7 +112,7 @@ export class Utils {
 
              */
             console.log(`ERAN CHECK: starting POST`) // TODO del
-            const response: HttpClientResponse = await httpClient.post(exchangeUrl, dataString)
+            const response: HttpClientResponse = await httpClient.post(exchangeUrl, dataString, headers)
             console.log(`ERAN CHECK: POST succeeded`) // TODO del
             const responseData: string = await response.readBody()
             console.log(`ERAN CHECK: response string: ${responseData}`) // TODO del
@@ -114,28 +120,6 @@ export class Utils {
         } catch (error : any) {
             throw new Error(`POST REST command failed with error ${error.message}`)
         }
-
-        /*
-        const response =  await fetch(exchangeUrl, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${jsonWebToken}`,
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: new URLSearchParams({
-                aud: audience
-            }),
-        });
-
-        if(!response.ok) {
-            throw new Error(`POST REST command failed with status ${response.status}`)
-        }
-
-        const responseData = await response.json();
-        console.log(responseData)
-        console.log(`ERAN CHECK: REST response JSON is: \n ${responseData}`)
-
-         */
         // TODO print the json content in order to ensure the fields name
         return ""
     }
