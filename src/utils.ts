@@ -84,6 +84,7 @@ export class Utils {
         const exchangeUrl : string = basicUrl.replace(/\/$/, '') + "/access/api/v1/oidc/token"
 
         console.log(`ERAN CHECK: Exchanging JWT with ACCESS TOKEN. Url for REST command: ${exchangeUrl}`) // TODO del
+        console.log(`ERAN CHECK: JWT content: ${jsonWebToken}`) // TODO del
 
         console.log("Exchanging JSON web token with access token")
         const audience: string = core.getInput(Utils.OIDC_AUDIENCE_ARG, { required: false });
@@ -101,7 +102,7 @@ export class Utils {
                 //audience: audience, //TODO should I pass audience here as well? it was passed to the JWT generator
             });
              */
-            // TODO try -  "subject_token_type": "urn:ietf:params:oauth:token-type:access_token",
+
             const data = `{
                 "grant_type": "urn:ietf:params:oauth:grant-type:token-exchange",
                 "subject_token_type": "urn:ietf:params:oauth:token-type:id_token",
