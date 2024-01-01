@@ -7,6 +7,7 @@ import { join } from 'path';
 import { lt } from 'semver';
 import { HttpClient, HttpClientResponse } from '@actions/http-client'
 import { OutgoingHttpHeaders } from "http";
+import * as jwt from 'jsonwebtoken';
 
 
 export class Utils {
@@ -67,6 +68,11 @@ export class Utils {
             throw new Error(`getting openID Connect JSON web token failed: ${error.message}`)
         }
 
+        // todo del
+        const decodedJwt = jwt.decode(jsonWebToken)
+        console.log(`ERAN CHECK: JWT content: ${decodedJwt}`)
+        // todo up to here
+
         try {
             return await this.getAccessTokenFromJWT(basicUrl, jsonWebToken)
         } catch (error: any) {
@@ -109,6 +115,7 @@ export class Utils {
                 "subject_token": "${jsonWebToken}",
                 "provider_name": "jfrog-eran"
             }`;
+            // TODO make sure to pass provider_name as input to the action and insert it here
             // provider_name: github-oidc
 
             const additionalHeaders: OutgoingHttpHeaders = {
