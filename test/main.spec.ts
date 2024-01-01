@@ -73,6 +73,15 @@ test('Get legacy Config Tokens', async () => {
     expect(Utils.getConfigTokens()).toStrictEqual(new Set(['DUMMY_CONFIG_TOKEN_1', 'DUMMY_CONFIG_TOKEN_2', 'DUMMY_CONFIG_TOKEN_3']));
 });
 
+test("Get JFrog access token", async () => {
+   process.env['JF_URL'] = '';
+   let accessToken: string = await Utils.getJfrogAccessToken();
+   expect(accessToken).toEqual('');
+   // TODO how do I test the working use case where the returned value is a secret and cannot be exposed in the tests code?
+});
+
+//TODO add tests to the REST function that gets the access token ??
+
 test('Get separate env config', async () => {
     // No url
     let configCommand: string[] | undefined = Utils.getSeparateEnvConfigArgs();
