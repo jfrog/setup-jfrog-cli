@@ -107,9 +107,9 @@ export class Utils {
                 "grant_type": "urn:ietf:params:oauth:grant-type:token-exchange",
                 "subject_token_type": "urn:ietf:params:oauth:token-type:id_token",
                 "subject_token": "${jsonWebToken}",
-                "provider_name": "github-oidc"
+                "provider_name": "jfrog-eran"
             }`;
-
+            // provider_name: github-oidc
 
             const additionalHeaders: OutgoingHttpHeaders = {
                 'Content-Type': 'application/json',
