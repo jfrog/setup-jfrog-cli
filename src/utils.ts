@@ -73,7 +73,6 @@ export class Utils {
         // todo del
         const decodedJwt2 = jwt_decode.jwtDecode(jsonWebToken)
         console.log(`ERAN CHECK: JWT 2 content: \n aud: ${decodedJwt2.aud} | sub: ${decodedJwt2.sub} | iss: ${decodedJwt2.iss}`)
-
         // todo up to here
 
         try {
@@ -94,10 +93,9 @@ export class Utils {
         console.log("Exchanging JSON web token with access token")
 
         const provider_name: string = core.getInput(Utils.OIDC_INTEGRATION_PROVIDER_NAME, { required: true });
-
         const httpClient : HttpClient = new HttpClient()
+        let responseData: string
 
-        // TODO fix request
         try {
             const data: string = `{
                 "grant_type": "urn:ietf:params:oauth:grant-type:token-exchange",
@@ -105,7 +103,6 @@ export class Utils {
                 "subject_token": "${jsonWebToken}",
                 "provider_name": "${provider_name}"
             }`;
-            // TODO make sure to pass provider_name as input to the action and insert it here
 
             const additionalHeaders: OutgoingHttpHeaders = {
                 'Content-Type': 'application/json',
@@ -115,14 +112,14 @@ export class Utils {
             console.log(`ERAN CHECK: starting POST`) // TODO del
             const response: HttpClientResponse = await httpClient.post(exchangeUrl, data, additionalHeaders)
             console.log(`ERAN CHECK: POST succeeded`) // TODO del
-            const responseData: string = await response.readBody()
+            responseData= await response.readBody()
             console.log(`ERAN CHECK: response string: ${responseData}`) // TODO del
 
         } catch (error : any) {
             throw new Error(`POST REST command failed with error ${error.message}`)
         }
-        // TODO print the json content in order to ensure the fields name
-        return ""
+        // TODO print the responseData content to make sure how to address the field
+        return responseData
     }
 
     public static async getAndAddCliToPath() {
