@@ -7,7 +7,6 @@ import { join } from 'path';
 import { lt } from 'semver';
 import { HttpClient, HttpClientResponse } from '@actions/http-client'
 import { OutgoingHttpHeaders } from "http";
-import * as jwt from 'jsonwebtoken';
 import * as jwt_decode from "jwt-decode";
 
 
@@ -70,9 +69,6 @@ export class Utils {
         }
 
         // todo del
-        const decodedJwt1 = jwt.decode(jsonWebToken)
-        console.log(`ERAN CHECK: JWT 1 content: ${decodedJwt1.toString()}`)
-
         const decodedJwt2 = jwt_decode.jwtDecode(jsonWebToken)
         console.log(`ERAN CHECK: JWT 2 content: \n aud: ${decodedJwt2.aud} | sub: ${decodedJwt2.sub} | iss: ${decodedJwt2.iss}`)
 
