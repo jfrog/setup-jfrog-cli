@@ -63,6 +63,7 @@ export class Utils {
         let jsonWebToken: string | undefined
         try {
             console.log("Fetching JSON web token")
+            console.log(`ERAN CHECK: aud: ${audience}`) // TODO del
             jsonWebToken = await core.getIDToken(audience);
         } catch (error: any){
             throw new Error(`getting openID Connect JSON web token failed: ${error.message}`)
