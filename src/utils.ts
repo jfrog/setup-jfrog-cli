@@ -8,6 +8,7 @@ import { lt } from 'semver';
 import { HttpClient, HttpClientResponse } from '@actions/http-client'
 import { OutgoingHttpHeaders } from "http";
 import * as jwt from 'jsonwebtoken';
+import * as jwt_decode from "jwt-decode";
 
 
 export class Utils {
@@ -69,8 +70,12 @@ export class Utils {
         }
 
         // todo del
-        const decodedJwt = jwt.decode(jsonWebToken)
-        console.log(`ERAN CHECK: JWT content: ${decodedJwt.toString()}`)
+        const decodedJwt1 = jwt.decode(jsonWebToken)
+        console.log(`ERAN CHECK: JWT 1 content: ${decodedJwt1.toString()}`)
+
+        const decodedJwt2 = jwt_decode.jwtDecode(jsonWebToken)
+        console.log(`ERAN CHECK: JWT 2 content: \n aud: ${decodedJwt2.aud} | sub: ${decodedJwt2.sub} | iss: ${decodedJwt2.iss}`)
+
         // todo up to here
 
         try {
@@ -90,7 +95,6 @@ export class Utils {
         const exchangeUrl : string = basicUrl.replace(/\/$/, '') + "/access/api/v1/oidc/token"
 
         console.log(`ERAN CHECK: Exchanging JWT with ACCESS TOKEN. Url for REST command: ${exchangeUrl}`) // TODO del
-        console.log(`ERAN CHECK: JWT content: ${jsonWebToken}`) // TODO del
 
         console.log("Exchanging JSON web token with access token")
         const audience: string = core.getInput(Utils.OIDC_AUDIENCE_ARG, { required: false });
