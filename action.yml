@@ -12,6 +12,9 @@ inputs:
     aud:
         description: "Recipient for which the JWT is intended. This input is related to the OpenID-Connect"
         required: false
+    provider_name:
+        description: "Provider Name's value that was set in OpenId Connect integration"
+        required: false
 
 runs:
     using: "node16"

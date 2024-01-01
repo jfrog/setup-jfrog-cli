@@ -41,6 +41,8 @@ export class Utils {
     private static readonly CLI_REMOTE_ARG: string = 'download-repository';
     // OpenID Connect audience input
     private static readonly OIDC_AUDIENCE_ARG: string = 'aud';
+    //OpenID Connect provider_name input
+    private static readonly OIDC_INTEGRATION_PROVIDER_NAME = 'provider_name'
 
     /**
      * Gets access details to allow Accessing JFrog's servers
@@ -63,7 +65,6 @@ export class Utils {
         let jsonWebToken: string | undefined
         try {
             console.log("Fetching JSON web token")
-            console.log(`ERAN CHECK: aud: ${audience}`) // TODO del
             jsonWebToken = await core.getIDToken(audience);
         } catch (error: any){
             throw new Error(`getting openID Connect JSON web token failed: ${error.message}`)
@@ -90,34 +91,21 @@ export class Utils {
      */
     private static async getAccessTokenFromJWT(basicUrl: string, jsonWebToken: string): Promise<string> {
         const exchangeUrl : string = basicUrl.replace(/\/$/, '') + "/access/api/v1/oidc/token"
-
-        console.log(`ERAN CHECK: Exchanging JWT with ACCESS TOKEN. Url for REST command: ${exchangeUrl}`) // TODO del
-
         console.log("Exchanging JSON web token with access token")
-        const audience: string = core.getInput(Utils.OIDC_AUDIENCE_ARG, { required: false });
+
+        const provider_name: string = core.getInput(Utils.OIDC_INTEGRATION_PROVIDER_NAME, { required: true });
+
         const httpClient : HttpClient = new HttpClient()
 
         // TODO fix request
         try {
-            /*
-            const dataString: string = JSON.stringify({
-                grant_type: "urn:ietf:params:oauth:grant-type:token-exchange",
-                subject_token_type: "urn:ietf:params:oauth:token-type:access_token", //TODO try: id-token -> access_token
-                subject_token: jsonWebToken,
-                provider_name: "github-oidc" // https://token.actions.githubusercontent.com
-                //assertion: jsonWebToken,
-                //audience: audience, //TODO should I pass audience here as well? it was passed to the JWT generator
-            });
-             */
-
-            const data = `{
+            const data: string = `{
                 "grant_type": "urn:ietf:params:oauth:grant-type:token-exchange",
                 "subject_token_type": "urn:ietf:params:oauth:token-type:id_token",
                 "subject_token": "${jsonWebToken}",
-                "provider_name": "jfrog-eran"
+                "provider_name": "${provider_name}"
             }`;
             // TODO make sure to pass provider_name as input to the action and insert it here
-            // provider_name: github-oidc
 
             const additionalHeaders: OutgoingHttpHeaders = {
                 'Content-Type': 'application/json',
