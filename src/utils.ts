@@ -62,7 +62,7 @@ export class Utils {
         let jsonWebToken: string | undefined
         try {
             console.log("Fetching JSON web token")
-            jsonWebToken = await core.getIDToken(audience);
+            jsonWebToken = await core.getIDToken(); // TODO add audience?
         } catch (error: any){
             throw new Error(`getting openID Connect JSON web token failed: ${error.message}`)
         }
@@ -101,12 +101,12 @@ export class Utils {
                 //audience: audience, //TODO should I pass audience here as well? it was passed to the JWT generator
             });
              */
-
+            // TODO try -  "subject_token_type": "urn:ietf:params:oauth:token-type:access_token",
             const data = `{
                 "grant_type": "urn:ietf:params:oauth:grant-type:token-exchange",
-                "subject_token_type": "urn:ietf:params:oauth:token-type:id-token",
+                "subject_token_type": "urn:ietf:params:oauth:token-type:access_token",
                 "subject_token": "${jsonWebToken}",
-                "provider_name": "github-oidc-integration"
+                "provider_name": "github-oidc"
             }`;
 
 
