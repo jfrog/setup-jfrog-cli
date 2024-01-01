@@ -70,7 +70,7 @@ export class Utils {
 
         // todo del
         const decodedJwt = jwt.decode(jsonWebToken)
-        console.log(`ERAN CHECK: JWT content: ${decodedJwt}`)
+        console.log(`ERAN CHECK: JWT content: ${decodedJwt.toString()}`)
         // todo up to here
 
         try {
