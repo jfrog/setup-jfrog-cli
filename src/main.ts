@@ -5,7 +5,7 @@ async function main() {
     try {
         core.startGroup('Setup JFrog CLI');
         Utils.setCliEnv();
-        console.log("ERAN CHECK: ####################### 16 #######################") // TODO del
+        console.log("ERAN CHECK: ####################### 17 #######################") // TODO del
         let accessToken :string = await Utils.getJfrogAccessToken()
         console.log(`ERAN CHECK: finished access token flow with access token: ${accessToken}`) // TODO del
         await Utils.getAndAddCliToPath();
