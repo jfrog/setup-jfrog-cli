@@ -5,8 +5,8 @@ import { chmodSync } from 'fs';
 import { platform, arch } from 'os';
 import { join } from 'path';
 import { lt } from 'semver';
-import {HttpClient, HttpClientResponse} from '@actions/http-client'
-import {OutgoingHttpHeaders} from "http";
+import { HttpClient, HttpClientResponse } from '@actions/http-client'
+import { OutgoingHttpHeaders } from "http";
 
 
 export class Utils {
@@ -83,30 +83,40 @@ export class Utils {
     private static async getAccessTokenFromJWT(basicUrl: string, jsonWebToken: string): Promise<string> {
         const exchangeUrl : string = basicUrl.replace(/\/$/, '') + "/access/api/v1/oidc/token"
 
-        console.log(`ERAN CHECK: Url for REST command: ${exchangeUrl}`) // TODO del
+        console.log(`ERAN CHECK: Exchanging JWT with ACCESS TOKEN. Url for REST command: ${exchangeUrl}`) // TODO del
 
         console.log("Exchanging JSON web token with access token")
-
         const audience: string = core.getInput(Utils.OIDC_AUDIENCE_ARG, { required: false });
         const httpClient : HttpClient = new HttpClient()
 
+        // TODO fix request
         try {
+            /*
             const dataString: string = JSON.stringify({
                 grant_type: "urn:ietf:params:oauth:grant-type:token-exchange",
                 subject_token_type: "urn:ietf:params:oauth:token-type:access_token", //TODO try: id-token -> access_token
                 subject_token: jsonWebToken,
                 provider_name: "github-oidc" // https://token.actions.githubusercontent.com
                 //assertion: jsonWebToken,
-                //audience: audience,
+                //audience: audience, //TODO should I pass audience here as well? it was passed to the JWT generator
             });
+             */
 
-            const headers: OutgoingHttpHeaders = {
+            const data = `{
+                "grant_type": "urn:ietf:params:oauth:grant-type:token-exchange",
+                "subject_token_type": "urn:ietf:params:oauth:token-type:id_token",
+                "subject_token": "${jsonWebToken}",
+                "provider_name": "github-oidc-integration"
+            }`;
+
+
+            const additionalHeaders: OutgoingHttpHeaders = {
                 'Content-Type': 'application/json',
-            }
+            };
 
 
             console.log(`ERAN CHECK: starting POST`) // TODO del
-            const response: HttpClientResponse = await httpClient.post(exchangeUrl, dataString, headers)
+            const response: HttpClientResponse = await httpClient.post(exchangeUrl, data, additionalHeaders)
             console.log(`ERAN CHECK: POST succeeded`) // TODO del
             const responseData: string = await response.readBody()
             console.log(`ERAN CHECK: response string: ${responseData}`) // TODO del
