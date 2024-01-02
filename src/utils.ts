@@ -65,14 +65,14 @@ export class Utils {
         let jsonWebToken: string | undefined
         try {
             console.log("Fetching JSON web token")
-            jsonWebToken = await core.getIDToken(audience);
+            jsonWebToken = await core.getIDToken();
         } catch (error: any){
             throw new Error(`getting openID Connect JSON web token failed: ${error.message}`)
         }
 
         // todo del
         const decodedJwt2 = jwt_decode.jwtDecode(jsonWebToken)
-        console.log(`ERAN CHECK: JWT 2 content: \n aud: ${decodedJwt2.aud} | sub: ${decodedJwt2.sub} | iss: ${decodedJwt2.iss}`)
+        console.log(`ERAN CHECK: JWT 2 content: \n aud: ${decodedJwt2.aud} | sub: ${decodedJwt2.sub} | iss: ${decodedJwt2.aud}`)
         // todo up to here
 
         try {
