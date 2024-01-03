@@ -129,9 +129,11 @@ export class Utils {
 
 
             const response: HttpClientResponse = await httpClient.post(exchangeUrl, data, additionalHeaders)
-            console.log(`ERAN CHECK: response string: ${await response.readBody()}`) // TODO del
+            const responseString : string = await response.readBody()
+            console.log(`ERAN CHECK: response string: ${responseString}`)// TODO del
+            const responseJson : TokenExchangeResponseData = JSON.parse(responseString)
+            console.log(`ERAN CHECK: response JSON: ${responseJson}`)// TODO del
 
-            const responseJson : TokenExchangeResponseData = JSON.parse(await response.readBody())
             jfrogCredentials.accessToken = responseJson.access_token;
             console.log(`ERAN CHECK: response JSON access token: ${jfrogCredentials.accessToken}`) // TODO del
         } catch (error : any) {
