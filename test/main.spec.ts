@@ -1,5 +1,5 @@
 import * as os from 'os';
-import { Utils, DownloadDetails } from '../src/utils';
+import {Utils, DownloadDetails, JfrogCredentials} from '../src/utils';
 jest.mock('os');
 
 const DEFAULT_CLI_URL: string = 'https://releases.jfrog.io/artifactory/jfrog-cli/';
@@ -75,8 +75,8 @@ test('Get legacy Config Tokens', async () => {
 
 test("Get JFrog access token", async () => {
    process.env['JF_URL'] = '';
-   let accessToken: string = await Utils.getJfrogAccessToken();
-   expect(accessToken).toEqual('');
+   let jfrogCredentials: JfrogCredentials = await Utils.getJfrogCredentials();
+   expect(jfrogCredentials.accessToken).toEqual('');
    // TODO how do I test the working use case where the returned value is a secret and cannot be exposed in the tests code?
 });
 

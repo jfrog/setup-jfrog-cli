@@ -101,7 +101,23 @@ Sensitive connection details of the JFrog platform (i.e. the access token) used 
 This is achieved by utilizing the OpenID-Connect (OIDC) protocol, that can authenticate the workflow issuer and provide a valid access token, provided only the JF_URL environment variable (as a secret).
 There are several steps to perform **once** in order to use OIDC protocol:
 1. [**Configure an OIDC Integration**](https://jfrog.com/help/r/jfrog-platform-administration-documentation/configure-an-oidc-integration): this step sets an integration between the Action to the JFrog platform.
-2. [**Configure an identity mapping**](https://jfrog.com/help/r/jfrog-platform-administration-documentation/configure-identity-mappings): this step creates a reference token to authenticate with the JFrog platform - We define the details that enable the server to authenticate the action issuer, and provide him an adequate access token. ??? add here what is mandatory to define? ???
+
+| Important: 'Provider Name' value is the value you must pass as provider_name input in step 4. <br/>'Audience' field is NOT the 'aud' claim you can insert to the identity-mapping in step 2. The only claim that will be checked are those in the Claims Json that is created in step 2. |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+
+2. [**Configure an identity mapping**](https://jfrog.com/help/r/jfrog-platform-administration-documentation/configure-identity-mappings): this step creates a reference token to authenticate with the JFrog platform - We define the details that enable the server to authenticate the action issuer, and provide him an adequate access token.
+   You can define any list of valid claims in order to authenticate the request. You can check a list of the possible claims [here](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect#understanding-the-oidc-token).
+   Example Claims JSON:
+   ```yml
+   {
+   "sub": "repo:my-user-name/project1:ref:refs/heads/main", 
+   "aud": "https://github.com/my-user-name",
+   "ref": "refs/heads/main",
+   "repository": "my-user-name/project1",
+   "iss": "https://token.actions.githubusercontent.com"
+   }
+   ```
+
 3. **Set required permissions**: as part of the protocol a JSON Web Token (JWT) must be obtained from GitHub's OIDC provider. In order to be able to request this token we must set the following permission in the workflow file:
    ```yml
    permissions:
@@ -109,7 +125,7 @@ There are several steps to perform **once** in order to use OIDC protocol:
    ```
 4. **Pass the 'provider_name' input to the Action (Required)**: 'provider_name' tells the process which predefined OIDC configuration's identity maps to look for the match between the JWT claims and identity-map claims. This input should contain the value of 'Provider Name' we set for the OIDC configuration.
 5. **Pass the 'aud' input to the Action (Optional)**: 'aud' input specifies the intended recipients of an ID token (JWT), to ensure that only authorized recipients are able to access the cloud (Artifactory). By default, it holds the URL of the repository owner.
-   This value (if sent) will be passed as an argument to core.getIDToken(), which generates the JWT, and sets a condition that only workflows in the specified repository/organization can access the cloud role. Read more about it [here](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect#customizing-the-audience-value). ??? GO OVER AND ENSURE WHAT IS WRITTEN HERE IS CORRECT ???
+   This value (if sent) will be passed as an argument to core.getIDToken(), which generates the JWT, and sets a condition that only workflows in the specified repository/organization can access the cloud role. Read more about it [here](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect#customizing-the-audience-value).
       ```yml
       - name: Install JFrog CLI
         uses: jfrog/setup-jfrog-cli@v3

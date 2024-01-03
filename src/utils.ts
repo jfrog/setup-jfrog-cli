@@ -50,36 +50,54 @@ export class Utils {
      * If none of the above found, returns an access token from the addressed Jfrog's server, if request and requester are authorized, using
      * OpenID Connect mechanism
      */
-    public static async getJfrogAccessToken(): Promise<string> {
+    public static async getJfrogCredentials(): Promise<JfrogCredentials> {
+        let jfrogCredentials : JfrogCredentials = {} as JfrogCredentials;
         if(!process.env.JF_URL) {
-            return "";
+            return jfrogCredentials;
+        }
+        jfrogCredentials.jfrogUrl = process.env.JF_URL;
+
+        console.log("Searching for JF_ACCESS_TOKEN and JF_USER + JF_PASSWORD")
+        if (process.env.JF_ACCESS_TOKEN) {
+            console.log("JF_ACCESS_TOKEN found")
+            jfrogCredentials.accessToken = process.env.JF_ACCESS_TOKEN
         }
 
-        let basicUrl : string = process.env.JF_URL
-        console.log("Searching for JF_ACCESS_TOKEN or JF_USER + JF_PASSWORD in exising env variables")
-        if(process.env.JF_ACCESS_TOKEN || (process.env.JF_USER && process.env.JF_PASSWORD)) {
-            return "";
+        if (process.env.JF_USER && process.env.JF_PASSWORD) {
+            console.log("JF_USER and JF_PASSWORD found")
+            jfrogCredentials.username = process.env.JF_USER;
+            jfrogCredentials.password = process.env.JF_PASSWORD;
         }
+
+        if (jfrogCredentials.accessToken || (jfrogCredentials.username && jfrogCredentials.password)) {
+            return jfrogCredentials;
+        }
+
+        // In case we don't have access token or username + password we initiate the OIDC protocol to get an access token
         console.log("JF_ACCESS_TOKEN and JF_USER + JF_PASSWORD weren't found. Getting access token using OpenID Connect")
         const audience: string = core.getInput(Utils.OIDC_AUDIENCE_ARG, { required: false });
         let jsonWebToken: string | undefined
         try {
             console.log("Fetching JSON web token")
-            jsonWebToken = await core.getIDToken(audience); // print char 1-10 and 11-end and add them app (try to laavod on actions)
+            jsonWebToken = await core.getIDToken(audience);
+            /*
             console.log("ERAN CHECK - token part 1: " + jsonWebToken.substring(0,10))
             let tokenLen = jsonWebToken.length
             console.log("ERAN CHECK - token part 2: " + jsonWebToken.substring(11,tokenLen - 1))
+             */
         } catch (error: any){
             throw new Error(`getting openID Connect JSON web token failed: ${error.message}`)
         }
 
+        /*
         // todo del
         const decodedJwt2 = jwt_decode.jwtDecode(jsonWebToken)
         console.log(`ERAN CHECK: JWT 2 content: \n aud: ${decodedJwt2.aud} | sub: ${decodedJwt2.sub} | iss: ${decodedJwt2.iss}`)
         // todo up to here
+         */
 
         try {
-            return await this.getAccessTokenFromJWT(basicUrl, jsonWebToken)
+            return await this.getAccessTokenFromJWT(jfrogCredentials, jsonWebToken)
         } catch (error: any) {
             throw new Error(`Exchanging JSON web token with an access token failed: ${error.message}`)
         }
@@ -87,18 +105,16 @@ export class Utils {
 
     /**
      * Exchanges JWT with a valid access token
-     * @param basicUrl basic Url achieved as an env var
+     * @param jfrogCredentials existing JFrog credentials - url, access token, username + password
      * @param jsonWebToken JWT achieved from GitHub JWT provider
      * @private
      */
-    private static async getAccessTokenFromJWT(basicUrl: string, jsonWebToken: string): Promise<string> {
-        const exchangeUrl : string = basicUrl.replace(/\/$/, '') + "/access/api/v1/oidc/token"
+    private static async getAccessTokenFromJWT(jfrogCredentials: JfrogCredentials, jsonWebToken: string): Promise<JfrogCredentials> {
+        const exchangeUrl : string = jfrogCredentials.jfrogUrl.replace(/\/$/, '') + "/access/api/v1/oidc/token"
         console.log("Exchanging JSON web token with access token")
 
         const provider_name: string = core.getInput(Utils.OIDC_INTEGRATION_PROVIDER_NAME, { required: true });
         const httpClient : HttpClient = new HttpClient()
-        let responseData: string
-
         try {
             const data: string = `{
                 "grant_type": "urn:ietf:params:oauth:grant-type:token-exchange",
@@ -112,17 +128,17 @@ export class Utils {
             };
 
 
-            console.log(`ERAN CHECK: starting POST`) // TODO del
             const response: HttpClientResponse = await httpClient.post(exchangeUrl, data, additionalHeaders)
-            console.log(`ERAN CHECK: POST succeeded`) // TODO del
-            responseData= await response.readBody()
-            console.log(`ERAN CHECK: response string: ${responseData}`) // TODO del
+            console.log(`ERAN CHECK: response string: ${await response.readBody()}`) // TODO del
 
+            const responseJson = JSON.parse(await response.readBody())
+            jfrogCredentials.accessToken = responseJson.access_token;
+            console.log(`ERAN CHECK: response JSON access token: ${jfrogCredentials.accessToken}`) // TODO del
         } catch (error : any) {
             throw new Error(`POST REST command failed with error ${error.message}`)
         }
         // TODO print the responseData content to make sure how to address the field
-        return responseData
+        return jfrogCredentials
     }
 
     public static async getAndAddCliToPath() {
@@ -409,4 +425,11 @@ export interface DownloadDetails {
     artifactoryUrl: string;
     repository: string;
     auth: string;
+}
+
+export interface JfrogCredentials {
+    jfrogUrl: string ;
+    username: string | undefined;
+    password: string | undefined;
+    accessToken: string | undefined;
 }
