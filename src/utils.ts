@@ -132,18 +132,15 @@ export class Utils {
             const responseString : string = await response.readBody()
             console.log(`ERAN CHECK: response string: ${responseString}`)// TODO del
             const responseJson : TokenExchangeResponseData = JSON.parse(responseString)
-            console.log(`ERAN CHECK: response JSON: ${responseJson}`)// TODO del
-
             jfrogCredentials.accessToken = responseJson.access_token;
             console.log(`ERAN CHECK: response JSON access token: ${jfrogCredentials.accessToken}`) // TODO del
         } catch (error : any) {
             throw new Error(`POST REST command failed with error ${error.message}`)
         }
-        // TODO print the responseData content to make sure how to address the field
         return jfrogCredentials
     }
 
-    public static async getAndAddCliToPath() {
+    public static async getAndAddCliToPath(jfrogCredentials: JfrogCredentials) {
         let version: string = core.getInput(Utils.CLI_VERSION_ARG);
         let cliRemote: string = core.getInput(Utils.CLI_REMOTE_ARG);
         let major: string = version.split('.')[0];
@@ -162,7 +159,7 @@ export class Utils {
         }
 
         // Download JFrog CLI
-        let downloadDetails: DownloadDetails = Utils.extractDownloadDetails(cliRemote);
+        let downloadDetails: DownloadDetails = Utils.extractDownloadDetails(cliRemote, jfrogCredentials);
         let url: string = Utils.getCliUrl(major, version, jfrogFileName, downloadDetails);
         core.info('Downloading JFrog CLI from ' + url);
         let downloadDir: string = await toolCache.downloadTool(url, undefined, downloadDetails.auth);
@@ -243,17 +240,16 @@ export class Utils {
     }
 
     // Get separate env config for the URL and connection details and return args to add to the config add command
-    public static getSeparateEnvConfigArgs(): string[] | undefined {
+    public static getSeparateEnvConfigArgs(jfrogCredentials: JfrogCredentials): string[] | undefined {
         /**
          * @name url - JFrog Platform URL
          * @name user&password - JFrog Platform basic authentication
          * @name accessToken - Jfrog Platform access token
          */
-        //TODO replace env vars with structs fields
-        let url: string | undefined = process.env.JF_URL;
-        let user: string | undefined = process.env.JF_USER;
-        let password: string | undefined = process.env.JF_PASSWORD;
-        let accessToken: string | undefined = process.env.JF_ACCESS_TOKEN;
+        let url: string | undefined = jfrogCredentials.jfrogUrl;
+        let user: string | undefined = jfrogCredentials.username;
+        let password: string | undefined = jfrogCredentials.password;
+        let accessToken: string | undefined = jfrogCredentials.accessToken;
 
         if (url) {
             let configCmd: string[] = [Utils.SETUP_JFROG_CLI_SERVER_ID, '--url', url, '--interactive=false', '--overwrite=true'];
@@ -294,7 +290,8 @@ export class Utils {
         }
     }
 
-    public static async configJFrogServers() {
+    // TODO fix all related tests with new param
+    public static async configJFrogServers(jfrogCredentials: JfrogCredentials) {
         let cliConfigCmd: string[] = ['config'];
         let useOldConfig: boolean = Utils.useOldConfig();
         if (useOldConfig) {
@@ -307,7 +304,7 @@ export class Utils {
             await Utils.runCli(cliConfigCmd.concat('import', configToken));
         }
 
-        let configArgs: string[] | undefined = Utils.getSeparateEnvConfigArgs();
+        let configArgs: string[] | undefined = Utils.getSeparateEnvConfigArgs(jfrogCredentials);
         if (configArgs) {
             await Utils.runCli(cliConfigCmd.concat('add', ...configArgs));
         }
@@ -363,9 +360,11 @@ export class Utils {
      * If repository input was set, extract CLI download details,
      * from either a Config Token with a JF_ENV_ prefix or separate env config (JF_URL, JF_USER, JF_PASSWORD, JF_ACCESS_TOKEN).
      * @param repository - Remote repository in Artifactory pointing to https://releases.jfrog.io/artifactory/jfrog-cli/. If empty, use the default download details.
+     * @param jfrogCredentials all collected JFrog credentials
      * @returns the download details.
      */
-    public static extractDownloadDetails(repository: string): DownloadDetails {
+    // TODO fix all related tests with new param
+    public static extractDownloadDetails(repository: string, jfrogCredentials: JfrogCredentials): DownloadDetails {
         if (repository === '') {
             return Utils.DEFAULT_DOWNLOAD_DETAILS;
         }
@@ -380,18 +379,17 @@ export class Utils {
         }
         if (!serverObj.artifactoryUrl) {
             // No Config Tokens found, check if Separate Env config exist.
-            if (!process.env.JF_URL) {
+            if (!jfrogCredentials.jfrogUrl) {
                 throw new Error(
                     `'download-repository' input provided, but no JFrog environment details found. ` +
                         `Hint - Ensure that the JFrog connection details environment variables are set: ` +
                         `either a Config Token with a JF_ENV_ prefix or separate env config (JF_URL, JF_USER, JF_PASSWORD, JF_ACCESS_TOKEN)`,
                 );
             }
-            //TODO instead of env vars use the struct
-            serverObj.artifactoryUrl = process.env.JF_URL.replace(/\/$/, '') + '/artifactory';
-            serverObj.user = process.env.JF_USER;
-            serverObj.password = process.env.JF_PASSWORD;
-            serverObj.accessToken = process.env.JF_ACCESS_TOKEN;
+            serverObj.artifactoryUrl = jfrogCredentials.jfrogUrl.replace(/\/$/, '') + '/artifactory';
+            serverObj.user = jfrogCredentials.username;
+            serverObj.password = jfrogCredentials.password;
+            serverObj.accessToken = jfrogCredentials.accessToken;
         }
         results.artifactoryUrl = serverObj.artifactoryUrl;
         let authString: string | undefined = Utils.generateAuthString(serverObj);

@@ -76,7 +76,7 @@ test('Get legacy Config Tokens', async () => {
 test("Get JFrog access token", async () => {
    process.env['JF_URL'] = '';
    let jfrogCredentials: JfrogCredentials = await Utils.getJfrogCredentials();
-   expect(jfrogCredentials.accessToken).toEqual('');
+   expect(jfrogCredentials.accessToken).toEqual(undefined);
    // TODO how do I test the working use case where the returned value is a secret and cannot be exposed in the tests code?
 });
 
@@ -84,19 +84,21 @@ test("Get JFrog access token", async () => {
 
 test('Get separate env config', async () => {
     // No url
-    let configCommand: string[] | undefined = Utils.getSeparateEnvConfigArgs();
+    let configCommand: string[] | undefined = Utils.getSeparateEnvConfigArgs({} as JfrogCredentials);
     expect(configCommand).toBe(undefined);
 
-    process.env['JF_URL'] = DEFAULT_CLI_URL;
+    let jfrogCredentials : JfrogCredentials = {} as JfrogCredentials;
+    jfrogCredentials.jfrogUrl = DEFAULT_CLI_URL
 
     // No credentials
-    configCommand = Utils.getSeparateEnvConfigArgs();
+    configCommand = Utils.getSeparateEnvConfigArgs(jfrogCredentials);
     expect(configCommand).toStrictEqual([Utils.SETUP_JFROG_CLI_SERVER_ID, '--url', DEFAULT_CLI_URL, '--interactive=false', '--overwrite=true']);
 
+
     // Basic authentication
-    process.env['JF_USER'] = 'user';
-    process.env['JF_PASSWORD'] = 'password';
-    configCommand = Utils.getSeparateEnvConfigArgs();
+    jfrogCredentials.username = 'user';
+    jfrogCredentials.password = 'password'
+    configCommand = Utils.getSeparateEnvConfigArgs(jfrogCredentials);
     expect(configCommand).toStrictEqual([
         Utils.SETUP_JFROG_CLI_SERVER_ID,
         '--url',
@@ -110,10 +112,10 @@ test('Get separate env config', async () => {
     ]);
 
     // Access Token
-    process.env['JF_USER'] = '';
-    process.env['JF_PASSWORD'] = '';
-    process.env['JF_ACCESS_TOKEN'] = 'accessToken';
-    configCommand = Utils.getSeparateEnvConfigArgs();
+    jfrogCredentials.username = '';
+    jfrogCredentials.password = ''
+    jfrogCredentials.accessToken = 'accessToken';
+    configCommand = Utils.getSeparateEnvConfigArgs(jfrogCredentials);
     expect(configCommand).toStrictEqual([
         Utils.SETUP_JFROG_CLI_SERVER_ID,
         '--url',
@@ -143,7 +145,7 @@ describe('JFrog CLI V1 URL Tests', () => {
         expect(cliUrl).toBe(DEFAULT_CLI_URL + expectedUrl);
 
         process.env.JF_ENV_LOCAL = V1_CONFIG;
-        cliUrl = Utils.getCliUrl('1', '1.2.3', fileName, Utils.extractDownloadDetails('jfrog-cli-remote'));
+        cliUrl = Utils.getCliUrl('1', '1.2.3', fileName, Utils.extractDownloadDetails('jfrog-cli-remote', {} as JfrogCredentials));
         expect(cliUrl).toBe(CUSTOM_CLI_URL + expectedUrl);
     });
 });
@@ -164,11 +166,11 @@ describe('JFrog CLI V2 URL Tests', () => {
         myOs.platform.mockImplementation(() => <NodeJS.Platform>platform);
         myOs.arch.mockImplementation(() => arch);
 
-        let cliUrl: string = Utils.getCliUrl('2', '2.3.4', fileName, Utils.extractDownloadDetails(''));
+        let cliUrl: string = Utils.getCliUrl('2', '2.3.4', fileName, Utils.extractDownloadDetails('', {} as JfrogCredentials));
         expect(cliUrl).toBe(DEFAULT_CLI_URL + expectedUrl);
 
         process.env.JF_ENV_LOCAL = V2_CONFIG;
-        cliUrl = Utils.getCliUrl('2', '2.3.4', fileName, Utils.extractDownloadDetails('jfrog-cli-remote'));
+        cliUrl = Utils.getCliUrl('2', '2.3.4', fileName, Utils.extractDownloadDetails('jfrog-cli-remote', {} as JfrogCredentials));
         expect(cliUrl).toBe(CUSTOM_CLI_URL + expectedUrl);
     });
 });
@@ -176,14 +178,14 @@ describe('JFrog CLI V2 URL Tests', () => {
 test('Extract download details Tests', () => {
     for (let config of [V1_CONFIG, V2_CONFIG]) {
         process.env.JF_ENV_LOCAL = config;
-        let downloadDetails: DownloadDetails = Utils.extractDownloadDetails('jfrog-cli-remote');
+        let downloadDetails: DownloadDetails = Utils.extractDownloadDetails('jfrog-cli-remote', {} as JfrogCredentials);
         expect(downloadDetails.artifactoryUrl).toBe('http://127.0.0.1:8081/artifactory/');
         expect(downloadDetails.repository).toBe('jfrog-cli-remote');
         expect(downloadDetails.auth).toBe('Basic YWRtaW46cGFzc3dvcmQ=');
     }
 
     process.env.JF_ENV_LOCAL = V2_CONFIG_TOKEN;
-    let downloadDetails: DownloadDetails = Utils.extractDownloadDetails('jfrog-cli-remote');
+    let downloadDetails: DownloadDetails = Utils.extractDownloadDetails('jfrog-cli-remote', {} as JfrogCredentials);
     expect(downloadDetails.artifactoryUrl).toBe('http://127.0.0.1:8081/artifactory/');
     expect(downloadDetails.repository).toBe('jfrog-cli-remote');
     expect(downloadDetails.auth).toBe(
@@ -191,21 +193,23 @@ test('Extract download details Tests', () => {
     );
 
     process.env.JF_ENV_LOCAL = '';
-    process.env['JF_URL'] = 'http://127.0.0.1:8081';
-    process.env['JF_USER'] = 'user';
-    process.env['JF_PASSWORD'] = 'password';
-    downloadDetails = Utils.extractDownloadDetails('jfrog-cli-remote');
+    let jfrogCredentials1 : JfrogCredentials = {} as JfrogCredentials;
+    jfrogCredentials1.jfrogUrl = 'http://127.0.0.1:8081';
+    jfrogCredentials1.username = 'user';
+    jfrogCredentials1.password = 'password';
+    downloadDetails = Utils.extractDownloadDetails('jfrog-cli-remote', jfrogCredentials1);
     expect(downloadDetails.artifactoryUrl).toBe('http://127.0.0.1:8081/artifactory');
     expect(downloadDetails.repository).toBe('jfrog-cli-remote');
     expect(downloadDetails.auth).toBe('Basic dXNlcjpwYXNzd29yZA==');
 
-    process.env['JF_USER'] = '';
-    process.env['JF_PASSWORD'] = '';
-    process.env['JF_ACCESS_TOKEN'] = 'YWNjZXNzVG9rZW4=';
-    downloadDetails = Utils.extractDownloadDetails('jfrog-cli-remote');
+    let jfrogCredentials2 : JfrogCredentials = {} as JfrogCredentials;
+    jfrogCredentials2.jfrogUrl = 'http://127.0.0.1:8081';
+    jfrogCredentials2.accessToken = 'YWNjZXNzVG9rZW4=';
+    downloadDetails = Utils.extractDownloadDetails('jfrog-cli-remote', jfrogCredentials2);
     expect(downloadDetails.artifactoryUrl).toBe('http://127.0.0.1:8081/artifactory');
     expect(downloadDetails.repository).toBe('jfrog-cli-remote');
     expect(downloadDetails.auth).toBe(`Bearer YWNjZXNzVG9rZW4=`);
+
 });
 
 test('User agent', () => {
