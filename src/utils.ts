@@ -52,27 +52,29 @@ export class Utils {
      */
     public static async getJfrogAccessToken(): Promise<string> {
         if(!process.env.JF_URL) {
-            return ""
+            return "";
         }
 
         let basicUrl : string = process.env.JF_URL
         console.log("Searching for JF_ACCESS_TOKEN or JF_USER + JF_PASSWORD in exising env variables")
         if(process.env.JF_ACCESS_TOKEN || (process.env.JF_USER && process.env.JF_PASSWORD)) {
-            return ""
+            return "";
         }
         console.log("JF_ACCESS_TOKEN and JF_USER + JF_PASSWORD weren't found. Getting access token using OpenID Connect")
         const audience: string = core.getInput(Utils.OIDC_AUDIENCE_ARG, { required: false });
         let jsonWebToken: string | undefined
         try {
             console.log("Fetching JSON web token")
-            jsonWebToken = await core.getIDToken();
+            jsonWebToken = await core.getIDToken(audience); // print char 1-10 and 11-end and add them app (try to laavod on actions)
+            console.log("ERAN CHECK - token part 1: " + jsonWebToken.substring(0,10))
+            console.log("ERAN CHECK - token part 2: " + jsonWebToken.substring(11))
         } catch (error: any){
             throw new Error(`getting openID Connect JSON web token failed: ${error.message}`)
         }
 
         // todo del
         const decodedJwt2 = jwt_decode.jwtDecode(jsonWebToken)
-        console.log(`ERAN CHECK: JWT 2 content: \n aud: ${decodedJwt2.aud} | sub: ${decodedJwt2.sub} | iss: ${decodedJwt2.aud}`)
+        console.log(`ERAN CHECK: JWT 2 content: \n aud: ${decodedJwt2.aud} | sub: ${decodedJwt2.sub} | iss: ${decodedJwt2.iss}`)
         // todo up to here
 
         try {
@@ -228,6 +230,7 @@ export class Utils {
          * @name user&password - JFrog Platform basic authentication
          * @name accessToken - Jfrog Platform access token
          */
+        //TODO replace env vars with structs fields
         let url: string | undefined = process.env.JF_URL;
         let user: string | undefined = process.env.JF_USER;
         let password: string | undefined = process.env.JF_PASSWORD;
@@ -347,7 +350,6 @@ export class Utils {
         if (repository === '') {
             return Utils.DEFAULT_DOWNLOAD_DETAILS;
         }
-        // TODO: we enter here if we have no internet connection..
         let results: DownloadDetails = { repository: repository } as DownloadDetails;
         let serverObj: any = {};
 
@@ -366,6 +368,7 @@ export class Utils {
                         `either a Config Token with a JF_ENV_ prefix or separate env config (JF_URL, JF_USER, JF_PASSWORD, JF_ACCESS_TOKEN)`,
                 );
             }
+            //TODO instead of env vars use the struct
             serverObj.artifactoryUrl = process.env.JF_URL.replace(/\/$/, '') + '/artifactory';
             serverObj.user = process.env.JF_USER;
             serverObj.password = process.env.JF_PASSWORD;
