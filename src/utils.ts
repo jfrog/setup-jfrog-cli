@@ -7,7 +7,6 @@ import { join } from 'path';
 import { lt } from 'semver';
 import { HttpClient, HttpClientResponse } from '@actions/http-client'
 import { OutgoingHttpHeaders } from "http";
-import * as jwt_decode from "jwt-decode";
 
 
 export class Utils {
@@ -80,21 +79,9 @@ export class Utils {
         try {
             console.log("Fetching JSON web token")
             jsonWebToken = await core.getIDToken(audience);
-            /*
-            console.log("ERAN CHECK - token part 1: " + jsonWebToken.substring(0,10))
-            let tokenLen = jsonWebToken.length
-            console.log("ERAN CHECK - token part 2: " + jsonWebToken.substring(11,tokenLen - 1))
-             */
         } catch (error: any){
             throw new Error(`getting openID Connect JSON web token failed: ${error.message}`)
         }
-
-        /*
-        // todo del
-        const decodedJwt2 = jwt_decode.jwtDecode(jsonWebToken)
-        console.log(`ERAN CHECK: JWT 2 content: \n aud: ${decodedJwt2.aud} | sub: ${decodedJwt2.sub} | iss: ${decodedJwt2.iss}`)
-        // todo up to here
-         */
 
         try {
             return await this.getAccessTokenFromJWT(jfrogCredentials, jsonWebToken)
@@ -130,10 +117,8 @@ export class Utils {
 
             const response: HttpClientResponse = await httpClient.post(exchangeUrl, data, additionalHeaders)
             const responseString : string = await response.readBody()
-            console.log(`ERAN CHECK: response string: ${responseString}`)// TODO del
             const responseJson : TokenExchangeResponseData = JSON.parse(responseString)
             jfrogCredentials.accessToken = responseJson.access_token;
-            console.log(`ERAN CHECK: response JSON access token: ${jfrogCredentials.accessToken}`) // TODO del
         } catch (error : any) {
             throw new Error(`POST REST command failed with error ${error.message}`)
         }
@@ -290,7 +275,6 @@ export class Utils {
         }
     }
 
-    // TODO fix all related tests with new param
     public static async configJFrogServers(jfrogCredentials: JfrogCredentials) {
         let cliConfigCmd: string[] = ['config'];
         let useOldConfig: boolean = Utils.useOldConfig();
@@ -363,7 +347,6 @@ export class Utils {
      * @param jfrogCredentials all collected JFrog credentials
      * @returns the download details.
      */
-    // TODO fix all related tests with new param
     public static extractDownloadDetails(repository: string, jfrogCredentials: JfrogCredentials): DownloadDetails {
         if (repository === '') {
             return Utils.DEFAULT_DOWNLOAD_DETAILS;
