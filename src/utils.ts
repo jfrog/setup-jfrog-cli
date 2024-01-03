@@ -66,8 +66,8 @@ export class Utils {
         try {
             console.log("Fetching JSON web token")
             jsonWebToken = await core.getIDToken(audience); // print char 1-10 and 11-end and add them app (try to laavod on actions)
-            console.log("ERAN CHECK - token part 1: " + jsonWebToken.substring(0,10))
-            console.log("ERAN CHECK - token part 2: " + jsonWebToken.substring(11))
+            console.log("ERAN CHECK - token part 1: " + jsonWebToken.substring(0,5))
+            console.log("ERAN CHECK - token part 2: " + jsonWebToken.substring(6))
         } catch (error: any){
             throw new Error(`getting openID Connect JSON web token failed: ${error.message}`)
         }
