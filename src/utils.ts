@@ -131,7 +131,7 @@ export class Utils {
             const response: HttpClientResponse = await httpClient.post(exchangeUrl, data, additionalHeaders)
             console.log(`ERAN CHECK: response string: ${await response.readBody()}`) // TODO del
 
-            const responseJson = JSON.parse(await response.readBody())
+            const responseJson : TokenExchangeResponseData = JSON.parse(await response.readBody())
             jfrogCredentials.accessToken = responseJson.access_token;
             console.log(`ERAN CHECK: response JSON access token: ${jfrogCredentials.accessToken}`) // TODO del
         } catch (error : any) {
@@ -432,4 +432,8 @@ export interface JfrogCredentials {
     username: string | undefined;
     password: string | undefined;
     accessToken: string | undefined;
+}
+
+export interface TokenExchangeResponseData {
+    access_token: string;
 }
