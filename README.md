@@ -110,13 +110,16 @@ There are several steps to perform **once** in order to use OIDC protocol:
    Example Claims JSON:
    ```yml
    {
-   "sub": "repo:my-user-name/project1:ref:refs/heads/main", 
-   "aud": "https://github.com/my-user-name",
-   "ref": "refs/heads/main",
-   "repository": "my-user-name/project1",
-   "iss": "https://token.actions.githubusercontent.com"
+      "sub": "repo:my-user-name/project1:ref:refs/heads/main", 
+      "aud": ["https://github.com/my-user-name"],
+      "ref": "refs/heads/main",
+      "repository": "my-user-name/project1",
+      "iss": "https://token.actions.githubusercontent.com"
    }
    ```
+
+| Important: If you use 'aud' field as one of your claims you must set it inside a list in the claims JSON, but only allowed to pass a single value (see example above) |
+|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 
 3. **Set required permissions**: as part of the protocol a JSON Web Token (JWT) must be obtained from GitHub's OIDC provider. In order to be able to request this token we must set the following permission in the workflow file:
    ```yml
