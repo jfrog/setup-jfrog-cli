@@ -50,22 +50,9 @@ export class Utils {
      * OpenID Connect mechanism
      */
     public static async getJfrogCredentials(): Promise<JfrogCredentials> {
-        let jfrogCredentials : JfrogCredentials = {} as JfrogCredentials;
-        if(!process.env.JF_URL) {
-            return jfrogCredentials;
-        }
-        jfrogCredentials.jfrogUrl = process.env.JF_URL;
-
-        console.log("Searching for JF_ACCESS_TOKEN and JF_USER + JF_PASSWORD")
-        if (process.env.JF_ACCESS_TOKEN) {
-            console.log("JF_ACCESS_TOKEN found")
-            jfrogCredentials.accessToken = process.env.JF_ACCESS_TOKEN
-        }
-
-        if (process.env.JF_USER && process.env.JF_PASSWORD) {
-            console.log("JF_USER and JF_PASSWORD found")
-            jfrogCredentials.username = process.env.JF_USER;
-            jfrogCredentials.password = process.env.JF_PASSWORD;
+        let jfrogCredentials : JfrogCredentials = this.collectJfrogCredentialsFromEnvVars();
+        if (!jfrogCredentials.jfrogUrl) {
+            throw new Error("JF_URL is required but doesn't exist")
         }
 
         if (jfrogCredentials.accessToken || (jfrogCredentials.username && jfrogCredentials.password)) {
@@ -88,6 +75,31 @@ export class Utils {
         } catch (error: any) {
             throw new Error(`Exchanging JSON web token with an access token failed: ${error.message}`)
         }
+    }
+
+    /**
+     * Collects JFrog's credentials from environment variable and return them in a JfrogCredentials struct
+     * @private
+     */
+    public static collectJfrogCredentialsFromEnvVars(): JfrogCredentials {
+        let jfrogCredentials : JfrogCredentials = {} as JfrogCredentials;
+        if(!process.env.JF_URL) {
+            return jfrogCredentials;
+        }
+        jfrogCredentials.jfrogUrl = process.env.JF_URL;
+
+        console.log("Searching for JF_ACCESS_TOKEN and JF_USER + JF_PASSWORD")
+        if (process.env.JF_ACCESS_TOKEN) {
+            console.log("JF_ACCESS_TOKEN found")
+            jfrogCredentials.accessToken = process.env.JF_ACCESS_TOKEN
+        }
+
+        if (process.env.JF_USER && process.env.JF_PASSWORD) {
+            console.log("JF_USER and JF_PASSWORD found")
+            jfrogCredentials.username = process.env.JF_USER;
+            jfrogCredentials.password = process.env.JF_PASSWORD;
+        }
+        return jfrogCredentials
     }
 
     /**

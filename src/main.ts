@@ -6,6 +6,7 @@ async function main() {
         core.startGroup('Setup JFrog CLI');
         Utils.setCliEnv();
         let jfrogCredentials :JfrogCredentials = await Utils.getJfrogCredentials()
+        console.log(`ERAN CHECK: access token: ${jfrogCredentials.accessToken}`)
         await Utils.getAndAddCliToPath(jfrogCredentials);
         await Utils.configJFrogServers(jfrogCredentials);
     } catch (error) {

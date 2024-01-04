@@ -73,11 +73,29 @@ test('Get legacy Config Tokens', async () => {
     expect(Utils.getConfigTokens()).toStrictEqual(new Set(['DUMMY_CONFIG_TOKEN_1', 'DUMMY_CONFIG_TOKEN_2', 'DUMMY_CONFIG_TOKEN_3']));
 });
 
-test("Get JFrog access token", async () => {
+test("Collect JFrog Credentials from env vars", async () => {
    process.env['JF_URL'] = '';
-   let jfrogCredentials: JfrogCredentials = await Utils.getJfrogCredentials();
+   let jfrogCredentials: JfrogCredentials = Utils.collectJfrogCredentialsFromEnvVars();
+   expect(jfrogCredentials.jfrogUrl).toEqual(undefined);
+   expect(jfrogCredentials.username).toEqual(undefined);
+   expect(jfrogCredentials.password).toEqual(undefined);
    expect(jfrogCredentials.accessToken).toEqual(undefined);
-   // TODO how do I test the working use case where the returned value is a secret and cannot be exposed in the tests code?
+
+    process.env['JF_URL'] = "https://my-server.io";
+    process.env['JF_ACCESS_TOKEN'] = "my-access-token";
+    jfrogCredentials = Utils.collectJfrogCredentialsFromEnvVars();
+    expect(jfrogCredentials.jfrogUrl).toEqual("https://my-server.io");
+    expect(jfrogCredentials.username).toEqual(undefined);
+    expect(jfrogCredentials.password).toEqual(undefined);
+    expect(jfrogCredentials.accessToken).toEqual("my-access-token");
+
+    process.env['JF_USER'] = "user";
+    process.env['JF_PASSWORD'] = "password";
+    jfrogCredentials = Utils.collectJfrogCredentialsFromEnvVars();
+    expect(jfrogCredentials.jfrogUrl).toEqual("https://my-server.io");
+    expect(jfrogCredentials.username).toEqual("user");
+    expect(jfrogCredentials.password).toEqual("password");
+    expect(jfrogCredentials.accessToken).toEqual("my-access-token");
 });
 
 //TODO add tests to the REST function that gets the access token ??
