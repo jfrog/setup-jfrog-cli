@@ -12,8 +12,7 @@
 This GitHub Action downloads, installs and configures JFrog CLI, so that it can be used as part of the workflow.
 
 In addition, the Action includes the following features, when using JFrog CLI to work with JFrog Platform.
-* The connection details of the JFrog platform used by JFrog CLI can be stored as secrets. Read more about it [here](#Storing-JFrog-Connection-Details-as-Secrets).
-* The connection details of the JFrog platform used by JFrog CLI can be auto-generated using OpenID Connect protocol. Read more about it [here](#connect-using-openid-connect) 
+* There exist two distinct methods to authenticate with the JFrog Platform. Read about them [here](#authorization)
 * There's no need to add the *build name* and *build number* options and arguments to commands which accept them.
 All build related operations will be automatically recorded with the *Workflow Name* as build name and *Run Number* as build number.
 
@@ -24,6 +23,12 @@ All build related operations will be automatically recorded with the *Workflow N
 - uses: jfrog/setup-jfrog-cli@v3
 - run: jf --version
 ```
+# Authorization
+JFrog CLI operates in conjunction with the JFrog Platform. In order to facilitate this connection, certain connection details of the JFrog Platform must be provided.
+There exist two methods to provide these details, and you only need to choose **one** method:
+* The connection details of the JFrog platform can be stored as secrets. Read more about it [here](#storing-jfrog-connection-details-as-secrets).
+* The connection details of the JFrog platform can be auto-generated using OpenID Connect protocol. Read more about it [here](#connect-using-openid-connect)
+
 
 ## Storing JFrog connection details as secrets
 The connection details of the JFrog platform used by JFrog CLI can be stored as secrets.

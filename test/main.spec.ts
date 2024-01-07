@@ -230,6 +230,7 @@ test('Extract download details Tests', () => {
 
 });
 
+
 test('User agent', () => {
     let userAgent: string = Utils.USER_AGENT;
     let split: string[] = userAgent.split('/');
