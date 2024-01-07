@@ -1,0 +1,86 @@
+name: OpenID Connect Test
+on:
+  push:
+    branches:
+      - '**'
+    tags-ignore:
+      - '**'
+  # Triggers the workflow on labeled PRs only.
+  pull_request_target:
+    types: [ labeled ]
+# Ensures that only the latest commit is running for each PR at a time.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  id-token: write
+
+jobs:
+  OIDC-Test:
+    if: contains(github.event.pull_request.labels.*.name, 'safe to test') || github.event_name == 'push' # SHOULD BE ON PUSH EITHER??
+    name: OIDC-Access integration test (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu, windows, macos ]
+    runs-on: ${{ matrix.os }}-latest
+    steps:
+      # IS needed???????
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Install OIDC Client from Core Package
+        run: npm install @actions/core @actions/http-client
+
+      - name: Get unique OIDC config name
+        run: echo "OIDC_CONFIG_NAME=oidc-integration-test-config-$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
+
+      - name: POST OpenID Connect Integration
+        run: |
+          curl -X POST "${{ secrets.PLATFORM_URL }}/access/api/v1/oidc" -H "Content-Type: application/json" -H "Authorization: Bearer ${{ secrets.PLATFORM_ADMIN_TOKEN }}" -d '{
+          "name": "${{ env.OIDC_CONFIG_NAME }}",
+          "issuer_url": "https://token.actions.githubusercontent.com/",
+          "provider_type": "GitHub",
+          "description": "This is a test configuration created for OIDC-Access integration test"
+          }'
+
+      # check in the 'sub' if the branch that the tests is running in should always be 'main' even if the test it triggered in a PR in another branch
+      - name: POST OIDC Integration Identity Mapping
+        run: |
+          curl -X POST ${{ secrets.PLATFORM_URL }}/access/api/v1/oidc/${{ env.OIDC_CONFIG_NAME }}/identity_mappings \
+          -H 'Content-Type: application/json' \
+          -H 'Authorization: Bearer ${{ secrets.PLATFORM_ADMIN_TOKEN }}' \
+          -d '{
+                "name": "oidc-test-identity-mapping",
+                "priority": "1",
+                "claims": {
+                  "sub": "repo:jfrog/setup-jfrog-cli:ref:refs/heads/main",
+                  "iss": "https://token.actions.githubusercontent.com"
+                },
+                "token_spec": {
+                  "scope": "applied-permissions/admin",
+                  "expires_in": 60
+                }
+          }'
+
+      # in this step DO NOT deliver the access token. it should be generated alone by the OIDC flow
+      - name: Install JFrog CLI using
+        uses: eranturgeman/setup-jfrog-cli@adding-oidc-auth
+        env:
+          JF_URL: ${{ secrets.JF_URL }}
+        with:
+          provider_name: ${{ env.OIDC_CONFIG_NAME }} #old val: eran-jfrog
+          # aud: https://github.com/eranturgeman
+
+      - name: Test JFrog CLI
+        run: |
+          jf rt ping
+
+      - name: DEL OIDC Integration Identity-mapping
+        run: |
+          curl -X DELETE ${{ secrets.PLATFORM_URL }}/access/api/v1/oidc/${{ env.OIDC_CONFIG_NAME }}/identity_mappings/oidc-test-identity-mapping -H 'Authorization: Bearer ${{ secrets.PLATFORM_ADMIN_TOKEN }}'
+
+      - name: DEL OIDC Integration
+        run: |
+          curl -X DELETE ${{ secrets.PLATFORM_URL }}/access/api/v1/oidc/${{ env.OIDC_CONFIG_NAME }} -H 'Authorization: Bearer ${{ secrets.PLATFORM_ADMIN_TOKEN }}'
