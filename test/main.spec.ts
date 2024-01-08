@@ -98,8 +98,6 @@ test("Collect JFrog Credentials from env vars", async () => {
     expect(jfrogCredentials.accessToken).toEqual("my-access-token");
 });
 
-//TODO add tests to the REST function that gets the access token ??
-
 test('Get separate env config', async () => {
     // No url
     let configCommand: string[] | undefined = Utils.getSeparateEnvConfigArgs({} as JfrogCredentials);

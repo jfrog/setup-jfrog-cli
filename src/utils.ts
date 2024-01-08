@@ -70,30 +70,21 @@ export class Utils {
     }
 
     /**
-     * Gets access details to allow Accessing JFrog's servers
-     * Initially searches for JF_ACCESS_TOKEN or JF_USER + JF_PASSWORD in existing environment variables
-     * If none of the above found, returns an access token from the addressed Jfrog's server, if request and requester are authorized, using
-     * OpenID Connect mechanism
+     * Retrieves server credentials for accessing JFrog's server
+     * searching for existing environment variables such as JF_ACCESS_TOKEN or the combination of JF_USER and JF_PASSWORD.
+     * If neither is found, and if the request and requester are authorized, it generates an access token for the specified JFrog's server using the OpenID Connect mechanism.
      */
     public static async getJfrogCredentials(): Promise<JfrogCredentials> {
-        /*
-        if (credentialsCollectionMode == Utils.CREDENTIALS_ENV_MODE) {
-            // If the credentials are to be collected from some JF_ENV_* variable we don't need to collect them ourselves at this point
-            return {} as JfrogCredentials;
-        }
-         */
-
         let jfrogCredentials : JfrogCredentials = this.collectJfrogCredentialsFromEnvVars();
         if (!jfrogCredentials.jfrogUrl) {
             return jfrogCredentials
         }
 
-        // If sufficient credentials were found (access token / username + password) we return without triggering the OIDC flow
+        // If the required credentials, such as the access token or a combination of username and password, are available, the process terminates without triggering the OIDC flow
         if (jfrogCredentials.accessToken || (jfrogCredentials.username && jfrogCredentials.password)) {
             return jfrogCredentials;
         }
 
-        // In case we don't have access token or username + password we initiate the OIDC protocol to get an access token
         console.log("JF_ACCESS_TOKEN and JF_USER + JF_PASSWORD weren't found. Getting access token using OpenID Connect")
         const audience: string = core.getInput(Utils.OIDC_AUDIENCE_ARG, { required: false });
         let jsonWebToken: string | undefined
@@ -112,35 +103,10 @@ export class Utils {
     }
 
     /**
-     * Collects JFrog's credentials from environment variable and return them in a JfrogCredentials struct
+     * Gathers JFrog's credentials from environment variables and delivers them in a JfrogCredentials structure
      * @private
      */
     public static collectJfrogCredentialsFromEnvVars(): JfrogCredentials {
-        // TODO return an array of JfrogCredentials
-
-        //TODO MODE URL:
-        // act the same as current flow. insert everything we have to the jfrogCredentials. an array with a single element will be returned
-
-        //TODO MODE ENV:
-        // run in a loop and collect all envs data into JfrogCredentials structs and return the entire array
-
-        /*
-        let jfrogCredentialsArr : JfrogCredentials[] = [];
-        if (credentialsCollectionMode == Utils.CREDENTIALS_URL_MODE) {
-            console.log("JF_URL has been detected. Fetching credentials from env variables: JF_ACCESS_TOKEN, JF_USER, JF_PASSWORD")
-            let jfrogCredentials : JfrogCredentials = {} as JfrogCredentials;
-            jfrogCredentials.jfrogUrl = process.env.JF_URL;
-            jfrogCredentials.artifactoryUrl = process.env.JF_URL + "/artifactory";
-            jfrogCredentials.accessToken = process.env.JF_ACCESS_TOKEN;
-            jfrogCredentials.username = process.env.JF_USER;
-            jfrogCredentials.password = process.env.JF_PASSWORD;
-
-            jfrogCredentialsArr.push(jfrogCredentials)
-            return jfrogCredentialsArr;
-        }
-
-         */
-
         let jfrogCredentials : JfrogCredentials = {} as JfrogCredentials;
         console.log("Searching for JF_URL")
         if (process.env.JF_URL) {
@@ -169,7 +135,7 @@ export class Utils {
      * @private
      */
     private static async getAccessTokenFromJWT(jfrogCredentials: JfrogCredentials, jsonWebToken: string): Promise<JfrogCredentials> {
-        // @ts-ignore : If we got to this point jfrogCredentials.jfrogUrl ,ust contain process.env.JF_URL value which was verified to contain a value
+        // @ts-ignore : If we've reached this stage, the jfrogCredentials.jfrogUrl field should hold a non-empty value obtained from process.env.JF_URL
         const exchangeUrl : string = jfrogCredentials.jfrogUrl.replace(/\/$/, '') + "/access/api/v1/oidc/token"
         console.log("Exchanging JSON web token with access token")
 
@@ -186,7 +152,6 @@ export class Utils {
             const additionalHeaders: OutgoingHttpHeaders = {
                 'Content-Type': 'application/json',
             };
-
 
             const response: HttpClientResponse = await httpClient.post(exchangeUrl, data, additionalHeaders)
             const responseString : string = await response.readBody()
@@ -361,12 +326,6 @@ export class Utils {
             await Utils.runCli(cliConfigCmd.concat('import', configToken));
         }
 
-        /*
-        if (!jfrogCredentials.jfrogUrl || (!jfrogCredentials.accessToken || !(jfrogCredentials.username && jfrogCredentials.password))) {
-            jfrogCredentials = Utils.collectJfrogCredentialsFromEnvVars()
-        }
-         */
-
         let configArgs: string[] | undefined = Utils.getSeparateEnvConfigArgs(jfrogCredentials);
         if (configArgs) {
             await Utils.runCli(cliConfigCmd.concat('add', ...configArgs));
@@ -432,29 +391,6 @@ export class Utils {
         }
         let results: DownloadDetails = { repository: repository } as DownloadDetails;
         let serverObj: any = {};
-
-        /*
-        if (credentialsCollectionMode == Utils.CREDENTIALS_ENV_MODE) {
-            for (let configToken of Utils.getConfigTokens()) {
-                serverObj = JSON.parse(Buffer.from(configToken, 'base64').toString());
-                if (serverObj && serverObj.artifactoryUrl) {
-                    break;
-                }
-            }
-        } else {
-            if (!jfrogCredentials.jfrogUrl) {
-                throw new Error(
-                    `'download-repository' input provided, but no JFrog environment details found. ` +
-                    `Hint - Ensure that the JFrog connection details environment variables are set: ` +
-                    `either a Config Token with a JF_ENV_ prefix or separate env config (JF_URL, JF_USER, JF_PASSWORD, JF_ACCESS_TOKEN)`,
-                );
-            }
-            serverObj.artifactoryUrl = jfrogCredentials.jfrogUrl.replace(/\/$/, '') + '/artifactory';
-            serverObj.user = jfrogCredentials.username;
-            serverObj.password = jfrogCredentials.password;
-            serverObj.accessToken = jfrogCredentials.accessToken;
-        }
-         */
 
         for (let configToken of Utils.getConfigTokens()) {
             serverObj = JSON.parse(Buffer.from(configToken, 'base64').toString());
