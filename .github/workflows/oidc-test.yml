@@ -32,7 +32,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # Generating a unique name for the Integration configuration that will be created in the following step
+      # Generating a unique name for the Integration Configuration that will be created in the following step
       - name: Get unique OIDC config name
         shell: bash
         run: echo "OIDC_CONFIG_NAME=oidc-integration-test-config-$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
