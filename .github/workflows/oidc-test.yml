@@ -37,8 +37,8 @@ jobs:
 
       - name: POST OpenID Connect Integration
         run: |
-          curl -X POST "${ secrets.JFROG_PLATFORM_URL }/access/api/v1/oidc" -H "Content-Type: application/json" -H "Authorization: Bearer ${ secrets.JFROG_PLATFORM_RT_TOKEN }" -d "{
-          "name": "${ env.OIDC_CONFIG_NAME }",
+          curl -X POST "${{ secrets.JFROG_PLATFORM_URL }}/access/api/v1/oidc" -H "Content-Type: application/json" -H "Authorization: Bearer ${{ secrets.JFROG_PLATFORM_RT_TOKEN }}" -d "{
+          "name": "${{ env.OIDC_CONFIG_NAME }}",
           "issuer_url": "https://token.actions.githubusercontent.com/",
           "provider_type": "GitHub",
           "description": "This is a test configuration created for OIDC-Access integration test" }"
