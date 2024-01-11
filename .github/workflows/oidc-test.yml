@@ -72,7 +72,9 @@ jobs:
 
       - name: Test JFrog CLI
         run: |
+          jf c show
           jf rt ping
+
       - name: DEL OIDC Integration Identity-mapping
         if: always()
         run: |
