@@ -1,3 +1,4 @@
+# This action is an integration test for OIDC workflow
 name: OpenID Connect Test
 on:
   workflow_dispatch:
@@ -45,7 +46,6 @@ jobs:
           "provider_type": "GitHub",
           "description": "This is a test configuration created for OIDC-Access integration test" }'
 
-      # check in the 'sub' if the branch that the tests is running in should always be 'main' even if the test it triggered in a PR in another branch
       - name: POST OIDC Integration Identity Mapping
         shell: bash
         run: |
@@ -66,9 +66,9 @@ jobs:
           }'
 
       - name: Install JFrog CLI using
-        uses: eranturgeman/setup-jfrog-cli@adding-oidc-auth # TODO dont forget to redirect the flow to use jfrog/setup-jfrog-cli and not my fork
+        uses: eranturgeman/setup-jfrog-cli@adding-oidc-auth
         env:
-          JF_URL: ${{ secrets.JF_URL }}
+          JF_URL: ${{ secrets.JFROG_PLATFORM_URL }}
         with:
           provider_name: ${{ env.OIDC_CONFIG_NAME }}
 
