@@ -36,6 +36,7 @@ jobs:
         run: echo "OIDC_CONFIG_NAME=oidc-integration-test-config-$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
 
       - name: POST OpenID Connect Integration
+        shell: bash
         run: |
           curl -X POST "${{ secrets.JFROG_PLATFORM_URL }}/access/api/v1/oidc" -H "Content-Type: application/json" -H "Authorization: Bearer ${{ secrets.JFROG_PLATFORM_RT_TOKEN }}" -d '{
           "name": "${{ env.OIDC_CONFIG_NAME }}",
@@ -45,6 +46,7 @@ jobs:
 
       # check in the 'sub' if the branch that the tests is running in should always be 'main' even if the test it triggered in a PR in another branch
       - name: POST OIDC Integration Identity Mapping
+        shell: bash
         run: |
           curl -X POST ${{ secrets.JFROG_PLATFORM_URL }}/access/api/v1/oidc/${{ env.OIDC_CONFIG_NAME }}/identity_mappings \
           -H 'Content-Type: application/json' \
@@ -75,11 +77,13 @@ jobs:
           jf rt ping
 
       - name: DEL OIDC Integration Identity-mapping
+        shell: bash
         if: always()
         run: |
           curl -X DELETE ${{ secrets.JFROG_PLATFORM_URL }}/access/api/v1/oidc/${{ env.OIDC_CONFIG_NAME }}/identity_mappings/oidc-test-identity-mapping -H 'Authorization: Bearer ${{ secrets.JFROG_PLATFORM_RT_TOKEN }}'
 
       - name: DEL OIDC Integration
+        shell: bash
         if: always()
         run: |
           curl -X DELETE ${{ secrets.JFROG_PLATFORM_URL }}/access/api/v1/oidc/${{ env.OIDC_CONFIG_NAME }} -H 'Authorization: Bearer ${{ secrets.JFROG_PLATFORM_RT_TOKEN }}'
