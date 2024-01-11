@@ -66,7 +66,7 @@ jobs:
           }'
 
       - name: Install JFrog CLI using
-        uses: eranturgeman/setup-jfrog-cli@adding-oidc-auth
+        uses: jfrog/setup-jfrog-cli@v3
         env:
           JF_URL: ${{ secrets.JFROG_PLATFORM_URL }}
         with:
