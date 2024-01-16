@@ -1,5 +1,5 @@
 import * as os from 'os';
-import {Utils, DownloadDetails, JfrogCredentials} from '../src/utils';
+import { Utils, DownloadDetails, JfrogCredentials } from '../src/utils';
 jest.mock('os');
 
 const DEFAULT_CLI_URL: string = 'https://releases.jfrog.io/artifactory/jfrog-cli/';
@@ -73,29 +73,70 @@ test('Get legacy Config Tokens', async () => {
     expect(Utils.getConfigTokens()).toStrictEqual(new Set(['DUMMY_CONFIG_TOKEN_1', 'DUMMY_CONFIG_TOKEN_2', 'DUMMY_CONFIG_TOKEN_3']));
 });
 
-test("Collect JFrog Credentials from env vars", async () => {
-   process.env['JF_URL'] = '';
-   let jfrogCredentials: JfrogCredentials = Utils.collectJfrogCredentialsFromEnvVars();
-   expect(jfrogCredentials.jfrogUrl).toEqual(undefined);
-   expect(jfrogCredentials.username).toEqual(undefined);
-   expect(jfrogCredentials.password).toEqual(undefined);
-   expect(jfrogCredentials.accessToken).toEqual(undefined);
+describe("Collect credentials from environment variables test", () => {
+    let cases: string[][] = [
+        // [JF_URL, JF_ACCESS_TOKEN, JF_USER, JF_PASSWORD]
+        ["", "", "", ""],
+        ["https://my-server.io", "my-access-token", "", ""],
+        ["https://my-server.io", "my-access-token", "my-user", "my-password"],
+    ];
 
-    process.env['JF_URL'] = "https://my-server.io";
-    process.env['JF_ACCESS_TOKEN'] = "my-access-token";
-    jfrogCredentials = Utils.collectJfrogCredentialsFromEnvVars();
-    expect(jfrogCredentials.jfrogUrl).toEqual("https://my-server.io");
-    expect(jfrogCredentials.username).toEqual(undefined);
-    expect(jfrogCredentials.password).toEqual(undefined);
-    expect(jfrogCredentials.accessToken).toEqual("my-access-token");
+    test.each(cases)('Checking Jfrog credentials struct for url: %s, access token %s, username: %s, password: %s', (jfrogUrl, accessToken, username, password) => {
+        process.env['JF_URL'] = jfrogUrl;
+        process.env['JF_ACCESS_TOKEN'] = accessToken;
+        process.env['JF_USER'] = username;
+        process.env['JF_PASSWORD'] = password;
 
-    process.env['JF_USER'] = "user";
-    process.env['JF_PASSWORD'] = "password";
+        let jfrogCredentials: JfrogCredentials = Utils.collectJfrogCredentialsFromEnvVars();
+        if (jfrogUrl != "") {
+            expect(jfrogCredentials.jfrogUrl).toEqual(jfrogUrl);
+        } else {
+            expect(jfrogCredentials.jfrogUrl).toBeUndefined()
+        }
+
+        if (accessToken != "") {
+            expect(jfrogCredentials.accessToken).toEqual(accessToken);
+        } else {
+            expect(jfrogCredentials.accessToken).toBeUndefined()
+        }
+
+        if (username != "") {
+            expect(jfrogCredentials.username).toEqual(username);
+        } else {
+            expect(jfrogCredentials.username).toBeUndefined()
+        }
+
+        if (password != "") {
+            expect(jfrogCredentials.password).toEqual(password);
+        } else {
+            expect(jfrogCredentials.password).toBeUndefined()
+        }
+    });
+});
+
+test('Collect JFrog Credentials from env vars', async () => {
+    process.env['JF_URL'] = '';
+    let jfrogCredentials: JfrogCredentials = Utils.collectJfrogCredentialsFromEnvVars();
+    expect(jfrogCredentials.jfrogUrl).toBeUndefined();
+    expect(jfrogCredentials.username).toBeUndefined();
+    expect(jfrogCredentials.password).toBeUndefined();
+    expect(jfrogCredentials.accessToken).toBeUndefined();
+
+    process.env['JF_URL'] = 'https://my-server.io';
+    process.env['JF_ACCESS_TOKEN'] = 'my-access-token';
     jfrogCredentials = Utils.collectJfrogCredentialsFromEnvVars();
-    expect(jfrogCredentials.jfrogUrl).toEqual("https://my-server.io");
-    expect(jfrogCredentials.username).toEqual("user");
-    expect(jfrogCredentials.password).toEqual("password");
-    expect(jfrogCredentials.accessToken).toEqual("my-access-token");
+    expect(jfrogCredentials.jfrogUrl).toEqual('https://my-server.io');
+    expect(jfrogCredentials.username).toBeUndefined();
+    expect(jfrogCredentials.password).toBeUndefined();
+    expect(jfrogCredentials.accessToken).toEqual('my-access-token');
+
+    process.env['JF_USER'] = 'user';
+    process.env['JF_PASSWORD'] = 'password';
+    jfrogCredentials = Utils.collectJfrogCredentialsFromEnvVars();
+    expect(jfrogCredentials.jfrogUrl).toEqual('https://my-server.io');
+    expect(jfrogCredentials.username).toEqual('user');
+    expect(jfrogCredentials.password).toEqual('password');
+    expect(jfrogCredentials.accessToken).toEqual('my-access-token');
 });
 
 test('Get separate env config', async () => {
@@ -103,17 +144,16 @@ test('Get separate env config', async () => {
     let configCommand: string[] | undefined = Utils.getSeparateEnvConfigArgs({} as JfrogCredentials);
     expect(configCommand).toBe(undefined);
 
-    let jfrogCredentials : JfrogCredentials = {} as JfrogCredentials;
-    jfrogCredentials.jfrogUrl = DEFAULT_CLI_URL
+    let jfrogCredentials: JfrogCredentials = {} as JfrogCredentials;
+    jfrogCredentials.jfrogUrl = DEFAULT_CLI_URL;
 
     // No credentials
     configCommand = Utils.getSeparateEnvConfigArgs(jfrogCredentials);
     expect(configCommand).toStrictEqual([Utils.SETUP_JFROG_CLI_SERVER_ID, '--url', DEFAULT_CLI_URL, '--interactive=false', '--overwrite=true']);
 
-
     // Basic authentication
     jfrogCredentials.username = 'user';
-    jfrogCredentials.password = 'password'
+    jfrogCredentials.password = 'password';
     configCommand = Utils.getSeparateEnvConfigArgs(jfrogCredentials);
     expect(configCommand).toStrictEqual([
         Utils.SETUP_JFROG_CLI_SERVER_ID,
@@ -129,7 +169,7 @@ test('Get separate env config', async () => {
 
     // Access Token
     jfrogCredentials.username = '';
-    jfrogCredentials.password = ''
+    jfrogCredentials.password = '';
     jfrogCredentials.accessToken = 'accessToken';
     configCommand = Utils.getSeparateEnvConfigArgs(jfrogCredentials);
     expect(configCommand).toStrictEqual([
@@ -209,7 +249,7 @@ test('Extract download details Tests', () => {
     );
 
     process.env.JF_ENV_LOCAL = '';
-    let jfrogCredentials1 : JfrogCredentials = {} as JfrogCredentials;
+    let jfrogCredentials1: JfrogCredentials = {} as JfrogCredentials;
     jfrogCredentials1.jfrogUrl = 'http://127.0.0.1:8081';
     jfrogCredentials1.username = 'user';
     jfrogCredentials1.password = 'password';
@@ -218,16 +258,14 @@ test('Extract download details Tests', () => {
     expect(downloadDetails.repository).toBe('jfrog-cli-remote');
     expect(downloadDetails.auth).toBe('Basic dXNlcjpwYXNzd29yZA==');
 
-    let jfrogCredentials2 : JfrogCredentials = {} as JfrogCredentials;
+    let jfrogCredentials2: JfrogCredentials = {} as JfrogCredentials;
     jfrogCredentials2.jfrogUrl = 'http://127.0.0.1:8081';
     jfrogCredentials2.accessToken = 'YWNjZXNzVG9rZW4=';
     downloadDetails = Utils.extractDownloadDetails('jfrog-cli-remote', jfrogCredentials2);
     expect(downloadDetails.artifactoryUrl).toBe('http://127.0.0.1:8081/artifactory');
     expect(downloadDetails.repository).toBe('jfrog-cli-remote');
     expect(downloadDetails.auth).toBe(`Bearer YWNjZXNzVG9rZW4=`);
-
 });
-
 
 test('User agent', () => {
     let userAgent: string = Utils.USER_AGENT;

@@ -1,8 +1,6 @@
 # This action is an integration test for OIDC workflow
 name: OpenID Connect Test
 on:
-  workflow_dispatch:
-
   push:
     branches:
       - '**'
@@ -33,11 +31,11 @@ jobs:
         uses: actions/checkout@v4
 
       # Generating a unique name for the Integration Configuration that will be created in the following step
-      - name: Get unique OIDC config name
+      - name: Generate unique OIDC config name
         shell: bash
         run: echo "OIDC_CONFIG_NAME=oidc-integration-test-config-$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
 
-      - name: POST OpenID Connect Integration
+      - name: Create OpenID Connect integration
         shell: bash
         run: |
           curl -X POST "${{ secrets.JFROG_PLATFORM_URL }}/access/api/v1/oidc" -H "Content-Type: application/json" -H "Authorization: Bearer ${{ secrets.JFROG_PLATFORM_RT_TOKEN }}" -d '{
@@ -46,7 +44,7 @@ jobs:
           "provider_type": "GitHub",
           "description": "This is a test configuration created for OIDC-Access integration test" }'
 
-      - name: POST OIDC Integration Identity Mapping
+      - name: Create OIDC integration Identity Mapping
         shell: bash
         run: |
           curl -X POST ${{ secrets.JFROG_PLATFORM_URL }}/access/api/v1/oidc/${{ env.OIDC_CONFIG_NAME }}/identity_mappings \
@@ -65,24 +63,19 @@ jobs:
                 }
           }'
 
-      - name: Install JFrog CLI using
-        uses: jfrog/setup-jfrog-cli@v3
+      - name: Setup JFrog CLI
+        uses: ./
         env:
           JF_URL: ${{ secrets.JFROG_PLATFORM_URL }}
         with:
-          provider_name: ${{ env.OIDC_CONFIG_NAME }}
+          oidc-provider-name: ${{ env.OIDC_CONFIG_NAME }}
 
       - name: Test JFrog CLI
         run: |
           jf rt ping
 
-      - name: DEL OIDC Integration Identity-mapping
-        shell: bash
-        if: always()
-        run: |
-          curl -X DELETE ${{ secrets.JFROG_PLATFORM_URL }}/access/api/v1/oidc/${{ env.OIDC_CONFIG_NAME }}/identity_mappings/oidc-test-identity-mapping -H 'Authorization: Bearer ${{ secrets.JFROG_PLATFORM_RT_TOKEN }}'
-
-      - name: DEL OIDC Integration
+      # Removing the OIDC integration will remove the Identity Mapping as well
+      - name: Delete OIDC integration
         shell: bash
         if: always()
         run: |

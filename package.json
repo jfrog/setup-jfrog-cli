@@ -39,7 +39,6 @@
         "@actions/exec": "~1.1.1",
         "@actions/http-client": "~2.2.0",
         "@actions/tool-cache": "~2.0.1",
-        "jwt-decode": "^4.0.0",
         "semver": "~7.5.4"
     },
     "devDependencies": {

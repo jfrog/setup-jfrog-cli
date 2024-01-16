@@ -1,5 +1,5 @@
 import * as core from '@actions/core';
-import {JfrogCredentials, Utils} from './utils';
+import { JfrogCredentials, Utils } from './utils';
 
 async function cleanup() {
     try {
