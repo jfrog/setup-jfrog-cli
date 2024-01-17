@@ -2,9 +2,11 @@ import * as core from '@actions/core';
 import { exec } from '@actions/exec';
 import * as toolCache from '@actions/tool-cache';
 import { chmodSync } from 'fs';
-import { platform, arch } from 'os';
+import { arch, platform } from 'os';
 import { join } from 'path';
 import { lt } from 'semver';
+import { HttpClient, HttpClientResponse } from '@actions/http-client';
+import { OutgoingHttpHeaders } from 'http';
 
 export class Utils {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -35,8 +37,103 @@ export class Utils {
     private static readonly CLI_VERSION_ARG: string = 'version';
     // Download repository input
     private static readonly CLI_REMOTE_ARG: string = 'download-repository';
+    // OpenID Connect audience input
+    private static readonly OIDC_AUDIENCE_ARG: string = 'oidc-audience';
+    // OpenID Connect provider_name input
+    private static readonly OIDC_INTEGRATION_PROVIDER_NAME: string = 'oidc-provider-name';
 
-    public static async addCliToPath() {
+    /**
+     * Retrieves server credentials for accessing JFrog's server
+     * searching for existing environment variables such as JF_ACCESS_TOKEN or the combination of JF_USER and JF_PASSWORD.
+     * If neither is found, and if the request and requester are authorized, it generates an access token for the specified JFrog's server using the OpenID Connect mechanism.
+     * @returns JfrogCredentials struct filled with collected credentials
+     */
+    public static async getJfrogCredentials(): Promise<JfrogCredentials> {
+        let jfrogCredentials: JfrogCredentials = this.collectJfrogCredentialsFromEnvVars();
+        if (!jfrogCredentials.jfrogUrl) {
+            return jfrogCredentials;
+        }
+
+        // If the required credentials, such as the access token or a combination of username and password, are available, the process terminates without triggering the OIDC flow
+        if (jfrogCredentials.accessToken || (jfrogCredentials.username && jfrogCredentials.password)) {
+            return jfrogCredentials;
+        }
+
+        core.info("JF_ACCESS_TOKEN and JF_USER + JF_PASSWORD weren't found. Getting access token using OpenID Connect");
+        const audience: string = core.getInput(Utils.OIDC_AUDIENCE_ARG);
+        let jsonWebToken: string | undefined;
+        try {
+            core.debug('Fetching JSON web token');
+            jsonWebToken = await core.getIDToken(audience);
+        } catch (error: any) {
+            throw new Error(`Getting openID Connect JSON web token failed: ${error.message}`);
+        }
+
+        try {
+            return await this.getAccessTokenFromJWT(jfrogCredentials, jsonWebToken);
+        } catch (error: any) {
+            throw new Error(`Exchanging JSON web token with an access token failed: ${error.message}`);
+        }
+    }
+
+    /**
+     * Gathers JFrog's credentials from environment variables and delivers them in a JfrogCredentials structure
+     * @returns JfrogCredentials struct with all credentials found in environment variables
+     */
+    public static collectJfrogCredentialsFromEnvVars(): JfrogCredentials {
+        let jfrogCredentials: JfrogCredentials = {} as JfrogCredentials;
+        core.debug('Searching for JF_URL');
+        if (process.env.JF_URL) {
+            core.debug('JF_URL found');
+            jfrogCredentials.jfrogUrl = process.env.JF_URL;
+        }
+
+        core.debug('Searching for JF_ACCESS_TOKEN, JF_USER and JF_PASSWORD');
+        if (process.env.JF_ACCESS_TOKEN) {
+            core.debug('JF_ACCESS_TOKEN found');
+            jfrogCredentials.accessToken = process.env.JF_ACCESS_TOKEN;
+        }
+
+        if (process.env.JF_USER && process.env.JF_PASSWORD) {
+            core.debug('JF_USER and JF_PASSWORD found');
+            jfrogCredentials.username = process.env.JF_USER;
+            jfrogCredentials.password = process.env.JF_PASSWORD;
+        }
+        return jfrogCredentials;
+    }
+
+    /**
+     * Exchanges JWT with a valid access token
+     * @param jfrogCredentials existing JFrog credentials - url, access token, username + password
+     * @param jsonWebToken JWT achieved from GitHub JWT provider
+     * @returns an access token for the requested Artifactory server
+     */
+    private static async getAccessTokenFromJWT(jfrogCredentials: JfrogCredentials, jsonWebToken: string): Promise<JfrogCredentials> {
+        // If we've reached this stage, the jfrogCredentials.jfrogUrl field should hold a non-empty value obtained from process.env.JF_URL
+        const exchangeUrl: string = jfrogCredentials.jfrogUrl!.replace(/\/$/, '') + '/access/api/v1/oidc/token';
+        core.debug('Exchanging JSON web token with an access token');
+
+        const providerName: string = core.getInput(Utils.OIDC_INTEGRATION_PROVIDER_NAME, { required: true });
+        const httpClient: HttpClient = new HttpClient();
+        const data: string = `{
+            "grant_type": "urn:ietf:params:oauth:grant-type:token-exchange",
+            "subject_token_type": "urn:ietf:params:oauth:token-type:id_token",
+            "subject_token": "${jsonWebToken}",
+            "provider_name": "${providerName}"
+        }`;
+
+        const additionalHeaders: OutgoingHttpHeaders = {
+            'Content-Type': 'application/json',
+        };
+
+        const response: HttpClientResponse = await httpClient.post(exchangeUrl, data, additionalHeaders);
+        const responseString: string = await response.readBody();
+        const responseJson: TokenExchangeResponseData = JSON.parse(responseString);
+        jfrogCredentials.accessToken = responseJson.access_token;
+        return jfrogCredentials;
+    }
+
+    public static async getAndAddCliToPath(jfrogCredentials: JfrogCredentials) {
         let version: string = core.getInput(Utils.CLI_VERSION_ARG);
         let cliRemote: string = core.getInput(Utils.CLI_REMOTE_ARG);
         let major: string = version.split('.')[0];
@@ -55,7 +152,7 @@ export class Utils {
         }
 
         // Download JFrog CLI
-        let downloadDetails: DownloadDetails = Utils.extractDownloadDetails(cliRemote);
+        let downloadDetails: DownloadDetails = Utils.extractDownloadDetails(cliRemote, jfrogCredentials);
         let url: string = Utils.getCliUrl(major, version, jfrogFileName, downloadDetails);
         core.info('Downloading JFrog CLI from ' + url);
         let downloadDir: string = await toolCache.downloadTool(url, undefined, downloadDetails.auth);
@@ -135,17 +232,20 @@ export class Utils {
         return configTokens;
     }
 
-    // Get separate env config for the URL and connection details and return args to add to the config add command
-    public static getSeparateEnvConfigArgs(): string[] | undefined {
+    /**
+     * Get separate env config for the URL and connection details and return args to add to the config add command
+     * @param jfrogCredentials existing JFrog credentials - url, access token, username + password
+     */
+    public static getSeparateEnvConfigArgs(jfrogCredentials: JfrogCredentials): string[] | undefined {
         /**
          * @name url - JFrog Platform URL
          * @name user&password - JFrog Platform basic authentication
          * @name accessToken - Jfrog Platform access token
          */
-        let url: string | undefined = process.env.JF_URL;
-        let user: string | undefined = process.env.JF_USER;
-        let password: string | undefined = process.env.JF_PASSWORD;
-        let accessToken: string | undefined = process.env.JF_ACCESS_TOKEN;
+        let url: string | undefined = jfrogCredentials.jfrogUrl;
+        let user: string | undefined = jfrogCredentials.username;
+        let password: string | undefined = jfrogCredentials.password;
+        let accessToken: string | undefined = jfrogCredentials.accessToken;
 
         if (url) {
             let configCmd: string[] = [Utils.SETUP_JFROG_CLI_SERVER_ID, '--url', url, '--interactive=false', '--overwrite=true'];
@@ -186,7 +286,7 @@ export class Utils {
         }
     }
 
-    public static async configJFrogServers() {
+    public static async configJFrogServers(jfrogCredentials: JfrogCredentials) {
         let cliConfigCmd: string[] = ['config'];
         let useOldConfig: boolean = Utils.useOldConfig();
         if (useOldConfig) {
@@ -199,7 +299,7 @@ export class Utils {
             await Utils.runCli(cliConfigCmd.concat('import', configToken));
         }
 
-        let configArgs: string[] | undefined = Utils.getSeparateEnvConfigArgs();
+        let configArgs: string[] | undefined = Utils.getSeparateEnvConfigArgs(jfrogCredentials);
         if (configArgs) {
             await Utils.runCli(cliConfigCmd.concat('add', ...configArgs));
         }
@@ -255,9 +355,10 @@ export class Utils {
      * If repository input was set, extract CLI download details,
      * from either a Config Token with a JF_ENV_ prefix or separate env config (JF_URL, JF_USER, JF_PASSWORD, JF_ACCESS_TOKEN).
      * @param repository - Remote repository in Artifactory pointing to https://releases.jfrog.io/artifactory/jfrog-cli/. If empty, use the default download details.
+     * @param jfrogCredentials All collected JFrog credentials
      * @returns the download details.
      */
-    public static extractDownloadDetails(repository: string): DownloadDetails {
+    public static extractDownloadDetails(repository: string, jfrogCredentials: JfrogCredentials): DownloadDetails {
         if (repository === '') {
             return Utils.DEFAULT_DOWNLOAD_DETAILS;
         }
@@ -272,18 +373,19 @@ export class Utils {
         }
         if (!serverObj.artifactoryUrl) {
             // No Config Tokens found, check if Separate Env config exist.
-            if (!process.env.JF_URL) {
+            if (!jfrogCredentials.jfrogUrl) {
                 throw new Error(
                     `'download-repository' input provided, but no JFrog environment details found. ` +
                         `Hint - Ensure that the JFrog connection details environment variables are set: ` +
                         `either a Config Token with a JF_ENV_ prefix or separate env config (JF_URL, JF_USER, JF_PASSWORD, JF_ACCESS_TOKEN)`,
                 );
             }
-            serverObj.artifactoryUrl = process.env.JF_URL.replace(/\/$/, '') + '/artifactory';
-            serverObj.user = process.env.JF_USER;
-            serverObj.password = process.env.JF_PASSWORD;
-            serverObj.accessToken = process.env.JF_ACCESS_TOKEN;
+            serverObj.artifactoryUrl = jfrogCredentials.jfrogUrl.replace(/\/$/, '') + '/artifactory';
+            serverObj.user = jfrogCredentials.username;
+            serverObj.password = jfrogCredentials.password;
+            serverObj.accessToken = jfrogCredentials.accessToken;
         }
+
         results.artifactoryUrl = serverObj.artifactoryUrl;
         let authString: string | undefined = Utils.generateAuthString(serverObj);
         if (authString) {
@@ -318,4 +420,14 @@ export interface DownloadDetails {
     artifactoryUrl: string;
     repository: string;
     auth: string;
+}
+export interface JfrogCredentials {
+    jfrogUrl: string | undefined;
+    username: string | undefined;
+    password: string | undefined;
+    accessToken: string | undefined;
+}
+
+export interface TokenExchangeResponseData {
+    access_token: string;
 }
