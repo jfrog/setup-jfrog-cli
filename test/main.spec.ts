@@ -73,45 +73,48 @@ test('Get legacy Config Tokens', async () => {
     expect(Utils.getConfigTokens()).toStrictEqual(new Set(['DUMMY_CONFIG_TOKEN_1', 'DUMMY_CONFIG_TOKEN_2', 'DUMMY_CONFIG_TOKEN_3']));
 });
 
-describe("Collect credentials from environment variables test", () => {
+describe('Collect credentials from environment variables test', () => {
     let cases: string[][] = [
         // [JF_URL, JF_ACCESS_TOKEN, JF_USER, JF_PASSWORD]
-        ["", "", "", ""],
-        ["https://my-server.io", "my-access-token", "", ""],
-        ["https://my-server.io", "my-access-token", "my-user", "my-password"],
+        ['', '', '', ''],
+        ['https://my-server.io', 'my-access-token', '', ''],
+        ['https://my-server.io', 'my-access-token', 'my-user', 'my-password'],
     ];
 
-    test.each(cases)('Checking Jfrog credentials struct for url: %s, access token %s, username: %s, password: %s', (jfrogUrl, accessToken, username, password) => {
-        process.env['JF_URL'] = jfrogUrl;
-        process.env['JF_ACCESS_TOKEN'] = accessToken;
-        process.env['JF_USER'] = username;
-        process.env['JF_PASSWORD'] = password;
+    test.each(cases)(
+        'Checking Jfrog credentials struct for url: %s, access token %s, username: %s, password: %s',
+        (jfrogUrl, accessToken, username, password) => {
+            process.env['JF_URL'] = jfrogUrl;
+            process.env['JF_ACCESS_TOKEN'] = accessToken;
+            process.env['JF_USER'] = username;
+            process.env['JF_PASSWORD'] = password;
 
-        let jfrogCredentials: JfrogCredentials = Utils.collectJfrogCredentialsFromEnvVars();
-        if (jfrogUrl != "") {
-            expect(jfrogCredentials.jfrogUrl).toEqual(jfrogUrl);
-        } else {
-            expect(jfrogCredentials.jfrogUrl).toBeUndefined()
-        }
+            let jfrogCredentials: JfrogCredentials = Utils.collectJfrogCredentialsFromEnvVars();
+            if (jfrogUrl) {
+                expect(jfrogCredentials.jfrogUrl).toEqual(jfrogUrl);
+            } else {
+                expect(jfrogCredentials.jfrogUrl).toBeUndefined();
+            }
 
-        if (accessToken != "") {
-            expect(jfrogCredentials.accessToken).toEqual(accessToken);
-        } else {
-            expect(jfrogCredentials.accessToken).toBeUndefined()
-        }
+            if (accessToken) {
+                expect(jfrogCredentials.accessToken).toEqual(accessToken);
+            } else {
+                expect(jfrogCredentials.accessToken).toBeUndefined();
+            }
 
-        if (username != "") {
-            expect(jfrogCredentials.username).toEqual(username);
-        } else {
-            expect(jfrogCredentials.username).toBeUndefined()
-        }
+            if (username) {
+                expect(jfrogCredentials.username).toEqual(username);
+            } else {
+                expect(jfrogCredentials.username).toBeUndefined();
+            }
 
-        if (password != "") {
-            expect(jfrogCredentials.password).toEqual(password);
-        } else {
-            expect(jfrogCredentials.password).toBeUndefined()
-        }
-    });
+            if (password) {
+                expect(jfrogCredentials.password).toEqual(password);
+            } else {
+                expect(jfrogCredentials.password).toBeUndefined();
+            }
+        },
+    );
 });
 
 test('Collect JFrog Credentials from env vars', async () => {

@@ -39,7 +39,7 @@ export class Utils {
     private static readonly CLI_REMOTE_ARG: string = 'download-repository';
     // OpenID Connect audience input
     private static readonly OIDC_AUDIENCE_ARG: string = 'oidc-audience';
-    //OpenID Connect provider_name input
+    // OpenID Connect provider_name input
     private static readonly OIDC_INTEGRATION_PROVIDER_NAME: string = 'oidc-provider-name';
 
     /**
@@ -111,7 +111,7 @@ export class Utils {
     private static async getAccessTokenFromJWT(jfrogCredentials: JfrogCredentials, jsonWebToken: string): Promise<JfrogCredentials> {
         // If we've reached this stage, the jfrogCredentials.jfrogUrl field should hold a non-empty value obtained from process.env.JF_URL
         const exchangeUrl: string = jfrogCredentials.jfrogUrl!.replace(/\/$/, '') + '/access/api/v1/oidc/token';
-        core.info('Exchanging JSON web token with access tokesn');
+        core.debug('Exchanging JSON web token with an access token');
 
         const providerName: string = core.getInput(Utils.OIDC_INTEGRATION_PROVIDER_NAME, { required: true });
         const httpClient: HttpClient = new HttpClient();
