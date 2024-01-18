@@ -54,7 +54,7 @@ jobs:
                 "name": "oidc-test-identity-mapping",
                 "priority": "1",
                 "claims": {
-                  "sub": "repo:jfrog/setup-jfrog-cli:ref:refs/heads/main",
+                  "sub": "repo:${{ github.repository_owner }}/setup-jfrog-cli:ref:${{ github.ref }}",
                   "iss": "https://token.actions.githubusercontent.com"
                 },
                 "token_spec": {
@@ -72,7 +72,7 @@ jobs:
 
       - name: Test JFrog CLI
         run: |
-          jf rt ping
+          jf rt s "some-repo/"
 
       # Removing the OIDC integration will remove the Identity Mapping as well
       - name: Delete OIDC integration

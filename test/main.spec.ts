@@ -82,7 +82,7 @@ describe('Collect credentials from environment variables test', () => {
     ];
 
     test.each(cases)(
-        'Checking Jfrog credentials struct for url: %s, access token %s, username: %s, password: %s',
+        'Checking JFrog credentials struct for url: %s, access token %s, username: %s, password: %s',
         (jfrogUrl, accessToken, username, password) => {
             process.env['JF_URL'] = jfrogUrl;
             process.env['JF_ACCESS_TOKEN'] = accessToken;
@@ -93,53 +93,43 @@ describe('Collect credentials from environment variables test', () => {
             if (jfrogUrl) {
                 expect(jfrogCredentials.jfrogUrl).toEqual(jfrogUrl);
             } else {
-                expect(jfrogCredentials.jfrogUrl).toBeUndefined();
+                expect(jfrogCredentials.jfrogUrl).toBeFalsy();
             }
 
             if (accessToken) {
                 expect(jfrogCredentials.accessToken).toEqual(accessToken);
             } else {
-                expect(jfrogCredentials.accessToken).toBeUndefined();
+                expect(jfrogCredentials.accessToken).toBeFalsy();
             }
 
             if (username) {
                 expect(jfrogCredentials.username).toEqual(username);
             } else {
-                expect(jfrogCredentials.username).toBeUndefined();
+                expect(jfrogCredentials.username).toBeFalsy();
             }
 
             if (password) {
                 expect(jfrogCredentials.password).toEqual(password);
             } else {
-                expect(jfrogCredentials.password).toBeUndefined();
+                expect(jfrogCredentials.password).toBeFalsy();
             }
         },
     );
 });
 
-test('Collect JFrog Credentials from env vars', async () => {
-    process.env['JF_URL'] = '';
-    let jfrogCredentials: JfrogCredentials = Utils.collectJfrogCredentialsFromEnvVars();
-    expect(jfrogCredentials.jfrogUrl).toBeUndefined();
-    expect(jfrogCredentials.username).toBeUndefined();
-    expect(jfrogCredentials.password).toBeUndefined();
-    expect(jfrogCredentials.accessToken).toBeUndefined();
+describe('Collect JFrog Credentials from env vars exceptions', () => {
+    let cases: string[][] = [
+        // [JF_USER, JF_PASSWORD, EXCEPTION]
+        ['', 'password', 'JF_PASSWORD is configured, but the JF_USER environment variable was not set.'],
+        ['user', '', 'JF_USER is configured, but the JF_PASSWORD or JF_ACCESS_TOKEN environment variables were not set.'],
+    ];
 
-    process.env['JF_URL'] = 'https://my-server.io';
-    process.env['JF_ACCESS_TOKEN'] = 'my-access-token';
-    jfrogCredentials = Utils.collectJfrogCredentialsFromEnvVars();
-    expect(jfrogCredentials.jfrogUrl).toEqual('https://my-server.io');
-    expect(jfrogCredentials.username).toBeUndefined();
-    expect(jfrogCredentials.password).toBeUndefined();
-    expect(jfrogCredentials.accessToken).toEqual('my-access-token');
-
-    process.env['JF_USER'] = 'user';
-    process.env['JF_PASSWORD'] = 'password';
-    jfrogCredentials = Utils.collectJfrogCredentialsFromEnvVars();
-    expect(jfrogCredentials.jfrogUrl).toEqual('https://my-server.io');
-    expect(jfrogCredentials.username).toEqual('user');
-    expect(jfrogCredentials.password).toEqual('password');
-    expect(jfrogCredentials.accessToken).toEqual('my-access-token');
+    test.each(cases)('Checking JFrog credentials struct for username: %s, password: %s', (username, password, exception) => {
+        process.env['JF_ACCESS_TOKEN'] = '';
+        process.env['JF_USER'] = username;
+        process.env['JF_PASSWORD'] = password;
+        expect(() => Utils.collectJfrogCredentialsFromEnvVars()).toThrow(new Error(exception));
+    });
 });
 
 test('Get separate env config', async () => {
