@@ -1,12 +1,12 @@
 import * as core from '@actions/core';
 import { exec } from '@actions/exec';
+import { HttpClient, HttpClientResponse } from '@actions/http-client';
 import * as toolCache from '@actions/tool-cache';
 import { chmodSync } from 'fs';
+import { OutgoingHttpHeaders } from 'http';
 import { arch, platform } from 'os';
 import { join } from 'path';
 import { lt } from 'semver';
-import { HttpClient, HttpClientResponse } from '@actions/http-client';
-import { OutgoingHttpHeaders } from 'http';
 
 export class Utils {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -154,7 +154,7 @@ export class Utils {
         let version: string = core.getInput(Utils.CLI_VERSION_ARG);
         let cliRemote: string = core.getInput(Utils.CLI_REMOTE_ARG);
         let major: string = version.split('.')[0];
-        if (version === this.LATEST_CLI_VERSION) {
+        if (version === Utils.LATEST_CLI_VERSION) {
             version = Utils.LATEST_RELEASE_VERSION;
             major = '2';
         } else if (lt(version, this.MIN_CLI_VERSION)) {
@@ -177,6 +177,23 @@ export class Utils {
         // Cache 'jf' and 'jfrog' executables
         await this.cacheAndAddPath(downloadDir, version, jfFileName);
         await this.cacheAndAddPath(downloadDir, version, jfrogFileName);
+    }
+
+    /**
+     * Fetch the JFrog CLI path from the tool cache and append it to the PATH environment variable. Employ this approach during the cleanup phase.
+     */
+    public static addCachedCliToPath(): boolean {
+        let version: string = core.getInput(Utils.CLI_VERSION_ARG);
+        if (version === Utils.LATEST_CLI_VERSION) {
+            version = Utils.LATEST_RELEASE_VERSION;
+        }
+        let jfrogCliPath: string = toolCache.find(Utils.getJfExecutableName(), version);
+        if (!jfrogCliPath) {
+            core.warning(`Could not find JFrog CLI version '${version}' in tool cache`);
+            return false;
+        }
+        core.addPath(jfrogCliPath);
+        return true;
     }
 
     /**
