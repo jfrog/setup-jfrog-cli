@@ -1,12 +1,12 @@
 import * as core from '@actions/core';
 import { exec } from '@actions/exec';
+import { HttpClient, HttpClientResponse } from '@actions/http-client';
 import * as toolCache from '@actions/tool-cache';
 import { chmodSync } from 'fs';
+import { OutgoingHttpHeaders } from 'http';
 import { arch, platform } from 'os';
 import { join } from 'path';
 import { lt } from 'semver';
-import { HttpClient, HttpClientResponse } from '@actions/http-client';
-import { OutgoingHttpHeaders } from 'http';
 
 export class Utils {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -182,7 +182,7 @@ export class Utils {
     /**
      * Fetch the JFrog CLI path from the tool cache and append it to the PATH environment variable. Employ this approach during the cleanup phase.
      */
-    public static async addCachedCliToPath(): Promise<boolean> {
+    public static addCachedCliToPath(): boolean {
         let version: string = core.getInput(Utils.CLI_VERSION_ARG);
         if (version === Utils.LATEST_CLI_VERSION) {
             version = Utils.LATEST_RELEASE_VERSION;
