@@ -78,16 +78,17 @@ export class Utils {
      * @returns true if OpenID Connect authentication should be used
      */
     private static shouldUseOpenIDConnect(jfrogCredentials: JfrogCredentials): boolean {
+        if (!process.env.ACTIONS_ID_TOKEN_REQUEST_URL) {
+            // To enable OpenIDConnect authentication, users must configure the 'id-token: write' permission, which sets the ACTIONS_ID_TOKEN_REQUEST_URL environment variable.
+            // If this variable is empty, it indicates that OIDC should not be utilized.
+            return false;
+        }
         if (!jfrogCredentials.jfrogUrl) {
             // If no JFrog URL is specified, we can't use OpenID Connect
             return false;
         }
         if (jfrogCredentials.password || jfrogCredentials.accessToken) {
             // If credentials are specified - use them instead
-            return false;
-        }
-        if (!process.env.ACTIONS_ID_TOKEN_REQUEST_URL) {
-            // Only if the user added the 'id-token: write' permission, this environment variable was set
             return false;
         }
         return true;
