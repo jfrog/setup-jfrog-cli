@@ -50,16 +50,12 @@ export class Utils {
      */
     public static async getJfrogCredentials(): Promise<JfrogCredentials> {
         let jfrogCredentials: JfrogCredentials = this.collectJfrogCredentialsFromEnvVars();
-        if (!jfrogCredentials.jfrogUrl) {
+        if (!jfrogCredentials.jfrogUrl || jfrogCredentials.password || jfrogCredentials.accessToken || !process.env.ACTIONS_ID_TOKEN_REQUEST_URL) {
+            // Use JF_ENV or the credentials found in the environment variables
             return jfrogCredentials;
         }
 
-        // If the required credentials, such as the access token or a combination of username and password, are available, the process terminates without triggering the OIDC flow
-        if (jfrogCredentials.accessToken || (jfrogCredentials.username && jfrogCredentials.password)) {
-            return jfrogCredentials;
-        }
-
-        core.info("JF_ACCESS_TOKEN and JF_USER + JF_PASSWORD weren't found. Getting access token using OpenID Connect");
+        core.info('The JFrog platform credentials were not configured. Obtaining an access token through OpenID Connect.');
         const audience: string = core.getInput(Utils.OIDC_AUDIENCE_ARG);
         let jsonWebToken: string | undefined;
         try {
@@ -79,25 +75,21 @@ export class Utils {
     /**
      * Gathers JFrog's credentials from environment variables and delivers them in a JfrogCredentials structure
      * @returns JfrogCredentials struct with all credentials found in environment variables
+     * @throws Error if a password provided without a username
      */
     public static collectJfrogCredentialsFromEnvVars(): JfrogCredentials {
-        let jfrogCredentials: JfrogCredentials = {} as JfrogCredentials;
-        core.debug('Searching for JF_URL');
-        if (process.env.JF_URL) {
-            core.debug('JF_URL found');
-            jfrogCredentials.jfrogUrl = process.env.JF_URL;
-        }
+        let jfrogCredentials: JfrogCredentials = {
+            jfrogUrl: process.env.JF_URL,
+            accessToken: process.env.JF_ACCESS_TOKEN,
+            username: process.env.JF_USER,
+            password: process.env.JF_PASSWORD,
+        } as JfrogCredentials;
 
-        core.debug('Searching for JF_ACCESS_TOKEN, JF_USER and JF_PASSWORD');
-        if (process.env.JF_ACCESS_TOKEN) {
-            core.debug('JF_ACCESS_TOKEN found');
-            jfrogCredentials.accessToken = process.env.JF_ACCESS_TOKEN;
+        if (jfrogCredentials.password && !jfrogCredentials.username) {
+            throw new Error('JF_PASSWORD is configured, but the JF_USER environment variable was not set.');
         }
-
-        if (process.env.JF_USER && process.env.JF_PASSWORD) {
-            core.debug('JF_USER and JF_PASSWORD found');
-            jfrogCredentials.username = process.env.JF_USER;
-            jfrogCredentials.password = process.env.JF_PASSWORD;
+        if (jfrogCredentials.username && !jfrogCredentials.accessToken && !jfrogCredentials.password) {
+            throw new Error('JF_USER is configured, but the JF_PASSWORD or JF_ACCESS_TOKEN environment variables were not set.');
         }
         return jfrogCredentials;
     }
@@ -130,6 +122,9 @@ export class Utils {
         const responseString: string = await response.readBody();
         const responseJson: TokenExchangeResponseData = JSON.parse(responseString);
         jfrogCredentials.accessToken = responseJson.access_token;
+        if (jfrogCredentials.accessToken) {
+            core.setSecret(jfrogCredentials.accessToken);
+        }
         return jfrogCredentials;
     }
 
