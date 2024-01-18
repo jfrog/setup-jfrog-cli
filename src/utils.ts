@@ -50,7 +50,7 @@ export class Utils {
      */
     public static async getJfrogCredentials(): Promise<JfrogCredentials> {
         let jfrogCredentials: JfrogCredentials = this.collectJfrogCredentialsFromEnvVars();
-        if (!jfrogCredentials.jfrogUrl || jfrogCredentials.password || jfrogCredentials.accessToken || !process.env.ACTIONS_ID_TOKEN_REQUEST_URL) {
+        if (!this.shouldUseOpenIDConnect(jfrogCredentials)) {
             // Use JF_ENV or the credentials found in the environment variables
             return jfrogCredentials;
         }
@@ -70,6 +70,27 @@ export class Utils {
         } catch (error: any) {
             throw new Error(`Exchanging JSON web token with an access token failed: ${error.message}`);
         }
+    }
+
+    /**
+     * Returns true if OpenID Connect authentication should be used.
+     * @param jfrogCredentials - Credentials retrieved from the environment variables
+     * @returns true if OpenID Connect authentication should be used
+     */
+    private static shouldUseOpenIDConnect(jfrogCredentials: JfrogCredentials): boolean {
+        if (!jfrogCredentials.jfrogUrl) {
+            // If no JFrog URL is specified, we can't use OpenID Connect
+            return false;
+        }
+        if (jfrogCredentials.password || jfrogCredentials.accessToken) {
+            // If credentials are specified - use them instead
+            return false;
+        }
+        if (!process.env.ACTIONS_ID_TOKEN_REQUEST_URL) {
+            // Only if the user added the 'id-token: write' permission, this environment variable was set
+            return false;
+        }
+        return true;
     }
 
     /**
