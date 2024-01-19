@@ -50,12 +50,16 @@ export class Utils {
      */
     public static async getJfrogCredentials(): Promise<JfrogCredentials> {
         let jfrogCredentials: JfrogCredentials = this.collectJfrogCredentialsFromEnvVars();
-        if (!this.shouldUseOpenIDConnect(jfrogCredentials)) {
+        const oidcProviderName: string = core.getInput(Utils.OIDC_INTEGRATION_PROVIDER_NAME);
+        if (!oidcProviderName) {
             // Use JF_ENV or the credentials found in the environment variables
             return jfrogCredentials;
         }
 
-        core.info('The JFrog platform credentials were not configured. Obtaining an access token through OpenID Connect.');
+        if (!jfrogCredentials.jfrogUrl) {
+            throw new Error(`JF_URL must be provided when oidc-provider-name is specified`);
+        }
+        core.info('Obtaining an access token through OpenID Connect.');
         const audience: string = core.getInput(Utils.OIDC_AUDIENCE_ARG);
         let jsonWebToken: string | undefined;
         try {
@@ -66,32 +70,10 @@ export class Utils {
         }
 
         try {
-            return await this.getAccessTokenFromJWT(jfrogCredentials, jsonWebToken);
+            return await this.getAccessTokenFromJWT(jfrogCredentials, jsonWebToken, oidcProviderName);
         } catch (error: any) {
             throw new Error(`Exchanging JSON web token with an access token failed: ${error.message}`);
         }
-    }
-
-    /**
-     * Returns true if OpenID Connect authentication should be used.
-     * @param jfrogCredentials - Credentials retrieved from the environment variables
-     * @returns true if OpenID Connect authentication should be used
-     */
-    private static shouldUseOpenIDConnect(jfrogCredentials: JfrogCredentials): boolean {
-        if (!process.env.ACTIONS_ID_TOKEN_REQUEST_URL) {
-            // To enable OpenIDConnect authentication, users must configure the 'id-token: write' permission, which sets the ACTIONS_ID_TOKEN_REQUEST_URL environment variable.
-            // If this variable is empty, it indicates that OIDC should not be utilized.
-            return false;
-        }
-        if (!jfrogCredentials.jfrogUrl) {
-            // If no JFrog URL is specified, we can't use OpenID Connect
-            return false;
-        }
-        if (jfrogCredentials.password || jfrogCredentials.accessToken) {
-            // If credentials are specified - use them instead
-            return false;
-        }
-        return true;
     }
 
     /**
@@ -120,20 +102,24 @@ export class Utils {
      * Exchanges JWT with a valid access token
      * @param jfrogCredentials existing JFrog credentials - url, access token, username + password
      * @param jsonWebToken JWT achieved from GitHub JWT provider
+     * @param oidcProviderName OIDC provider name
      * @returns an access token for the requested Artifactory server
      */
-    private static async getAccessTokenFromJWT(jfrogCredentials: JfrogCredentials, jsonWebToken: string): Promise<JfrogCredentials> {
+    private static async getAccessTokenFromJWT(
+        jfrogCredentials: JfrogCredentials,
+        jsonWebToken: string,
+        oidcProviderName: string,
+    ): Promise<JfrogCredentials> {
         // If we've reached this stage, the jfrogCredentials.jfrogUrl field should hold a non-empty value obtained from process.env.JF_URL
         const exchangeUrl: string = jfrogCredentials.jfrogUrl!.replace(/\/$/, '') + '/access/api/v1/oidc/token';
         core.debug('Exchanging JSON web token with an access token');
 
-        const providerName: string = core.getInput(Utils.OIDC_INTEGRATION_PROVIDER_NAME, { required: true });
         const httpClient: HttpClient = new HttpClient();
         const data: string = `{
             "grant_type": "urn:ietf:params:oauth:grant-type:token-exchange",
             "subject_token_type": "urn:ietf:params:oauth:token-type:id_token",
             "subject_token": "${jsonWebToken}",
-            "provider_name": "${providerName}"
+            "provider_name": "${oidcProviderName}"
         }`;
 
         const additionalHeaders: OutgoingHttpHeaders = {
@@ -146,6 +132,9 @@ export class Utils {
         jfrogCredentials.accessToken = responseJson.access_token;
         if (jfrogCredentials.accessToken) {
             core.setSecret(jfrogCredentials.accessToken);
+        }
+        if (responseJson.errors) {
+            throw new Error(`${JSON.stringify(responseJson.errors)}`);
         }
         return jfrogCredentials;
     }
@@ -464,4 +453,5 @@ export interface JfrogCredentials {
 
 export interface TokenExchangeResponseData {
     access_token: string;
+    errors: string;
 }

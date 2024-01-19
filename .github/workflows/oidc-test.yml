@@ -44,6 +44,15 @@ jobs:
           "provider_type": "GitHub",
           "description": "This is a test configuration created for OIDC-Access integration test" }'
 
+      - name: Set subject
+        shell: bash
+        run: |
+          if [[ $GITHUB_EVENT_NAME == 'pull_request_target' ]]; then
+            echo "SUB=repo:${{ github.repository_owner }}/setup-jfrog-cli:pull_request" >> "$GITHUB_ENV"
+          else
+            echo "SUB=repo:${{ github.repository_owner }}/setup-jfrog-cli:ref:${{ github.ref }}" >> "$GITHUB_ENV"
+          fi
+
       - name: Create OIDC integration Identity Mapping
         shell: bash
         run: |
@@ -54,7 +63,7 @@ jobs:
                 "name": "oidc-test-identity-mapping",
                 "priority": "1",
                 "claims": {
-                  "sub": "repo:${{ github.repository_owner }}/setup-jfrog-cli:ref:${{ github.ref }}",
+                  "sub": "${{ env.SUB }}",
                   "iss": "https://token.actions.githubusercontent.com"
                 },
                 "token_spec": {

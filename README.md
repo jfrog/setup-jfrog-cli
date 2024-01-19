@@ -116,9 +116,9 @@ To utilize the OIDC protocol, follow these steps:
 <div id="platformstep2"/>
 
 2. **[Configure an identity mapping](https://jfrog.com/help/r/jfrog-platform-administration-documentation/configure-identity-mappings)**: This phase generates a reference token for authenticating against the JFrog platform. It involves defining the necessary details to enable server authentication of the action issuer and granting the issuer an appropriate access token. 
-   You have the flexibility to define any valid list of claims required for request authentication. You can check a list of the possible claims [here](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect#understanding-the-oidc-token).
-   Example Claims JSON:
-   ```yml
+You have the flexibility to define any valid list of claims required for request authentication. You can check a list of the possible claims [here](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect#understanding-the-oidc-token).
+Example Claims JSON:
+   ```json
    {
       "sub": "repo:my-user-name/project1:ref:refs/heads/main", 
       "aud": "https://github.com/my-user-name",
@@ -131,22 +131,23 @@ To utilize the OIDC protocol, follow these steps:
 1. **Set required permissions**: In the course of the protocol's execution, it's imperative to acquire a JSON Web Token (JWT) from GitHub's OIDC provider. To request this token, it's essential to configure the specified permission in the workflow file:
    ```yml
    permissions:
-    id-token: write
+     id-token: write
    ```
 <div id="workflowstep2"/>
 
-2. **Pass the 'oidc-provider-name' input to the Action (Required)**: The 'oidc-provider-name' parameter designates the OIDC configuration whose one of its identity mapping should align with the generated JWT claims. This input needs to align with the 'Provider Name' value established within the OIDC configuration.
-3. **Pass the 'oidc-audience' input to the Action (Optional)**: The 'oidc-audience' input defines the intended recipients of an ID token (JWT), ensuring access is restricted to authorized recipients for the cloud (Artifactory). By default, it contains the URL of the repository owner.
-   This value, if transmitted, will be used as an argument in core.getIDToken(), which generates the JWT. It enforces a condition, allowing only workflows within the designated repository/organization to access the cloud role. Read more about it [here](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect#customizing-the-audience-value).
-      ```yml
-      - name: Install JFrog CLI
-        uses: jfrog/setup-jfrog-cli@v3
-        env:
-          JF_URL: ${{ secrets.JF_URL }}
-        with:
-          oidc-provider-name: <Provider Name value given in step 1>
-          oidc-audience: <URL to the intended audience>
-   ```
+2. **Pass the 'oidc-provider-name' input to the Action (Required)**: The 'oidc-provider-name' parameter designates the OIDC configuration whose one of its identity mapping should align with the generated JWT claims. This input needs to align with the 'Provider Name' value established within the OIDC configuration in the JFrog Platform.
+3. **Pass the 'oidc-audience' input to the Action (Optional)**: The 'oidc-audience' input defines the intended recipients of an ID token (JWT), ensuring access is restricted to authorized recipients for the cloud (Artifactory). By default, it contains the URL of the GitHub repository owner.
+This value, if transmitted, will be used as an argument in core.getIDToken(), which generates the JWT. It enforces a condition, allowing only workflows within the designated repository/organization to access the cloud role. Read more about it [here](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect#customizing-the-audience-value).
+
+    ```yml
+    - name: Install JFrog CLI
+      uses: jfrog/setup-jfrog-cli@v3
+      env:
+        JF_URL: ${{ secrets.JF_URL }}
+      with:
+        oidc-provider-name: <Provider Name value given in step 1>
+        oidc-audience: <URL to the intended audience>
+    ```
 
 ## Setting the build name and build number when publishing build-info to Artifactory
 The Action automatically sets the following environment variables:
