@@ -70,7 +70,7 @@ export class Utils {
         }
 
         try {
-            return await this.getAccessTokenFromJWT(jfrogCredentials, jsonWebToken, oidcProviderName);
+            return await this.getJfrogAccessTokenThroughOidcProtocol(jfrogCredentials, jsonWebToken, oidcProviderName);
         } catch (error: any) {
             throw new Error(`Exchanging JSON web token with an access token failed: ${error.message}`);
         }
@@ -99,20 +99,20 @@ export class Utils {
     }
 
     /**
-     * Exchanges JWT with a valid access token
+     * Exchanges GitHub JWT with a valid JFrog access token
      * @param jfrogCredentials existing JFrog credentials - url, access token, username + password
      * @param jsonWebToken JWT achieved from GitHub JWT provider
      * @param oidcProviderName OIDC provider name
      * @returns an access token for the requested Artifactory server
      */
-    private static async getAccessTokenFromJWT(
+    private static async getJfrogAccessTokenThroughOidcProtocol(
         jfrogCredentials: JfrogCredentials,
         jsonWebToken: string,
         oidcProviderName: string,
     ): Promise<JfrogCredentials> {
         // If we've reached this stage, the jfrogCredentials.jfrogUrl field should hold a non-empty value obtained from process.env.JF_URL
         const exchangeUrl: string = jfrogCredentials.jfrogUrl!.replace(/\/$/, '') + '/access/api/v1/oidc/token';
-        core.debug('Exchanging JSON web token with an access token');
+        core.debug('Exchanging GitHub JSON web token with a JFrog access token...');
 
         const httpClient: HttpClient = new HttpClient();
         const data: string = `{
