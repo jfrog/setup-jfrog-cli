@@ -9,11 +9,11 @@ inputs:
     download-repository:
         description: "Remote repository in Artifactory pointing to 'https://releases.jfrog.io/artifactory/jfrog-cli'. Use this parameter in case you don't have an Internet access."
         required: false
-    oidc-audience:
-        description: "Recipient for which the JWT is intended. By default it contains the URL to the repository owner."
-        required: false
     oidc-provider-name:
-        description: "Provider Name's value that was set in OpenId Connect integration."
+        description: "Provider Name's value that was set in OpenId Connect integration in the JFrog platform."
+        required: false
+    oidc-audience:
+        description: "By default, this is the URL of the GitHub repository owner, such as the organization that owns the repository."
         required: false
 
 runs:
