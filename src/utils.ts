@@ -45,7 +45,7 @@ export class Utils {
     /**
      * Retrieves server credentials for accessing JFrog's server
      * searching for existing environment variables such as JF_ACCESS_TOKEN or the combination of JF_USER and JF_PASSWORD.
-     * If neither is found, and if the request and requester are authorized, it generates an access token for the specified JFrog's server using the OpenID Connect mechanism.
+     * If the 'oidc-provider-name' argument was provided, it generates an access token for the specified JFrog's server using the OpenID Connect mechanism.
      * @returns JfrogCredentials struct filled with collected credentials
      */
     public static async getJfrogCredentials(): Promise<JfrogCredentials> {
@@ -59,7 +59,7 @@ export class Utils {
         if (!jfrogCredentials.jfrogUrl) {
             throw new Error(`JF_URL must be provided when oidc-provider-name is specified`);
         }
-        core.info('Obtaining an access token through OpenID Connect.');
+        core.info('Obtaining an access token through OpenID Connect...');
         const audience: string = core.getInput(Utils.OIDC_AUDIENCE_ARG);
         let jsonWebToken: string | undefined;
         try {
