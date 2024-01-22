@@ -33,42 +33,32 @@ jobs:
       # Generating a unique name for the Integration Configuration that will be created in the following step
       - name: Generate unique OIDC config name
         shell: bash
-        run: echo "OIDC_CONFIG_NAME=oidc-integration-test-config-$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
+        run: echo "OIDC_PROVIDER_NAME=oidc-integration-test-provider-$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
 
       - name: Create OpenID Connect integration
         shell: bash
         run: |
           curl -X POST "${{ secrets.JFROG_PLATFORM_URL }}/access/api/v1/oidc" -H "Content-Type: application/json" -H "Authorization: Bearer ${{ secrets.JFROG_PLATFORM_RT_TOKEN }}" -d '{
-          "name": "${{ env.OIDC_CONFIG_NAME }}",
+          "name": "${{ env.OIDC_PROVIDER_NAME }}",
           "issuer_url": "https://token.actions.githubusercontent.com/",
           "provider_type": "GitHub",
           "description": "This is a test configuration created for OIDC-Access integration test" }'
 
-      - name: Set subject
-        shell: bash
-        run: |
-          if [[ $GITHUB_EVENT_NAME == 'pull_request_target' ]]; then
-            echo "SUB=repo:${{ github.repository_owner }}/setup-jfrog-cli:pull_request" >> "$GITHUB_ENV"
-          else
-            echo "SUB=repo:${{ github.repository_owner }}/setup-jfrog-cli:ref:${{ github.ref }}" >> "$GITHUB_ENV"
-          fi
-
       - name: Create OIDC integration Identity Mapping
         shell: bash
         run: |
-          curl -X POST ${{ secrets.JFROG_PLATFORM_URL }}/access/api/v1/oidc/${{ env.OIDC_CONFIG_NAME }}/identity_mappings \
+          curl -X POST ${{ secrets.JFROG_PLATFORM_URL }}/access/api/v1/oidc/${{ env.OIDC_PROVIDER_NAME }}/identity_mappings \
           -H 'Content-Type: application/json' \
           -H 'Authorization: Bearer ${{ secrets.JFROG_PLATFORM_RT_TOKEN }}' \
           -d '{
                 "name": "oidc-test-identity-mapping",
                 "priority": "1",
                 "claims": {
-                  "sub": "${{ env.SUB }}",
-                  "iss": "https://token.actions.githubusercontent.com"
+                  "repository": "${{ github.repository_owner }}/setup-jfrog-cli"
                 },
                 "token_spec": {
-                  "scope": "applied-permissions/admin",
-                  "expires_in": 60
+                  "scope": "applied-permissions/groups:readers",
+                  "expires_in": 30
                 }
           }'
 
@@ -77,7 +67,7 @@ jobs:
         env:
           JF_URL: ${{ secrets.JFROG_PLATFORM_URL }}
         with:
-          oidc-provider-name: ${{ env.OIDC_CONFIG_NAME }}
+          oidc-provider-name: ${{ env.OIDC_PROVIDER_NAME }}
 
       - name: Test JFrog CLI
         run: |
@@ -88,4 +78,4 @@ jobs:
         shell: bash
         if: always()
         run: |
-          curl -X DELETE ${{ secrets.JFROG_PLATFORM_URL }}/access/api/v1/oidc/${{ env.OIDC_CONFIG_NAME }} -H 'Authorization: Bearer ${{ secrets.JFROG_PLATFORM_RT_TOKEN }}'
+          curl -X DELETE ${{ secrets.JFROG_PLATFORM_URL }}/access/api/v1/oidc/${{ env.OIDC_PROVIDER_NAME }} -H 'Authorization: Bearer ${{ secrets.JFROG_PLATFORM_RT_TOKEN }}'
