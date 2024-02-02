@@ -10,16 +10,16 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macOS-latest]
-        version: ["", "latest", "1.29.0"]
+        version: ["", "latest", "1.46.4"]
       fail-fast: false
     steps:
       # Checkout and install prerequisites
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Setup NodeJS
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: "16.x"
+          node-version: "20.x"
 
       # Run action according to the input version
       - name: Setup JFrog CLI
