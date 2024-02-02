@@ -17,7 +17,7 @@ inputs:
         required: false
 
 runs:
-    using: "node16"
+    using: "node20"
     main: "lib/main.js"
     post: "lib/cleanup.js"
 branding:
