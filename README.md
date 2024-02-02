@@ -35,7 +35,7 @@ Additionally, the Action incorporates the following features when utilizing JFro
 ## Usage
 
 ```yml
-- uses: jfrog/setup-jfrog-cli@v3
+- uses: jfrog/setup-jfrog-cli@v4
 - run: jf --version
 ```
 
@@ -67,7 +67,7 @@ You can set the connection details to your JFrog Platform by using one of the fo
 You can use these environment variables in your workflow as follows:
 
 ```yml
-- uses: jfrog/setup-jfrog-cli@v3
+- uses: jfrog/setup-jfrog-cli@v4
   env:
     # JFrog platform url (for example: https://acme.jfrog.io)
     JF_URL: ${{ secrets.JF_URL }}
@@ -97,7 +97,7 @@ The secret should be exposed as an environment variable with the _JF*ENV*_ prefi
 Here's how you do this:
 
 ```yml
-- uses: jfrog/setup-jfrog-cli@v3
+- uses: jfrog/setup-jfrog-cli@v4
   env:
       JF_ENV_1: ${{ secrets.JF_SECRET_ENV_1 }}
 - run: |
@@ -111,7 +111,7 @@ as the _JF_ENV_1_ environment variable. That's it - the ping command will now pi
 If you have multiple Config Tokens as secrets, you can use all of them in the workflow as follows:
 
 ```yml
-- uses: jfrog/setup-jfrog-cli@v3
+- uses: jfrog/setup-jfrog-cli@v4
   env:
       JF_ENV_1: ${{ secrets.JF_SECRET_ENV_1 }}
       JF_ENV_2: ${{ secrets.JF_SECRET_ENV_2 }}
@@ -188,7 +188,7 @@ To utilize the OIDC protocol, follow these steps:
 Example step utilizing OpenID Connect:
 
 ```yml
-- uses: jfrog/setup-jfrog-cli@v3
+- uses: jfrog/setup-jfrog-cli@v4
   env:
       JF_URL: ${{ secrets.JF_URL }}
   with:
@@ -218,7 +218,7 @@ are registered as the build artifacts.
 By default, the JFrog CLI version set in [action.yml](https://github.com/jfrog/setup-jfrog-cli/blob/master/action.yml) is used. To set a specific version, add the _version_ input as follows:
 
 ```yml
-- uses: jfrog/setup-jfrog-cli@v3
+- uses: jfrog/setup-jfrog-cli@v4
   with:
       version: X.Y.Z
 ```
@@ -226,12 +226,12 @@ By default, the JFrog CLI version set in [action.yml](https://github.com/jfrog/s
 It is also possible to set the latest JFrog CLI version by adding the _version_ input as follows:
 
 ```yml
-- uses: jfrog/setup-jfrog-cli@v3
+- uses: jfrog/setup-jfrog-cli@v4
   with:
       version: latest
 ```
 
-| Important: Only JFrog CLI versions 1.29.0 or above are supported. |
+| Important: Only JFrog CLI versions 1.46.4 or above are supported. |
 | ----------------------------------------------------------------- |
 
 ## Downloading JFrog CLI from Artifactory
@@ -244,7 +244,7 @@ Here's how you do this:
 2. Set _download-repository_ input to jfrog-cli-remote:
 
     ```yml
-    - uses: jfrog/setup-jfrog-cli@v3
+    - uses: jfrog/setup-jfrog-cli@v4
       env:
           # JFrog platform url (for example: https://acme.jfrog.io)
           JF_URL: ${{ secrets.JF_URL }}

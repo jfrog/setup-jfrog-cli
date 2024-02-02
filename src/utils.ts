@@ -17,14 +17,10 @@ export class Utils {
         repository: 'jfrog-cli',
     } as DownloadDetails;
 
-    // The old JF_ARTIFACTORY_* prefix for Config Tokens
-    private static readonly CONFIG_TOKEN_LEGACY_PREFIX: RegExp = /^JF_ARTIFACTORY_.*$/;
     // The JF_ENV_* prefix for Config Tokens
     private static readonly CONFIG_TOKEN_PREFIX: RegExp = /^JF_ENV_.*$/;
-    // Since 1.45.0, 'jfrog rt c' command changed to 'jfrog c add'
-    private static readonly NEW_CONFIG_CLI_VERSION: string = '1.45.0';
     // Minimum JFrog CLI version supported
-    private static readonly MIN_CLI_VERSION: string = '1.29.0';
+    private static readonly MIN_CLI_VERSION: string = '1.46.4';
     // The value in "version" argument to set to get the latest JFrog CLI version
     private static readonly LATEST_CLI_VERSION: string = 'latest';
     // The value in the download URL to set to get the latest version
@@ -230,29 +226,12 @@ export class Utils {
     // Get Config Tokens created on your local machine using JFrog CLI.
     // The Tokens configured with JF_ENV_ environment variables.
     public static getConfigTokens(): Set<string> {
-        let configTokens: Set<string> = new Set(
+        return new Set(
             Object.keys(process.env)
                 .filter((envKey) => envKey.match(Utils.CONFIG_TOKEN_PREFIX))
                 .filter((envKey) => process.env[envKey])
                 .map((envKey) => process.env[envKey]?.trim() || ''),
         );
-
-        let legacyConfigTokens: Set<string> = new Set(
-            Object.keys(process.env)
-                .filter((envKey) => envKey.match(Utils.CONFIG_TOKEN_LEGACY_PREFIX))
-                .filter((envKey) => process.env[envKey])
-                .map((envKey) => process.env[envKey]?.trim() || ''),
-        );
-
-        if (legacyConfigTokens.size > 0) {
-            core.warning(
-                'The "JF_ARTIFACTORY_" prefix for environment variables is deprecated and is expected to be removed in v3. ' +
-                    'Please use the "JF_ENV_" prefix instead. The environment variables value should not be changed.',
-            );
-        }
-
-        legacyConfigTokens.forEach((configToken) => configTokens.add(configToken));
-        return configTokens;
     }
 
     /**
@@ -311,13 +290,6 @@ export class Utils {
 
     public static async configJFrogServers(jfrogCredentials: JfrogCredentials) {
         let cliConfigCmd: string[] = ['config'];
-        let useOldConfig: boolean = Utils.useOldConfig();
-        if (useOldConfig) {
-            // Add 'rt' prefix to the beginning of the config command
-            cliConfigCmd.unshift('rt');
-            let version: string = core.getInput(Utils.CLI_VERSION_ARG);
-            core.warning('JFrog CLI ' + version + ' on Setup JFrog CLI GitHub Action is deprecated. Please use version 1.46.4 or above.');
-        }
         for (let configToken of Utils.getConfigTokens()) {
             await Utils.runCli(cliConfigCmd.concat('import', configToken));
         }
@@ -329,11 +301,7 @@ export class Utils {
     }
 
     public static async removeJFrogServers() {
-        if (Utils.useOldConfig()) {
-            await Utils.runCli(['rt', 'c', 'clear', '--interactive=false']);
-        } else {
-            await Utils.runCli(['c', 'rm', '--quiet']);
-        }
+        await Utils.runCli(['c', 'rm', '--quiet']);
     }
 
     public static getArchitecture() {
@@ -424,18 +392,6 @@ export class Utils {
             return 'Basic ' + Buffer.from(serverObj.user + ':' + serverObj.password).toString('base64');
         }
         return;
-    }
-
-    /**
-     * Return true if should use 'jfrog rt c' instead of 'jfrog c'.
-     * @returns true if should use 'jfrog rt c' instead of 'jfrog c'.
-     */
-    private static useOldConfig(): boolean {
-        let version: string = core.getInput(Utils.CLI_VERSION_ARG);
-        if (version === this.LATEST_CLI_VERSION) {
-            return false;
-        }
-        return lt(version, this.NEW_CONFIG_CLI_VERSION);
     }
 }
 

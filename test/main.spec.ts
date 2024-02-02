@@ -25,18 +25,7 @@ const V2_CONFIG_TOKEN: string = `eyJ2ZXJzaW9uIjoyLCJ1cmwiOiJodHRwOi8vMTI3LjAuMC4
     zNsQzdqSXkzSmdudC1WQSIsInNlcnZlcklkIjoibG9jYWwifQ==`;
 
 beforeEach(() => {
-    [
-        'JF_ARTIFACTORY_1',
-        'JF_ARTIFACTORY_2',
-        'ARTIFACTORY_JF_1',
-        'JF_ENV_1',
-        'JF_ENV_2',
-        'ENV_JF_1',
-        'JF_ENV_LOCAL',
-        'JF_USER',
-        'JF_PASSWORD',
-        'JF_ACCESS_TOKEN',
-    ].forEach((envKey) => {
+    ['JF_ENV_1', 'JF_ENV_2', 'ENV_JF_1', 'JF_ENV_LOCAL', 'JF_USER', 'JF_PASSWORD', 'JF_ACCESS_TOKEN'].forEach((envKey) => {
         delete process.env[envKey];
     });
 });
@@ -56,21 +45,6 @@ test('Get Config Tokens', async () => {
     process.env['JF_ENV_2'] = 'DUMMY_CONFIG_TOKEN_2';
     configTokens = Utils.getConfigTokens();
     expect(configTokens).toStrictEqual(new Set(['DUMMY_CONFIG_TOKEN_1', 'DUMMY_CONFIG_TOKEN_2']));
-});
-
-test('Get legacy Config Tokens', async () => {
-    process.env['ARTIFACTORY_JF_1'] = 'ILLEGAL_CONFIG_TOKEN';
-    expect(Utils.getConfigTokens().size).toBe(0);
-
-    process.env['JF_ARTIFACTORY_1'] = 'DUMMY_CONFIG_TOKEN_1';
-    expect(Utils.getConfigTokens()).toStrictEqual(new Set(['DUMMY_CONFIG_TOKEN_1']));
-
-    process.env['JF_ARTIFACTORY_2'] = 'DUMMY_CONFIG_TOKEN_2';
-    expect(Utils.getConfigTokens()).toStrictEqual(new Set(['DUMMY_CONFIG_TOKEN_1', 'DUMMY_CONFIG_TOKEN_2']));
-
-    process.env['JF_ENV_1'] = 'DUMMY_CONFIG_TOKEN_1';
-    process.env['JF_ENV_2'] = 'DUMMY_CONFIG_TOKEN_3';
-    expect(Utils.getConfigTokens()).toStrictEqual(new Set(['DUMMY_CONFIG_TOKEN_1', 'DUMMY_CONFIG_TOKEN_2', 'DUMMY_CONFIG_TOKEN_3']));
 });
 
 describe('Collect credentials from environment variables test', () => {

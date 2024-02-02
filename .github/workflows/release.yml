@@ -8,9 +8,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
-      - name: Update v3 tag
-        run: git tag -f v3
+        uses: actions/checkout@v4
+      - name: Update v4 tag
+        run: git tag -f v4
       - name: Push changes
         uses: ad-m/github-push-action@master
         with:
