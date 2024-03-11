@@ -4,7 +4,7 @@ author: "JFrog"
 inputs:
     version:
         description: "JFrog CLI Version"
-        default: "2.52.9"
+        default: "2.53.2"
         required: false
     download-repository:
         description: "Remote repository in Artifactory pointing to 'https://releases.jfrog.io/artifactory/jfrog-cli'. Use this parameter in case you don't have an Internet access."
