@@ -158,11 +158,10 @@ export class Utils {
         let url: string = Utils.getCliUrl(major, version, jfrogFileName, downloadDetails);
         core.info('Downloading JFrog CLI from ' + url);
         let downloadDir: string = await toolCache.downloadTool(url, undefined, downloadDetails.auth);
-
+        core.info("this is download dir:")
+        core.info(downloadDir)
         // Cache 'jf' and 'jfrog' executables
         await this.cacheAndAddPath(downloadDir, version, jfFileName);
-        console.log("this is download dir:")
-        console.log(downloadDir)
         await this.cacheAndAddPath(downloadDir, version, jfrogFileName);
     }
 
