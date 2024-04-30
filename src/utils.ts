@@ -407,6 +407,7 @@ export class Utils {
             }
 
             let sourceFilePath: string = Utils.getHomeDirByOs();
+            console.log(`Reading job summary from ${sourceFilePath} and writing it to ${endFilePath}`);
 
             // Read the content of the source file
             const fileContent: string = await fs.readFile(sourceFilePath, 'utf-8');
