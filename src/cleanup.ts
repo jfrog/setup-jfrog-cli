@@ -8,7 +8,6 @@ async function cleanup() {
             return;
         }
         await Utils.removeJFrogServers();
-        console.log("generating job summary!");
         await Utils.generateJobSummary();
     } catch (error) {
         core.setFailed((<any>error).message);

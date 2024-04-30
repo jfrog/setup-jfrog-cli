@@ -161,6 +161,8 @@ export class Utils {
 
         // Cache 'jf' and 'jfrog' executables
         await this.cacheAndAddPath(downloadDir, version, jfFileName);
+        console.log("this is download dir:")
+        console.log(downloadDir)
         await this.cacheAndAddPath(downloadDir, version, jfrogFileName);
     }
 
@@ -394,6 +396,11 @@ export class Utils {
         return;
     }
 
+    /**
+     * Generates GitHub Job Summary markdown file
+     * This function runs as part of post-workflow cleanup function,
+     * collects the job summary from the source file and writes it to the markdown file.
+     */
     public static async generateJobSummary() {
         try {
             const endFilePath: string | undefined = process.env.GITHUB_STEP_SUMMARY;
