@@ -158,8 +158,6 @@ export class Utils {
         let url: string = Utils.getCliUrl(major, version, jfrogFileName, downloadDetails);
         core.info('Downloading JFrog CLI from ' + url);
         let downloadDir: string = await toolCache.downloadTool(url, undefined, downloadDetails.auth);
-        core.info("this is download dir:")
-        core.info(downloadDir)
         // Cache 'jf' and 'jfrog' executables
         await this.cacheAndAddPath(downloadDir, version, jfFileName);
         await this.cacheAndAddPath(downloadDir, version, jfrogFileName);
@@ -427,7 +425,7 @@ export class Utils {
 
     public static async prepareGitHubJobSummaries() {
         try {
-            const sourceFilePath: string = '/Users/runner/.jfrog/jfrog-github-summary/github-action-summary.md';
+            let sourceFilePath: string = '/Users/runner/.jfrog/jfrog-github-summary/github-action-summary.md';
             await fs.access(sourceFilePath);
             await fs.unlink(sourceFilePath);
             console.log(`File at ${sourceFilePath} has been removed.`);
