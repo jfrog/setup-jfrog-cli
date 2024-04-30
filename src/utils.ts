@@ -402,7 +402,7 @@ export class Utils {
                 return;
             }
 
-            const sourceFilePath: string = '/Users/eyalde/IdeaProjects/githubRunner/_work/_temp/jfrog-github-summary/github-action-summary.md';
+            const sourceFilePath: string = '/Users/runner/.jfrog/jfrog-github-summary/github-action-summary.md';
 
             // Read the content of the source file
             const fileContent: string = await fs.readFile(sourceFilePath, 'utf-8');
