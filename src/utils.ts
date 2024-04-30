@@ -406,7 +406,7 @@ export class Utils {
                 return;
             }
 
-            let sourceFilePath: string = Utils.getHomeDirByOs();
+            let sourceFilePath: string = Utils.getCliJobSummaryPathByOs();
             console.log(`Reading job summary from ${sourceFilePath} and writing it to ${endFilePath}`);
 
             // Read the content of the source file
@@ -426,7 +426,7 @@ export class Utils {
 
     public static async prepareGitHubJobSummaries() {
         try {
-            let sourceFilePath: string = Utils.getHomeDirByOs();
+            let sourceFilePath: string = Utils.getCliJobSummaryPathByOs();
             await fs.access(sourceFilePath);
             await fs.unlink(sourceFilePath);
             console.log(`File at ${sourceFilePath} has been removed.`);
@@ -434,13 +434,13 @@ export class Utils {
             console.error(`Failed to preparing job summary: ${error}`);
         }
     }
-    private static getHomeDirByOs(): string {
+    private static getCliJobSummaryPathByOs(): string {
         switch (process.env.RUNNER_OS) {
             case "Windows":
-                return join(process.env.USERPROFILE || '', ".jfrog", "jfrog-github-summary.md");
+                return join(process.env.USERPROFILE || '', ".jfrog", "jfrog-github-summary","summary.md");
             case "Linux":
             case "macOS":
-                return join(process.env.HOME || '', ".jfrog", "jfrog-github-summary.md");
+                return join(process.env.HOME || '', ".jfrog", "jfrog-github-summary","summary.md");
             default:
                 return "";
         }
