@@ -2,7 +2,7 @@ import * as core from '@actions/core';
 import { exec } from '@actions/exec';
 import { HttpClient, HttpClientResponse } from '@actions/http-client';
 import * as toolCache from '@actions/tool-cache';
-import { chmodSync } from 'fs';
+import { chmodSync,promises as fs } from 'fs';
 import { OutgoingHttpHeaders } from 'http';
 import { arch, platform } from 'os';
 import { join } from 'path';
@@ -392,6 +392,31 @@ export class Utils {
             return 'Basic ' + Buffer.from(serverObj.user + ':' + serverObj.password).toString('base64');
         }
         return;
+    }
+
+    public static async generateJobSummary() {
+        try {
+            const endFilePath: string | undefined = process.env.GITHUB_STEP_SUMMARY;
+            if (endFilePath == undefined) {
+                console.error('GITHUB_STEP_SUMMARY is not set. Job summary will not be generated.');
+                return;
+            }
+
+            const sourceFilePath: string = '/Users/eyalde/IdeaProjects/githubRunner/_work/_temp/jfrog-github-summary/github-action-summary.md';
+
+            // Read the content of the source file
+            const fileContent: string = await fs.readFile(sourceFilePath, 'utf-8');
+            if (fileContent == undefined || fileContent.trim() == "" ){
+                console.error('The source file is empty or contains only whitespace. Job summary will not be generated.');
+                return;
+            }
+
+            // Write the content to the destination file
+            await fs.writeFile(endFilePath, fileContent);
+            console.log('Job summary generated successfully.');
+        } catch (error) {
+            console.error(`Failed to generate job summary: ${error}`);
+        }
     }
 }
 
