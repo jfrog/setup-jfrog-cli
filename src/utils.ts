@@ -437,10 +437,10 @@ export class Utils {
     private static getHomeDirByOs(): string {
         switch (process.env.RUNNER_OS) {
             case "Windows":
-                return join(process.env.USERPROFILE || '', ".jfrog", "jfrog-github-summary");
+                return join(process.env.USERPROFILE || '', ".jfrog", "jfrog-github-summary.md");
             case "Linux":
             case "macOS":
-                return join(process.env.HOME || '', ".jfrog", "jfrog-github-summary");
+                return join(process.env.HOME || '', ".jfrog", "jfrog-github-summary.md");
             default:
                 return "";
         }
