@@ -424,6 +424,17 @@ export class Utils {
             console.error(`Failed to generate job summary: ${error}`);
         }
     }
+
+    public static async prepareGitHubJobSummaries() {
+        try {
+            const sourceFilePath: string = '/Users/runner/.jfrog/jfrog-github-summary/github-action-summary.md';
+            await fs.access(sourceFilePath);
+            await fs.unlink(sourceFilePath);
+            console.log(`File at ${sourceFilePath} has been removed.`);
+        } catch (error) {
+            console.error(`Failed to preparing job summary: ${error}`);
+        }
+    }
 }
 
 export interface DownloadDetails {
