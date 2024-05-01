@@ -424,16 +424,6 @@ export class Utils {
         }
     }
 
-    public static async prepareGitHubJobSummaries() {
-        try {
-            let sourceFilePath: string = Utils.getCliJobSummaryPathByOs();
-            await fs.access(sourceFilePath);
-            await fs.unlink(sourceFilePath);
-            console.log(`File at ${sourceFilePath} has been removed.`);
-        } catch (error) {
-            console.error(`Failed to preparing job summary: ${error}`);
-        }
-    }
     private static getCliJobSummaryPathByOs(): string {
         switch (process.env.RUNNER_OS) {
             case "Windows":
