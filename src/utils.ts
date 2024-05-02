@@ -7,6 +7,7 @@ import { OutgoingHttpHeaders } from 'http';
 import { arch, platform } from 'os';
 import { join } from 'path';
 import { lt } from 'semver';
+import { error } from '@actions/core';
 
 export class Utils {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -396,27 +397,24 @@ export class Utils {
     /**
      * Generates GitHub Job Summary markdown file
      * This function runs as part of post-workflow cleanup function,
-     * collects the job summary from the source file and writes it to the markdown file.
+     * collects the aggregated job summary prepared by the CLI, and set it as the job summary.
+     * This should happen only once and in the last steps of the workflow to allow aggregation of all the steps.
      */
     public static async generateJobSummary() {
         try {
+            // Read the prepared markdown file if exists
+            let preparedMarkdownPath: string = Utils.getCliJobSummaryPathByOs();
+            const fileContent: string = await fs.readFile(preparedMarkdownPath, 'utf-8');
+            if (fileContent == undefined || fileContent.trim() == "" ){
+                console.error('The source file is empty or contains only whitespace. Job summary will not be generated.');
+                return;
+            }
+            // Copy contents to the GITHUB_STEP_SUMMARY file
             const endFilePath: string | undefined = process.env.GITHUB_STEP_SUMMARY;
             if (endFilePath == undefined) {
                 console.error('GITHUB_STEP_SUMMARY is not set. Job summary will not be generated.');
                 return;
             }
-
-            let sourceFilePath: string = Utils.getCliJobSummaryPathByOs();
-            console.log(`Reading job summary from ${sourceFilePath} and writing it to ${endFilePath}`);
-
-            // Read the content of the source file
-            const fileContent: string = await fs.readFile(sourceFilePath, 'utf-8');
-            if (fileContent == undefined || fileContent.trim() == "" ){
-                console.error('The source file is empty or contains only whitespace. Job summary will not be generated.');
-                return;
-            }
-
-            // Write the content to the destination file
             await fs.writeFile(endFilePath, fileContent);
             console.log('Job summary generated successfully.');
         } catch (error) {
@@ -432,7 +430,7 @@ export class Utils {
             case "macOS":
                 return join(process.env.HOME || '', ".jfrog", "jfrog-github-summary","summary.md");
             default:
-                return "";
+                throw new Error(`Unsupported OS: ${process.env.RUNNER_OS}`);
         }
     }
 }
