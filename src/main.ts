@@ -8,7 +8,6 @@ async function main() {
         let jfrogCredentials: JfrogCredentials = await Utils.getJfrogCredentials();
         await Utils.getAndAddCliToPath(jfrogCredentials);
         await Utils.configJFrogServers(jfrogCredentials);
-       // await Utils.prepareGitHubJobSummaries();
     } catch (error) {
         core.setFailed((<any>error).message);
     } finally {
