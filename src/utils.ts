@@ -418,6 +418,7 @@ export class Utils {
         try {
             const fileContent: string = await this.constructJobSummary();
             await fs.writeFile(endFilePath, fileContent);
+            await this.clearJobSummaryDir()
             console.log(`Content written to ${endFilePath}`);
         } catch (error) {
             console.error(`Failed to generate job summary: ${error}`);
@@ -458,6 +459,11 @@ export class Utils {
             default:
                 throw new Error(`Unsupported OS: ${process.env.RUNNER_OS}`);
         }
+    }
+
+    private static async clearJobSummaryDir() {
+        const homedir: string = Utils.getCliJobSummaryPathByOs();
+        await fs.rmdir(homedir, { recursive: true });
     }
 }
 
