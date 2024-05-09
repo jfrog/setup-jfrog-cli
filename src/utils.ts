@@ -443,7 +443,7 @@ export class Utils {
     private static getInitialContent(): string {
         return '<p >\n' +
             '  <h1> \n' +
-            '    <picture><img src="https://github.com/EyalDelarea/jfrog-cli-core/blob/github_job_summary/utils/assests/JFrogLogo.png?raw=true" style="margin: 0 0 -10px 0"width="65px" alt=""></picture> JFrog Platform Job Summary \n' +
+            '    <picture><img src="https://github.com/eyaldelarea/setup-jfrog-cli/blob/cleanUpSummaries/images/JFrogLogo.png?raw=true" style="margin: 0 0 -10px 0"width="65px" alt=""></picture> JFrog Platform Job Summary \n' +
             '     </h1> \n' +
             '</p>  ';
     }
