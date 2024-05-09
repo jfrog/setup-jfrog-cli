@@ -419,7 +419,7 @@ export class Utils {
                 return;
             }
             // Construct job summary markdown with all the different sections
-            const fileNames: string[] = ['upload-data.md', 'build-publish.md', 'security.md'];
+            const sectionNames: string[] = ['upload-data.md', 'build-publish.md', 'security.md'];
             let fileContent: string = '';
             fileContent += '<p >\n' +
                 '  <h1> \n' +
@@ -428,9 +428,13 @@ export class Utils {
                 '</p>  ';
             // load each section
             let homedir: string = Utils.getCliJobSummaryPathByOs();
-            for (const fileName of fileNames) {
-                const content: string = await fs.readFile(path.join(homedir, fileName), 'utf-8');
-                fileContent += '\n\n' + content;
+            for (const fileName of sectionNames) {
+                try {
+                    const content: string = await fs.readFile(path.join(homedir, fileName), 'utf-8');
+                    fileContent += '\n\n' + content;
+                } catch (error) {
+                    console.debug(`section ${fileName} not found`);
+                }
             }
             // Write the job summary markdown to the desired path
             await fs.writeFile(endFilePath, fileContent);
@@ -443,7 +447,7 @@ export class Utils {
     private static getCliJobSummaryPathByOs(): string {
         switch (process.env.RUNNER_OS) {
             case 'Windows':
-                return join(process.env.USERPROFILE || '', '.jfrog', 'jfrog-github-summary' );
+                return join(process.env.USERPROFILE || '', '.jfrog', 'jfrog-github-summary');
             case 'Linux':
             case 'macOS':
                 return join(process.env.HOME || '', '.jfrog', 'jfrog-github-summary');
