@@ -280,6 +280,10 @@ export class Utils {
             process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY + '/actions/runs/' + process.env.GITHUB_RUN_ID,
         );
         Utils.exportVariableIfNotSet('JFROG_CLI_USER_AGENT', Utils.USER_AGENT);
+        let projectKey: string | undefined = process.env.JFROG_CLI_PROJECT;
+        if (projectKey) {
+            Utils.exportVariableIfNotSet('JFROG_CLI_BUILD_PROJECT', projectKey);
+        }
     }
 
     private static exportVariableIfNotSet(key: string, value: string) {
