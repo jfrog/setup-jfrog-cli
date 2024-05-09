@@ -2,12 +2,12 @@ import * as core from '@actions/core';
 import { exec } from '@actions/exec';
 import { HttpClient, HttpClientResponse } from '@actions/http-client';
 import * as toolCache from '@actions/tool-cache';
-import { chmodSync,promises as fs } from 'fs';
+import { chmodSync, promises as fs } from 'fs';
 import { OutgoingHttpHeaders } from 'http';
 import { arch, platform } from 'os';
 import { join } from 'path';
 import { lt } from 'semver';
-import { error } from '@actions/core';
+import * as path from 'node:path';
 
 export class Utils {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -15,7 +15,7 @@ export class Utils {
     // Default artifactory URL and repository for downloading JFrog CLI
     public static readonly DEFAULT_DOWNLOAD_DETAILS: DownloadDetails = {
         artifactoryUrl: 'https://releases.jfrog.io/artifactory',
-        repository: 'jfrog-cli',
+        repository: 'jfrog-cli'
     } as DownloadDetails;
 
     // The JF_ENV_* prefix for Config Tokens
@@ -83,7 +83,7 @@ export class Utils {
             jfrogUrl: process.env.JF_URL,
             accessToken: process.env.JF_ACCESS_TOKEN,
             username: process.env.JF_USER,
-            password: process.env.JF_PASSWORD,
+            password: process.env.JF_PASSWORD
         } as JfrogCredentials;
 
         if (jfrogCredentials.password && !jfrogCredentials.username) {
@@ -105,7 +105,7 @@ export class Utils {
     private static async getJfrogAccessTokenThroughOidcProtocol(
         jfrogCredentials: JfrogCredentials,
         jsonWebToken: string,
-        oidcProviderName: string,
+        oidcProviderName: string
     ): Promise<JfrogCredentials> {
         // If we've reached this stage, the jfrogCredentials.jfrogUrl field should hold a non-empty value obtained from process.env.JF_URL
         const exchangeUrl: string = jfrogCredentials.jfrogUrl!.replace(/\/$/, '') + '/access/api/v1/oidc/token';
@@ -120,7 +120,7 @@ export class Utils {
         }`;
 
         const additionalHeaders: OutgoingHttpHeaders = {
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/json'
         };
 
         const response: HttpClientResponse = await httpClient.post(exchangeUrl, data, additionalHeaders);
@@ -223,6 +223,7 @@ export class Utils {
         let artifactoryUrl: string = downloadDetails.artifactoryUrl.replace(/\/$/, '');
         return `${artifactoryUrl}/${downloadDetails.repository}/v${major}/${version}/${architecture}/${fileName}`;
     }
+
     // Get Config Tokens created on your local machine using JFrog CLI.
     // The Tokens configured with JF_ENV_ environment variables.
     public static getConfigTokens(): Set<string> {
@@ -230,7 +231,7 @@ export class Utils {
             Object.keys(process.env)
                 .filter((envKey) => envKey.match(Utils.CONFIG_TOKEN_PREFIX))
                 .filter((envKey) => process.env[envKey])
-                .map((envKey) => process.env[envKey]?.trim() || ''),
+                .map((envKey) => process.env[envKey]?.trim() || '')
         );
     }
 
@@ -263,7 +264,7 @@ export class Utils {
     public static setCliEnv() {
         Utils.exportVariableIfNotSet(
             'JFROG_CLI_ENV_EXCLUDE',
-            '*password*;*secret*;*key*;*token*;*auth*;JF_ARTIFACTORY_*;JF_ENV_*;JF_URL;JF_USER;JF_PASSWORD;JF_ACCESS_TOKEN',
+            '*password*;*secret*;*key*;*token*;*auth*;JF_ARTIFACTORY_*;JF_ENV_*;JF_URL;JF_USER;JF_PASSWORD;JF_ACCESS_TOKEN'
         );
         Utils.exportVariableIfNotSet('JFROG_CLI_OFFER_CONFIG', 'false');
         Utils.exportVariableIfNotSet('CI', 'true');
@@ -277,7 +278,7 @@ export class Utils {
         }
         Utils.exportVariableIfNotSet(
             'JFROG_CLI_BUILD_URL',
-            process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY + '/actions/runs/' + process.env.GITHUB_RUN_ID,
+            process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY + '/actions/runs/' + process.env.GITHUB_RUN_ID
         );
         Utils.exportVariableIfNotSet('JFROG_CLI_USER_AGENT', Utils.USER_AGENT);
         let projectKey: string | undefined = process.env.JFROG_CLI_PROJECT;
@@ -371,8 +372,8 @@ export class Utils {
             if (!jfrogCredentials.jfrogUrl) {
                 throw new Error(
                     `'download-repository' input provided, but no JFrog environment details found. ` +
-                        `Hint - Ensure that the JFrog connection details environment variables are set: ` +
-                        `either a Config Token with a JF_ENV_ prefix or separate env config (JF_URL, JF_USER, JF_PASSWORD, JF_ACCESS_TOKEN)`,
+                    `Hint - Ensure that the JFrog connection details environment variables are set: ` +
+                    `either a Config Token with a JF_ENV_ prefix or separate env config (JF_URL, JF_USER, JF_PASSWORD, JF_ACCESS_TOKEN)`
                 );
             }
             serverObj.artifactoryUrl = jfrogCredentials.jfrogUrl.replace(/\/$/, '') + '/artifactory';
@@ -404,23 +405,36 @@ export class Utils {
      * collects the aggregated job summary prepared by the CLI, and set it as the job summary.
      * This should happen only once and in the last steps of the workflow to allow aggregation of all the steps.
      */
-    public static async generateJobSummary() {
+    public static async generateCliSummary() {
+        await Utils.setAsJobSummary();
+    }
+
+    private static async setAsJobSummary() {
         try {
-            // Read the prepared markdown file if exists
-            let preparedMarkdownPath: string = Utils.getCliJobSummaryPathByOs();
-            const fileContent: string = await fs.readFile(preparedMarkdownPath, 'utf-8');
-            if (fileContent == undefined || fileContent.trim() == "" ){
-                console.error('The source file is empty or contains only whitespace. Job summary will not be generated.');
-                return;
-            }
-            // Copy contents to the GITHUB_STEP_SUMMARY file
+
+            // Get desired markdown path
             const endFilePath: string | undefined = process.env.GITHUB_STEP_SUMMARY;
             if (endFilePath == undefined) {
                 console.error('GITHUB_STEP_SUMMARY is not set. Job summary will not be generated.');
                 return;
             }
+            // Construct job summary markdown with all the different sections
+            const fileNames: string[] = ['upload-data.md', 'build-publish.md', 'security.md'];
+            let fileContent: string = '';
+            fileContent += '<p >\n' +
+                '  <h1> \n' +
+                '    <picture><img src="https://github.com/EyalDelarea/jfrog-cli-core/blob/github_job_summary/utils/assests/JFrogLogo.png?raw=true" style="margin: 0 0 -10px 0"width="65px"></picture> JFrog Platform Job Summary \n' +
+                '     </h1> \n' +
+                '</p>  ';
+            // load each section
+            let homedir: string = Utils.getCliJobSummaryPathByOs();
+            for (const fileName of fileNames) {
+                const content: string = await fs.readFile(path.join(homedir, fileName), 'utf-8');
+                fileContent += '\n\n' + content;
+            }
+            // Write the job summary markdown to the desired path
             await fs.writeFile(endFilePath, fileContent);
-            console.log('Job summary generated successfully.');
+            console.log(`Content written to ${endFilePath}`);
         } catch (error) {
             console.error(`Failed to generate job summary: ${error}`);
         }
@@ -428,11 +442,11 @@ export class Utils {
 
     private static getCliJobSummaryPathByOs(): string {
         switch (process.env.RUNNER_OS) {
-            case "Windows":
-                return join(process.env.USERPROFILE || '', ".jfrog", "jfrog-github-summary","summary.md");
-            case "Linux":
-            case "macOS":
-                return join(process.env.HOME || '', ".jfrog", "jfrog-github-summary","summary.md");
+            case 'Windows':
+                return join(process.env.USERPROFILE || '', '.jfrog', 'jfrog-github-summary', 'summary.md');
+            case 'Linux':
+            case 'macOS':
+                return join(process.env.HOME || '', '.jfrog', 'jfrog-github-summary', 'summary.md');
             default:
                 throw new Error(`Unsupported OS: ${process.env.RUNNER_OS}`);
         }
@@ -444,6 +458,7 @@ export interface DownloadDetails {
     repository: string;
     auth: string;
 }
+
 export interface JfrogCredentials {
     jfrogUrl: string | undefined;
     username: string | undefined;
