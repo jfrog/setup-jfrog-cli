@@ -443,10 +443,10 @@ export class Utils {
     private static getCliJobSummaryPathByOs(): string {
         switch (process.env.RUNNER_OS) {
             case 'Windows':
-                return join(process.env.USERPROFILE || '', '.jfrog', 'jfrog-github-summary', 'summary.md');
+                return join(process.env.USERPROFILE || '', '.jfrog', 'jfrog-github-summary' );
             case 'Linux':
             case 'macOS':
-                return join(process.env.HOME || '', '.jfrog', 'jfrog-github-summary', 'summary.md');
+                return join(process.env.HOME || '', '.jfrog', 'jfrog-github-summary');
             default:
                 throw new Error(`Unsupported OS: ${process.env.RUNNER_OS}`);
         }
