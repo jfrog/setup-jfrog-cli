@@ -28,6 +28,10 @@ export class Utils {
     private static readonly LATEST_RELEASE_VERSION: string = '[RELEASE]';
     // The default server id name for separate env config
     public static readonly SETUP_JFROG_CLI_SERVER_ID: string = 'setup-jfrog-cli-server';
+    // Directory path which holds markdown files for the job summary
+    private static readonly JOB_SUMMARY_DIR_PATH: string = '.jfrog/jfrog-job-summary';
+    // Job summary section files
+    public static JOB_SUMMARY_SECTIONS: string[] = ['upload-data.md', 'build-publish.md', 'security.md'];
 
     // Inputs
     // Version input
@@ -402,41 +406,17 @@ export class Utils {
     /**
      * Generates GitHub Job Summary markdown file
      * This function runs as part of post-workflow cleanup function,
-     * collects the aggregated job summary prepared by the CLI, and set it as the job summary.
-     * This should happen only once and in the last steps of the workflow to allow aggregation of all the steps.
+     * collects section markdown files and generates a single markdown file.
      */
-    public static async generateCliSummary() {
-        await Utils.setAsJobSummary();
-    }
+    public static async generateJobSummary() {
+        const endFilePath: string | undefined = process.env.GITHUB_STEP_SUMMARY;
+        if (!endFilePath) {
+            console.error('GITHUB_STEP_SUMMARY is not set. Job summary will not be generated.');
+            return;
+        }
 
-    private static async setAsJobSummary() {
         try {
-
-            // Get desired markdown path
-            const endFilePath: string | undefined = process.env.GITHUB_STEP_SUMMARY;
-            if (endFilePath == undefined) {
-                console.error('GITHUB_STEP_SUMMARY is not set. Job summary will not be generated.');
-                return;
-            }
-            // Construct job summary markdown with all the different sections
-            const sectionNames: string[] = ['upload-data.md', 'build-publish.md', 'security.md'];
-            let fileContent: string = '';
-            fileContent += '<p >\n' +
-                '  <h1> \n' +
-                '    <picture><img src="https://github.com/EyalDelarea/jfrog-cli-core/blob/github_job_summary/utils/assests/JFrogLogo.png?raw=true" style="margin: 0 0 -10px 0"width="65px"></picture> JFrog Platform Job Summary \n' +
-                '     </h1> \n' +
-                '</p>  ';
-            // load each section
-            let homedir: string = Utils.getCliJobSummaryPathByOs();
-            for (const fileName of sectionNames) {
-                try {
-                    const content: string = await fs.readFile(path.join(homedir, fileName), 'utf-8');
-                    fileContent += '\n\n' + content;
-                } catch (error) {
-                    console.debug(`section ${fileName} not found`);
-                }
-            }
-            // Write the job summary markdown to the desired path
+            const fileContent: string = await this.constructJobSummary();
             await fs.writeFile(endFilePath, fileContent);
             console.log(`Content written to ${endFilePath}`);
         } catch (error) {
@@ -444,13 +424,37 @@ export class Utils {
         }
     }
 
+    private static async constructJobSummary(): Promise<string> {
+        const homedir: string = Utils.getCliJobSummaryPathByOs();
+        let fileContent: string = this.getInitialContent();
+
+        for (const fileName of Utils.JOB_SUMMARY_SECTIONS) {
+            try {
+                const content: string = await fs.readFile(path.join(homedir, fileName), 'utf-8');
+                fileContent += '\n\n' + content;
+            } catch (error) {
+                core.debug(`Section ${fileName} not found`);
+            }
+        }
+
+        return fileContent;
+    }
+
+    private static getInitialContent(): string {
+        return '<p >\n' +
+            '  <h1> \n' +
+            '    <picture><img src="https://github.com/EyalDelarea/jfrog-cli-core/blob/github_job_summary/utils/assests/JFrogLogo.png?raw=true" style="margin: 0 0 -10px 0"width="65px" alt=""></picture> JFrog Platform Job Summary \n' +
+            '     </h1> \n' +
+            '</p>  ';
+    }
+
     private static getCliJobSummaryPathByOs(): string {
         switch (process.env.RUNNER_OS) {
             case 'Windows':
-                return join(process.env.USERPROFILE || '', '.jfrog', 'jfrog-github-summary');
+                return join(process.env.USERPROFILE || '', this.JOB_SUMMARY_DIR_PATH);
             case 'Linux':
             case 'macOS':
-                return join(process.env.HOME || '', '.jfrog', 'jfrog-github-summary');
+                return join(process.env.HOME || '', this.JOB_SUMMARY_DIR_PATH);
             default:
                 throw new Error(`Unsupported OS: ${process.env.RUNNER_OS}`);
         }
