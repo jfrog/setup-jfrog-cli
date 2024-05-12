@@ -469,7 +469,7 @@ export class Utils {
         if (!homedir) {
             throw new Error('Jobs home directory is undefined, RUNNER_TEMP is not set.');
         }
-        return homedir;
+        return path.join(homedir,Utils.JOB_SUMMARY_DIR_PATH);
     }
 
     private static async clearJobSummaryDir() {
