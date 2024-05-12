@@ -456,10 +456,12 @@ export class Utils {
 
     private static getInitialContent(): string {
         // Add title and JFrog logo as bitmap.
+        // TODO replace image path on release
+        // https://github.com/jfrog/setup-jfrog-cli/blob/master/images/JFrogLogo.png?raw=true
         return '<p >\n' +
             '  <h1> \n' +
-            '    <picture><img src="https://github.com/jfrog/setup-jfrog-cli/blob/master/images/JFrogLogo.png?raw=true"   ' +
-            '     style="margin: 0 0 -10px 0"width="65px" alt="https://github.com/eyaldelarea/setup-jfrog-cli/blob/cleanUpSummaries/images/JFrogLogo.png?raw=true"></picture> JFrog Platform Job Summary \n' +
+            '    <picture><img src="https://github.com/eyaldelarea/setup-jfrog-cli/blob/cleanUpSummaries/images/JFrogLogo.png?raw=true"   ' +
+            '     style="margin: 0 0 -10px 0"width="65px" alt="JFrog logo"></picture> JFrog Platform Job Summary \n' +
             '     </h1> \n' +
             '</p>  ';
     }
@@ -475,7 +477,7 @@ export class Utils {
     private static async clearJobSummaryDir() {
         const homedir: string = Utils.getJobsTempDirectoryPath();
         core.debug("Removing job summary directory: " + homedir);
-        await fs.rmdir(homedir, { recursive: true });
+        await fs.rm(homedir, { recursive: true});
     }
 }
 
