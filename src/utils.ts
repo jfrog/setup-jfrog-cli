@@ -411,7 +411,7 @@ export class Utils {
     public static async generateJobSummary() {
         const endFilePath: string | undefined = process.env.GITHUB_STEP_SUMMARY;
         if (!endFilePath) {
-            core.error('GITHUB_STEP_SUMMARY is not set. Job summary will not be generated.');
+            core.debug('GITHUB_STEP_SUMMARY is not set. Job summary will not be generated.');
             return;
         }
         try {
@@ -425,7 +425,7 @@ export class Utils {
             await this.clearJobSummaryDir();
             core.debug(`Content written to ${endFilePath}`);
         } catch (error) {
-            core.error(`Failed to generate job summary: ${error}`);
+            core.warning(`Failed to generate job summary: ${error}`);
         }
     }
 
@@ -464,11 +464,11 @@ export class Utils {
     }
 
     private static getJobsTempDirectoryPath(): string {
-        const homedir: string | undefined= process.env.RUNNER_TEMP;
-        if (!homedir){
-            throw new Error('Jobs home directory is undefined, RUNNER_TEMP is not set.')
+        const homedir: string | undefined = process.env.RUNNER_TEMP;
+        if (!homedir) {
+            throw new Error('Jobs home directory is undefined, RUNNER_TEMP is not set.');
         }
-        return homedir
+        return homedir;
     }
 
     private static async clearJobSummaryDir() {
