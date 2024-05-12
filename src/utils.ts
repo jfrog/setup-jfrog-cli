@@ -418,6 +418,7 @@ export class Utils {
             // Read all sections and construct the final markdown file
             const fileContent: string = await this.constructJobSummary();
             if (fileContent.length == 0) {
+                core.debug('No job summaries sections found. Job summary will not be generated.');
                 return;
             }
             // Copy the content to the step summary path, to be displayed in the GitHub UI.
@@ -473,6 +474,7 @@ export class Utils {
 
     private static async clearJobSummaryDir() {
         const homedir: string = Utils.getJobsTempDirectoryPath();
+        core.debug("Removing job summary directory: " + homedir);
         await fs.rmdir(homedir, { recursive: true });
     }
 }
