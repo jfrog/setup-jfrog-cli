@@ -29,7 +29,7 @@ export class Utils {
     // The default server id name for separate env config
     public static readonly SETUP_JFROG_CLI_SERVER_ID: string = 'setup-jfrog-cli-server';
     // Directory path which holds markdown files for the job summary
-    private static readonly JOB_SUMMARY_DIR_PATH: string = '.jfrog/jfrog-job-summary';
+    private static readonly JOB_SUMMARY_DIR_PATH: string = 'jfrog-job-summary';
     // Job summary section files
     public static JOB_SUMMARY_SECTIONS: string[] = ['upload-data.md', 'build-publish.md', 'security.md'];
 
@@ -430,7 +430,7 @@ export class Utils {
     }
 
     private static async constructJobSummary(): Promise<string> {
-        const homedir: string = Utils.getCliJobSummaryPathByOs();
+        const homedir: string = Utils.getJobsTempDirectoryPath();
         let fileContent: string = '';
         let isAnySectionFound: boolean = false;
         // Read each section
@@ -463,20 +463,16 @@ export class Utils {
             '</p>  ';
     }
 
-    private static getCliJobSummaryPathByOs(): string {
-        switch (process.env.RUNNER_OS) {
-            case 'Windows':
-                return join(process.env.USERPROFILE || '', this.JOB_SUMMARY_DIR_PATH);
-            case 'Linux':
-            case 'macOS':
-                return join(process.env.HOME || '', this.JOB_SUMMARY_DIR_PATH);
-            default:
-                throw new Error(`Unsupported OS: ${process.env.RUNNER_OS}`);
+    private static getJobsTempDirectoryPath(): string {
+        const homedir: string | undefined= process.env.RUNNER_TEMP;
+        if (!homedir){
+            throw new Error('Jobs home directory is undefined, RUNNER_TEMP is not set.')
         }
+        return homedir
     }
 
     private static async clearJobSummaryDir() {
-        const homedir: string = Utils.getCliJobSummaryPathByOs();
+        const homedir: string = Utils.getJobsTempDirectoryPath();
         await fs.rmdir(homedir, { recursive: true });
     }
 }
