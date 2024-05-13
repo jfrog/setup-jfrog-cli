@@ -458,22 +458,21 @@ export class Utils {
         return fileContent;
     }
 
+    // TODO replace image path on release
+    // https://github.com/jfrog/setup-jfrog-cli/blob/master/images/JFrogLogo.png?raw=true
     private static getInitialContent(): string {
-        // Add mainTitle and JFrog logo as bitmap.
-        // TODO replace image path on release
-        // https://github.com/jfrog/setup-jfrog-cli/blob/master/images/JFrogLogo.png?raw=true
+        // Set variables
         const [projectPackagesUrl, projectKey] = Utils.getJobSummaryEnvVars();
-        let packagesLink:string = `<a href=${projectPackagesUrl}>📦 Project ${projectKey} package </a>`;
-
-        let imgSrc:string = "https://github.com/eyaldelarea/setup-jfrog-cli/blob/cleanUpSummaries/images/JFrogLogo.png?raw=true";
-
+        let imgSrc: string = 'https://github.com/eyaldelarea/setup-jfrog-cli/blob/cleanUpSummaries/images/JFrogLogo.png?raw=true';
+        // Format strings
+        let packagesLink: string = `<a href="${projectPackagesUrl}">📦 Project ${projectKey} package </a>`;
         let mainTitle: string = `<p >
                          <h1> 
                             <picture><img src="${imgSrc}" style="margin: 0 0 -10px 0" width="65px" alt="JFrog logo"></picture> JFrog Job Summary 
                         </h1> 
                                 </p>`;
 
-        return mainTitle + packagesLink;
+        return mainTitle + '\n\n' + packagesLink + '\n\n';
 
 
     }
