@@ -285,9 +285,13 @@ export class Utils {
             process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY + '/actions/runs/' + process.env.GITHUB_RUN_ID
         );
         Utils.exportVariableIfNotSet('JFROG_CLI_USER_AGENT', Utils.USER_AGENT);
-        let projectKey: string | undefined = process.env.JFROG_CLI_PROJECT;
+        let projectKey: string | undefined = process.env.JF_PROJECT;
         if (projectKey) {
             Utils.exportVariableIfNotSet('JFROG_CLI_BUILD_PROJECT', projectKey);
+        }
+        let jobSummariesHomeDir: string | undefined = process.env.RUNNER_TEMP;
+        if (jobSummariesHomeDir) {
+            Utils.exportVariableIfNotSet('JFROG_CLI_JOB_SUMMARY_HOME_DIR', jobSummariesHomeDir);
         }
     }
 
@@ -471,13 +475,13 @@ export class Utils {
         if (!homedir) {
             throw new Error('Jobs home directory is undefined, RUNNER_TEMP is not set.');
         }
-        return path.join(homedir,Utils.JOB_SUMMARY_DIR_PATH);
+        return path.join(homedir, Utils.JOB_SUMMARY_DIR_PATH);
     }
 
     private static async clearJobSummaryDir() {
         const homedir: string = Utils.getJobsTempDirectoryPath();
-        core.debug("Removing job summary directory: " + homedir);
-        await fs.rm(homedir, { recursive: true});
+        core.debug('Removing job summary directory: ' + homedir);
+        await fs.rm(homedir, { recursive: true });
     }
 }
 
