@@ -465,12 +465,8 @@ export class Utils {
         const [projectPackagesUrl, projectKey] = Utils.getJobSummaryEnvVars();
         let imgSrc: string = 'https://github.com/eyaldelarea/setup-jfrog-cli/blob/cleanUpSummaries/images/JFrogLogo.png?raw=true';
         // Format strings
-        let packagesLink: string = `<a href="${projectPackagesUrl}">📦 Project ${projectKey} package </a>`;
-        let mainTitle: string = `<p >
-                         <h1> 
-                            <picture><img src="${imgSrc}" style="margin: 0 0 -10px 0" width="65px" alt="JFrog logo"></picture> JFrog Job Summary 
-                        </h1> 
-                                </p>`;
+        let packagesLink: string = `<a href="${projectPackagesUrl}">📦 Project ${projectKey} packages </a>`;
+        let mainTitle: string = `<p><h1><picture><img src="${imgSrc}" style="margin: 0 0 -10px 0" width="65px" alt="JFrog logo"></picture> JFrog Job Summary</h1></p>`;
 
         return mainTitle + '\n\n' + packagesLink + '\n\n';
     }
