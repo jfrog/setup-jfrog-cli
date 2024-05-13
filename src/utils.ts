@@ -459,21 +459,39 @@ export class Utils {
     }
 
     private static getInitialContent(): string {
-        // Add title and JFrog logo as bitmap.
+        // Add mainTitle and JFrog logo as bitmap.
         // TODO replace image path on release
         // https://github.com/jfrog/setup-jfrog-cli/blob/master/images/JFrogLogo.png?raw=true
-        return '<p >\n' +
-            '  <h1> \n' +
-            '    <picture><img src="https://github.com/eyaldelarea/setup-jfrog-cli/blob/cleanUpSummaries/images/JFrogLogo.png?raw=true"   ' +
-            '     style="margin: 0 0 -10px 0"width="65px" alt="JFrog logo"></picture> JFrog Job Summary \n' +
-            '     </h1> \n' +
-            '</p>  ';
+        const [projectPackagesUrl, projectKey] = Utils.getJobSummaryEnvVars();
+        let packagesLink:string = `<a href=${projectPackagesUrl}>📦 Project ${projectKey} package </a>`;
+
+        let imgSrc:string = "https://github.com/eyaldelarea/setup-jfrog-cli/blob/cleanUpSummaries/images/JFrogLogo.png?raw=true";
+
+        let mainTitle: string = `<p >
+                         <h1> 
+                            <picture><img src="${imgSrc}" style="margin: 0 0 -10px 0" width="65px" alt="JFrog logo"></picture> JFrog Job Summary 
+                        </h1> 
+                                </p>`;
+
+        return mainTitle + packagesLink;
+
+
+    }
+
+    private static getJobSummaryEnvVars(): string[] {
+        let projectKey: string | undefined = process.env.JFROG_CLI_BUILD_PROJECT;
+        let platformUrl: string | undefined = process.env.JF_URL;
+        if (platformUrl == undefined || projectKey == undefined) {
+            throw new Error('JF_URL or JFROG_CLI_BUILD_PROJECT environment variables are not set.');
+        }
+        let projectPackagesUrl: string = path.join(platformUrl, 'ui/packages') + '?projectKey=' + projectKey;
+        return [projectPackagesUrl, projectKey];
     }
 
     private static getJobsTempDirectoryPath(): string {
-        const homedir: string | undefined = process.env.RUNNER_TEMP;
+        const homedir: string | undefined = process.env.JFROG_CLI_JOB_SUMMARY_HOME_DIR;
         if (!homedir) {
-            throw new Error('Jobs home directory is undefined, RUNNER_TEMP is not set.');
+            throw new Error('Jobs home directory is undefined, JFROG_CLI_JOB_SUMMARY_HOME_DIR is not set.');
         }
         return path.join(homedir, Utils.JOB_SUMMARY_DIR_PATH);
     }
