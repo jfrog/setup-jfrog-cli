@@ -473,8 +473,6 @@ export class Utils {
                                 </p>`;
 
         return mainTitle + '\n\n' + packagesLink + '\n\n';
-
-
     }
 
     private static getJobSummaryEnvVars(): string[] {
@@ -483,7 +481,10 @@ export class Utils {
         if (platformUrl == undefined || projectKey == undefined) {
             throw new Error('JF_URL or JFROG_CLI_BUILD_PROJECT environment variables are not set.');
         }
-        let projectPackagesUrl: string = path.join(platformUrl, 'ui/packages') + '?projectKey=' + projectKey;
+        if (!platformUrl.endsWith('/')) {
+            platformUrl += '/';
+        }
+        let projectPackagesUrl: string = platformUrl + 'ui/packages' + '?projectKey=' + projectKey;
         return [projectPackagesUrl, projectKey];
     }
 
