@@ -1,6 +1,5 @@
 import * as os from 'os';
 import { Utils, DownloadDetails, JfrogCredentials } from '../src/utils';
-jest.mock('os');
 
 const DEFAULT_CLI_URL: string = 'https://releases.jfrog.io/artifactory/jfrog-cli/';
 const CUSTOM_CLI_URL: string = 'http://127.0.0.1:8081/artifactory/jfrog-cli-remote/';
@@ -240,4 +239,12 @@ test('User agent', () => {
     expect(split).toHaveLength(2);
     expect(split[0]).toBe('setup-jfrog-cli-github-action');
     expect(split[1]).toMatch(/\d*.\d*.\d*/);
+});
+
+describe('Job Summaries', () => {
+    describe('Job summaries sanity', () => {
+        it('should not crash if no files were found', async () => {
+            expect(async () => await Utils.generateJobSummary()).not.toThrow();
+        });
+    });
 });
