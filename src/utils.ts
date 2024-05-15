@@ -31,7 +31,7 @@ export class Utils {
     // Directory path which holds markdown files for the job summary
     private static readonly JOB_SUMMARY_DIR_PATH: string = 'jfrog-job-summary';
     // Job summary section files
-    public static JOB_SUMMARY_SECTIONS: string[] = ['upload-data.md', 'build-publish.md', 'security.md'];
+    public static JOB_SUMMARY_SECTIONS: string[] = ['upload-data', 'build-publish', 'security'];
 
     // Inputs
     // Version input
@@ -439,15 +439,15 @@ export class Utils {
         let fileContent: string = '';
         let isAnySectionFound: boolean = false;
         // Read each section
-        for (const fileName of Utils.JOB_SUMMARY_SECTIONS) {
+        for (const section of Utils.JOB_SUMMARY_SECTIONS) {
             try {
-                const content: string = await fs.readFile(path.join(homedir, fileName), 'utf-8');
+                const content: string = await fs.readFile(path.join(homedir, section + '.md'), 'utf-8');
                 if (content.trim() !== '') {
                     isAnySectionFound = true;
                 }
-                fileContent += '\n\n' + content;
+                fileContent += '\n\n' + Utils.wrapSectionContent(section, content);
             } catch (error) {
-                core.debug(`Section ${fileName} not found or empty, skipping...`);
+                core.debug(`Section ${section} not found or empty, skipping...`);
             }
         }
 
@@ -456,6 +456,10 @@ export class Utils {
         }
 
         return fileContent;
+    }
+
+    private wrapContentInSection(sectionTitle: string, markdown: string): string {
+        return `\n<details open>\n\n<summary>  ${sectionTitle} </summary><p></p> \n\n ${markdown} \n\n</details>\n`;
     }
 
     // TODO replace image path on release
@@ -496,6 +500,24 @@ export class Utils {
         const homedir: string = Utils.getJobsTempDirectoryPath();
         core.debug('Removing job summary directory: ' + homedir);
         await fs.rm(homedir, { recursive: true });
+    }
+
+    private static wrapSectionContent(section: string, markdown: string): string {
+        let sectionTitle: string;
+        switch (section) {
+            case 'upload-data':
+                sectionTitle = `📁 Files uploaded to Artifactory by this job`;
+                break;
+            case 'build-publish':
+                sectionTitle = `📦 Build Info published to Artifactory by this job`;
+                break;
+            case 'security':
+                sectionTitle = `🛡️ Security scans preformed by this job`;
+                break;
+            default:
+                throw new Error(`Failed to get unknown section: ${section}, title.`);
+        }
+        return `\n<details open>\n\n<summary>  ${sectionTitle} </summary><p></p> \n\n ${markdown} \n\n</details>\n`;
     }
 }
 
