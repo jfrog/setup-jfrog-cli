@@ -1,6 +1,6 @@
 import * as os from 'os';
 import { Utils, DownloadDetails, JfrogCredentials } from '../src/utils';
-
+jest.mock('os');
 const DEFAULT_CLI_URL: string = 'https://releases.jfrog.io/artifactory/jfrog-cli/';
 const CUSTOM_CLI_URL: string = 'http://127.0.0.1:8081/artifactory/jfrog-cli-remote/';
 // Config in JFrog CLI 1.46.3 and below
