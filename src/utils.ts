@@ -435,13 +435,16 @@ export class Utils {
     }
 
     private static async constructJobSummary(): Promise<string> {
-        const homedir: string = Utils.getJobsTempDirectoryPath();
+        const outputDir: string = Utils.getJobOutputDirectoryPath();
+        core.info(`output dir is: ${outputDir} `);
         let fileContent: string = '';
         let isAnySectionFound: boolean = false;
         // Read each section
         for (const markdownFile of Utils.JOB_SUMMARY_MARKDOWN_FILE_NAMES) {
             try {
-                const content: string = await fs.readFile(path.join(homedir, markdownFile, 'markdown.md'), 'utf-8');
+                const fullPath: string = path.join(outputDir, markdownFile, 'markdown.md');
+                core.info(`trying to read file at ${fullPath}`);
+                const content: string = await fs.readFile(fullPath, 'utf-8');
                 if (content.trim() !== '') {
                     isAnySectionFound = true;
                 }
@@ -484,7 +487,7 @@ export class Utils {
         return [projectPackagesUrl, projectKey];
     }
 
-    private static getJobsTempDirectoryPath(): string {
+    private static getJobOutputDirectoryPath(): string {
         const outputDir: string | undefined = process.env.RUNNER_TEMP;
         if (!outputDir) {
             throw new Error('Jobs home directory is undefined, JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR is not set.');
@@ -493,7 +496,7 @@ export class Utils {
     }
 
     private static async clearJobSummaryDir() {
-        const homedir: string = Utils.getJobsTempDirectoryPath();
+        const homedir: string = Utils.getJobOutputDirectoryPath();
         core.debug('Removing job summary directory: ' + homedir);
         await fs.rm(homedir, { recursive: true });
     }
