@@ -291,7 +291,7 @@ export class Utils {
         }
         let jobSummariesHomeDir: string | undefined = process.env.RUNNER_TEMP;
         if (jobSummariesHomeDir) {
-            Utils.exportVariableIfNotSet('JFROG_CLI_JOB_SUMMARY_HOME_DIR', jobSummariesHomeDir);
+            Utils.exportVariableIfNotSet("JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR", jobSummariesHomeDir);
         }
     }
 
@@ -491,7 +491,7 @@ export class Utils {
     }
 
     private static getJobOutputDirectoryPath(): string {
-        const outputDir: string | undefined = process.env.RUNNER_TEMP;
+        const outputDir: string | undefined = process.env.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR;
         if (!outputDir) {
             throw new Error('Jobs home directory is undefined, JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR is not set.');
         }
