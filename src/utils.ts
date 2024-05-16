@@ -31,7 +31,7 @@ export class Utils {
     // Directory name which holds markdown files for the job summary
     private static readonly JOB_SUMMARY_DIR_NAME: string = 'jfrog-command-summary';
     // Job summary section files
-    public static JOB_SUMMARY_MARKDOWN_FILE_NAMES: string[] = ['upload', 'build-publish', 'security'];
+    public static JOB_SUMMARY_MARKDOWN_FILE_NAMES: string[] = ['upload', 'build-info', 'security'];
 
     // Inputs
     // Version input
@@ -421,11 +421,13 @@ export class Utils {
         try {
             // Read all sections and construct the final markdown file
             const fileContent: string = await this.constructJobSummary();
+            core.info(`final content is  ${fileContent}`);
             if (fileContent.length == 0) {
                 core.debug('No job summaries sections found. Job summary will not be generated.');
                 return;
             }
             // Copy the content to the step summary path, to be displayed in the GitHub UI.
+            core.info(`copying to   ${endFilePath}`);
             await fs.writeFile(endFilePath, fileContent);
             await this.clearJobSummaryDir();
             core.debug(`Content written to ${endFilePath}`);
@@ -445,6 +447,7 @@ export class Utils {
                 const fullPath: string = path.join(outputDir, markdownFile, 'markdown.md');
                 core.info(`trying to read file at ${fullPath}`);
                 const content: string = await fs.readFile(fullPath, 'utf-8');
+                core.info(`content is  ${content}`);
                 if (content.trim() !== '') {
                     isAnySectionFound = true;
                 }
@@ -507,7 +510,7 @@ export class Utils {
             case 'upload':
                 sectionTitle = `📁 Files uploaded to Artifactory by this job`;
                 break;
-            case 'build-publish':
+            case 'build-info':
                 sectionTitle = `📦 Build Info published to Artifactory by this job`;
                 break;
             case 'security':
