@@ -485,7 +485,7 @@ export class Utils {
     }
 
     private static getJobsTempDirectoryPath(): string {
-        const outputDir: string | undefined = process.env.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR;
+        const outputDir: string | undefined = process.env.RUNNER_TEMP;
         if (!outputDir) {
             throw new Error('Jobs home directory is undefined, JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR is not set.');
         }
