@@ -28,10 +28,10 @@ export class Utils {
     private static readonly LATEST_RELEASE_VERSION: string = '[RELEASE]';
     // The default server id name for separate env config
     public static readonly SETUP_JFROG_CLI_SERVER_ID: string = 'setup-jfrog-cli-server';
-    // Directory path which holds markdown files for the job summary
-    private static readonly JOB_SUMMARY_DIR_PATH: string = 'jfrog-job-summary';
+    // Directory name which holds markdown files for the job summary
+    private static readonly JOB_SUMMARY_DIR_NAME: string = 'jfrog-command-summary';
     // Job summary section files
-    public static JOB_SUMMARY_SECTIONS: string[] = ['upload-data', 'build-publish', 'security'];
+    public static JOB_SUMMARY_MARKDOWN_FILE_NAMES: string[] = ['upload', 'build-publish', 'security'];
 
     // Inputs
     // Version input
@@ -439,15 +439,15 @@ export class Utils {
         let fileContent: string = '';
         let isAnySectionFound: boolean = false;
         // Read each section
-        for (const section of Utils.JOB_SUMMARY_SECTIONS) {
+        for (const markdownFile of Utils.JOB_SUMMARY_MARKDOWN_FILE_NAMES) {
             try {
-                const content: string = await fs.readFile(path.join(homedir, section + '.md'), 'utf-8');
+                const content: string = await fs.readFile(path.join(homedir, markdownFile, 'markdown.md'), 'utf-8');
                 if (content.trim() !== '') {
                     isAnySectionFound = true;
                 }
-                fileContent += '\n\n' + Utils.wrapSectionContent(section, content);
+                fileContent += '\n\n' + Utils.wrapSectionContent(markdownFile, content);
             } catch (error) {
-                core.debug(`Section ${section} not found or empty, skipping...`);
+                core.debug(`Section ${markdownFile} not found or empty, skipping...`);
             }
         }
 
@@ -456,10 +456,6 @@ export class Utils {
         }
 
         return fileContent;
-    }
-
-    private wrapContentInSection(sectionTitle: string, markdown: string): string {
-        return `\n<details open>\n\n<summary>  ${sectionTitle} </summary><p></p> \n\n ${markdown} \n\n</details>\n`;
     }
 
     // TODO replace image path on release
@@ -489,11 +485,11 @@ export class Utils {
     }
 
     private static getJobsTempDirectoryPath(): string {
-        const homedir: string | undefined = process.env.JFROG_CLI_JOB_SUMMARY_HOME_DIR;
-        if (!homedir) {
-            throw new Error('Jobs home directory is undefined, JFROG_CLI_JOB_SUMMARY_HOME_DIR is not set.');
+        const outputDir: string | undefined = process.env.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR;
+        if (!outputDir) {
+            throw new Error('Jobs home directory is undefined, JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR is not set.');
         }
-        return path.join(homedir, Utils.JOB_SUMMARY_DIR_PATH);
+        return path.join(outputDir, Utils.JOB_SUMMARY_DIR_NAME);
     }
 
     private static async clearJobSummaryDir() {
@@ -505,7 +501,7 @@ export class Utils {
     private static wrapSectionContent(section: string, markdown: string): string {
         let sectionTitle: string;
         switch (section) {
-            case 'upload-data':
+            case 'upload':
                 sectionTitle = `📁 Files uploaded to Artifactory by this job`;
                 break;
             case 'build-publish':
