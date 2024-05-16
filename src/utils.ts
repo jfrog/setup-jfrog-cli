@@ -291,7 +291,7 @@ export class Utils {
         }
         let jobSummariesHomeDir: string | undefined = process.env.RUNNER_TEMP;
         if (jobSummariesHomeDir) {
-            Utils.exportVariableIfNotSet("JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR", jobSummariesHomeDir);
+            Utils.exportVariableIfNotSet('JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR', jobSummariesHomeDir);
         }
     }
 
@@ -421,13 +421,11 @@ export class Utils {
         try {
             // Read all sections and construct the final markdown file
             const fileContent: string = await this.constructJobSummary();
-            core.info(`final content is  ${fileContent}`);
             if (fileContent.length == 0) {
                 core.debug('No job summaries sections found. Job summary will not be generated.');
                 return;
             }
             // Copy the content to the step summary path, to be displayed in the GitHub UI.
-            core.info(`copying to   ${endFilePath}`);
             await fs.writeFile(endFilePath, fileContent);
             await this.clearJobSummaryDir();
             core.debug(`Content written to ${endFilePath}`);
@@ -438,16 +436,13 @@ export class Utils {
 
     private static async constructJobSummary(): Promise<string> {
         const outputDir: string = Utils.getJobOutputDirectoryPath();
-        core.info(`output dir is: ${outputDir} `);
         let fileContent: string = '';
         let isAnySectionFound: boolean = false;
         // Read each section
         for (const markdownFile of Utils.JOB_SUMMARY_MARKDOWN_FILE_NAMES) {
             try {
                 const fullPath: string = path.join(outputDir, markdownFile, 'markdown.md');
-                core.info(`trying to read file at ${fullPath}`);
                 const content: string = await fs.readFile(fullPath, 'utf-8');
-                core.info(`content is  ${content}`);
                 if (content.trim() !== '') {
                     isAnySectionFound = true;
                 }
@@ -478,10 +473,13 @@ export class Utils {
     }
 
     private static getJobSummaryEnvVars(): string[] {
-        let projectKey: string | undefined = process.env.JFROG_CLI_BUILD_PROJECT;
+        let projectKey: string | undefined = process.env.JF_PROJECT;
         let platformUrl: string | undefined = process.env.JF_URL;
-        if (platformUrl == undefined || projectKey == undefined) {
-            throw new Error('JF_URL or JFROG_CLI_BUILD_PROJECT environment variables are not set.');
+        if (projectKey == undefined) {
+            projectKey = '';
+        }
+        if (platformUrl == undefined) {
+            throw new Error('JF_URL  environment variables are not set.');
         }
         if (!platformUrl.endsWith('/')) {
             platformUrl += '/';
