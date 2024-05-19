@@ -459,15 +459,11 @@ export class Utils {
         return fileContent;
     }
 
-    // TODO replace image path on release
-    // https://github.com/jfrog/setup-jfrog-cli/blob/master/images/JFrogLogo.png?raw=true
     private static getInitialContent(): string {
-        // Set variables
         const [projectPackagesUrl, projectKey] = Utils.getJobSummaryEnvVars();
-        let imgSrc: string = 'https://github.com/eyaldelarea/setup-jfrog-cli/blob/cleanUpSummaries/images/JFrogLogo.png?raw=true';
-        // Format strings
+
         let packagesLink: string = `<a href="${projectPackagesUrl}">📦 Project ${projectKey} packages </a>`;
-        let mainTitle: string = `<p><h1><picture><img src="${imgSrc}" loading="lazy" style="margin: 0 0 -10px 0" width="65px" alt="JFrog logo"></picture> JFrog Job Summary</h1></p>`;
+        let mainTitle: string = `# $\\textcolor{lime}{\\textsf{ 🐸 JFrog Job Summary}}$`;
 
         return mainTitle + '\n\n' + packagesLink + '\n\n';
     }
@@ -475,10 +471,10 @@ export class Utils {
     private static getJobSummaryEnvVars(): string[] {
         let projectKey: string | undefined = process.env.JF_PROJECT;
         let platformUrl: string | undefined = process.env.JF_URL;
-        if (projectKey == undefined) {
+        if (projectKey === undefined) {
             projectKey = '';
         }
-        if (platformUrl == undefined) {
+        if (platformUrl === undefined) {
             throw new Error('JF_URL  environment variables are not set.');
         }
         if (!platformUrl.endsWith('/')) {
