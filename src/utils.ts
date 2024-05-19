@@ -508,7 +508,7 @@ export class Utils {
                 sectionTitle = `📦 Build info published to Artifactory by this workflow`;
                 break;
             case 'security':
-                sectionTitle = `🛡️ Security Status`;
+                sectionTitle = `🔒 Security Status`;
                 break;
             default:
                 throw new Error(`Failed to get unknown section: ${section}, title.`);
