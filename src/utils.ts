@@ -128,6 +128,10 @@ export class Utils {
         jfrogCredentials.accessToken = responseJson.access_token;
         if (jfrogCredentials.accessToken) {
             core.setSecret(jfrogCredentials.accessToken);
+            core.setOutput('jf_oidc_token', jfrogCredentials.accessToken);
+            core.setSecret('stam');
+            core.setOutput('jf_oidc_user', 'stam');
+
         }
         if (responseJson.errors) {
             throw new Error(`${JSON.stringify(responseJson.errors)}`);
