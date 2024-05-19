@@ -139,21 +139,21 @@ export class Utils {
                 throw new Error(`OIDC invalid access token format`);
             }
             //decode the second part of the token
-            let payload : JWTTokenData = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString('utf8'));
+            let payload: JWTTokenData = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString('utf8'));
             if (!payload || !payload.sub) {
                 throw new Error(`OIDC invalid access token format`);
             }
-            core.info('token payload=' + payload);
+
             if (payload.sub.startsWith('jfrt@') || payload.sub.includes('/users/')) {
                 let lastSlashIndex: number = payload.sub.lastIndexOf('/');
                 let lastSubstring: string = payload.sub.substring(lastSlashIndex + 1);
                 //output the user from the oidc access token subject extracted from the last section of the subject
-                core.setOutput('jf_oidc_user',lastSubstring);
-                core.setSecret(lastSubstring)
+                core.setOutput('jf_oidc_user', lastSubstring);
+                core.setSecret(lastSubstring);
             } else {
                 //output the user from the oidc access token subject AS-IS
                 core.setOutput('jf_oidc_user', payload.sub);
-                core.setSecret(payload.sub)
+                core.setSecret(payload.sub);
             }
         }
         if (responseJson.errors) {
