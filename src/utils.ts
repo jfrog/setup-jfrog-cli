@@ -128,9 +128,8 @@ export class Utils {
         jfrogCredentials.accessToken = responseJson.access_token;
         if (jfrogCredentials.accessToken) {
             // output the oidc access token as a secret
-            //core.setSecret(jfrogCredentials.accessToken);
+            core.setSecret(jfrogCredentials.accessToken);
             core.setOutput('jf_oidc_token', jfrogCredentials.accessToken);
-            core.info('jf_oidc_token='+ jfrogCredentials.accessToken);
 
             // output the user from the oidc access token subject as a secret
             //split jfrogCredentials.accessToken into 3 parts divided by .
@@ -150,9 +149,11 @@ export class Utils {
                 let lastSubstring: string = payload.sub.substring(lastSlashIndex + 1);
                 //output the user from the oidc access token subject extracted from the last section of the subject
                 core.setOutput('jf_oidc_user',lastSubstring);
+                core.setSecret(lastSubstring)
             } else {
                 //output the user from the oidc access token subject AS-IS
                 core.setOutput('jf_oidc_user', payload.sub);
+                core.setSecret(payload.sub)
             }
         }
         if (responseJson.errors) {
