@@ -128,8 +128,10 @@ export class Utils {
         jfrogCredentials.accessToken = responseJson.access_token;
         if (jfrogCredentials.accessToken) {
             // output the oidc access token as a secret
-            core.setSecret(jfrogCredentials.accessToken);
+            //core.setSecret(jfrogCredentials.accessToken);
             core.setOutput('jf_oidc_token', jfrogCredentials.accessToken);
+            core.info('jf_oidc_token='+ jfrogCredentials.accessToken);
+
             // output the user from the oidc access token subject as a secret
             //split jfrogCredentials.accessToken into 3 parts divided by .
             let tokenParts: string[] = jfrogCredentials.accessToken.split('.');
