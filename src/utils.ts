@@ -502,13 +502,13 @@ export class Utils {
         let sectionTitle: string;
         switch (section) {
             case 'upload':
-                sectionTitle = `📁 Files uploaded to Artifactory by this job`;
+                sectionTitle = `📁 Files uploaded to Artifactory by this workflow`;
                 break;
             case 'build-info':
-                sectionTitle = `📦 Build Info published to Artifactory by this job`;
+                sectionTitle = `📦 Build info published to Artifactory by this workflow`;
                 break;
             case 'security':
-                sectionTitle = `🛡️ Security scans preformed by this job`;
+                sectionTitle = `🛡️ Security Status`;
                 break;
             default:
                 throw new Error(`Failed to get unknown section: ${section}, title.`);
