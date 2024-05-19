@@ -127,11 +127,12 @@ export class Utils {
         const responseJson: TokenExchangeResponseData = JSON.parse(responseString);
         jfrogCredentials.accessToken = responseJson.access_token;
         if (jfrogCredentials.accessToken) {
-            core.setSecret(jfrogCredentials.accessToken);
+            // output the oidc access token as a secret
+            //core.setSecret(jfrogCredentials.accessToken);
             core.setOutput('jf_oidc_token', jfrogCredentials.accessToken);
-            core.setSecret('stam');
+            // output the user from the oidc access token subject as a secret
+            //core.setSecret('stam');
             core.setOutput('jf_oidc_user', 'stam');
-
         }
         if (responseJson.errors) {
             throw new Error(`${JSON.stringify(responseJson.errors)}`);
