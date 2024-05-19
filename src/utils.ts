@@ -132,7 +132,17 @@ export class Utils {
             core.setOutput('jf_oidc_token', jfrogCredentials.accessToken);
             // output the user from the oidc access token subject as a secret
             //core.setSecret('stam');
-            core.setOutput('jf_oidc_user', 'stam');
+            //split jfrogCredentials.accessToken into 3 parts divided by .
+            let tokenParts: string[] = jfrogCredentials.accessToken.split('.');
+            if (tokenParts.length != 3) {
+                // this error should not happen since access only generates valid JWT tokens
+                throw new Error(`OIDC invalid access token format`);
+            }
+            let payload : JWTTokenData = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString('utf8'));
+            core.info('token payload=' + payload);
+            //decode the second part of the token
+            //output the user from the oidc access token subject as a secret
+            core.setOutput('jf_oidc_user', payload.sub);
         }
         if (responseJson.errors) {
             throw new Error(`${JSON.stringify(responseJson.errors)}`);
@@ -415,4 +425,14 @@ export interface JfrogCredentials {
 export interface TokenExchangeResponseData {
     access_token: string;
     errors: string;
+}
+
+export interface JWTTokenData {
+    sub: string;
+    scp: string;
+    aud: string;
+    iss: string;
+    exp: bigint;
+    iat: bigint;
+    jti: string;
 }
