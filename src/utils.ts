@@ -463,7 +463,7 @@ export class Utils {
         const [projectPackagesUrl, projectKey] = Utils.getJobSummaryEnvVars();
 
         let packagesLink: string = `<a href="${projectPackagesUrl}">📦 Project ${projectKey} packages </a>`;
-        let mainTitle: string = `# $\\textcolor{lime}{\\textsf{ 🐸 JFrog Job Summary}}$`;
+        let mainTitle: string = `# $\\textcolor{green}{\\textsf{ 🐸 JFrog Job Summary}}$`;
 
         return mainTitle + '\n\n' + packagesLink + '\n\n';
     }
