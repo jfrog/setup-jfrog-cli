@@ -15,7 +15,7 @@ export class Utils {
     // Default artifactory URL and repository for downloading JFrog CLI
     public static readonly DEFAULT_DOWNLOAD_DETAILS: DownloadDetails = {
         artifactoryUrl: 'https://releases.jfrog.io/artifactory',
-        repository: 'jfrog-cli'
+        repository: 'jfrog-cli',
     } as DownloadDetails;
 
     // The JF_ENV_* prefix for Config Tokens
@@ -87,7 +87,7 @@ export class Utils {
             jfrogUrl: process.env.JF_URL,
             accessToken: process.env.JF_ACCESS_TOKEN,
             username: process.env.JF_USER,
-            password: process.env.JF_PASSWORD
+            password: process.env.JF_PASSWORD,
         } as JfrogCredentials;
 
         if (jfrogCredentials.password && !jfrogCredentials.username) {
@@ -109,7 +109,7 @@ export class Utils {
     private static async getJfrogAccessTokenThroughOidcProtocol(
         jfrogCredentials: JfrogCredentials,
         jsonWebToken: string,
-        oidcProviderName: string
+        oidcProviderName: string,
     ): Promise<JfrogCredentials> {
         // If we've reached this stage, the jfrogCredentials.jfrogUrl field should hold a non-empty value obtained from process.env.JF_URL
         const exchangeUrl: string = jfrogCredentials.jfrogUrl!.replace(/\/$/, '') + '/access/api/v1/oidc/token';
@@ -124,7 +124,7 @@ export class Utils {
         }`;
 
         const additionalHeaders: OutgoingHttpHeaders = {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
         };
 
         const response: HttpClientResponse = await httpClient.post(exchangeUrl, data, additionalHeaders);
@@ -228,7 +228,6 @@ export class Utils {
         let artifactoryUrl: string = downloadDetails.artifactoryUrl.replace(/\/$/, '');
         return `${artifactoryUrl}/${downloadDetails.repository}/v${major}/${version}/${architecture}/${fileName}`;
     }
-
     // Get Config Tokens created on your local machine using JFrog CLI.
     // The Tokens configured with JF_ENV_ environment variables.
     public static getConfigTokens(): Set<string> {
@@ -236,7 +235,7 @@ export class Utils {
             Object.keys(process.env)
                 .filter((envKey) => envKey.match(Utils.CONFIG_TOKEN_PREFIX))
                 .filter((envKey) => process.env[envKey])
-                .map((envKey) => process.env[envKey]?.trim() || '')
+                .map((envKey) => process.env[envKey]?.trim() || ''),
         );
     }
 
@@ -269,7 +268,7 @@ export class Utils {
     public static setCliEnv() {
         Utils.exportVariableIfNotSet(
             'JFROG_CLI_ENV_EXCLUDE',
-            '*password*;*secret*;*key*;*token*;*auth*;JF_ARTIFACTORY_*;JF_ENV_*;JF_URL;JF_USER;JF_PASSWORD;JF_ACCESS_TOKEN'
+            '*password*;*secret*;*key*;*token*;*auth*;JF_ARTIFACTORY_*;JF_ENV_*;JF_URL;JF_USER;JF_PASSWORD;JF_ACCESS_TOKEN',
         );
         Utils.exportVariableIfNotSet('JFROG_CLI_OFFER_CONFIG', 'false');
         Utils.exportVariableIfNotSet('CI', 'true');
@@ -283,7 +282,7 @@ export class Utils {
         }
         Utils.exportVariableIfNotSet(
             'JFROG_CLI_BUILD_URL',
-            process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY + '/actions/runs/' + process.env.GITHUB_RUN_ID
+            process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY + '/actions/runs/' + process.env.GITHUB_RUN_ID,
         );
         Utils.exportVariableIfNotSet('JFROG_CLI_USER_AGENT', Utils.USER_AGENT);
 
@@ -383,8 +382,8 @@ export class Utils {
             if (!jfrogCredentials.jfrogUrl) {
                 throw new Error(
                     `'download-repository' input provided, but no JFrog environment details found. ` +
-                    `Hint - Ensure that the JFrog connection details environment variables are set: ` +
-                    `either a Config Token with a JF_ENV_ prefix or separate env config (JF_URL, JF_USER, JF_PASSWORD, JF_ACCESS_TOKEN)`
+                        `Hint - Ensure that the JFrog connection details environment variables are set: ` +
+                        `either a Config Token with a JF_ENV_ prefix or separate env config (JF_URL, JF_USER, JF_PASSWORD, JF_ACCESS_TOKEN)`,
                 );
             }
             serverObj.artifactoryUrl = jfrogCredentials.jfrogUrl.replace(/\/$/, '') + '/artifactory';
