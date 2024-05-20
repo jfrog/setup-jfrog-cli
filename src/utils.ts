@@ -28,9 +28,9 @@ export class Utils {
     private static readonly LATEST_RELEASE_VERSION: string = '[RELEASE]';
     // The default server id name for separate env config
     public static readonly SETUP_JFROG_CLI_SERVER_ID: string = 'setup-jfrog-cli-server';
-    // Directory name which holds markdown files for the job summary
+    // Directory name which holds markdown files for the Workflow summary
     private static readonly JOB_SUMMARY_DIR_NAME: string = 'jfrog-command-summary';
-    // Job summary section files
+    // Workflow summary section files
     public static JOB_SUMMARY_MARKDOWN_SECTIONS_NAMES: string[] = ['upload', 'build-info', 'security'];
 
     // Inputs
@@ -416,10 +416,11 @@ export class Utils {
      * and constructs a single markdown file, to be displayed in the GitHub UI.
      */
     public static async generateWorkflowSummaryMarkdown() {
-
+        // This is the file path that the markdown should be copied to.
+        // In order for GitHub to display this as a job summary in the UI.
         const githubStepSummaryFilePath: string | undefined = process.env.GITHUB_STEP_SUMMARY;
         if (!githubStepSummaryFilePath) {
-            core.debug('GITHUB_STEP_SUMMARY is not set. Job summary will not be generated.');
+            core.debug('GITHUB_STEP_SUMMARY is not set. Workflow summary will not be generated.');
             return;
         }
 
@@ -427,14 +428,14 @@ export class Utils {
             // Read all sections and construct the final markdown file
             const markdownContent: string = await this.readCLIMarkdownSections();
             if (markdownContent.length == 0) {
-                core.debug('No job summaries sections found. Job summary will not be generated.');
+                core.debug('No job summaries sections found. Workflow summary will not be generated.');
                 return;
             }
-            // Copy the content to the step summary path, to be displayed in the GitHub UI.
             await fs.writeFile(githubStepSummaryFilePath, markdownContent);
+            // Clear files
             await this.clearJobSummaryDir();
         } catch (error) {
-            core.warning(`Failed to generate job summary: ${error}`);
+            core.warning(`Failed to generate Workflow summary: ${error}`);
         }
     }
 
@@ -502,7 +503,7 @@ export class Utils {
 
     private static async clearJobSummaryDir() {
         const homedir: string = Utils.getJobOutputDirectoryPath();
-        core.debug('Removing job summary directory: ' + homedir);
+        core.debug('Removing Workflow summary directory: ' + homedir);
         await fs.rm(homedir, { recursive: true });
     }
 
