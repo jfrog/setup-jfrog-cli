@@ -134,6 +134,7 @@ export class Utils {
         }
         return jfrogCredentials;
     }
+
     private static outputJfrogToken(oidcToken: string): void {
         // Making sure the user is treated as a secret
         core.setSecret(oidcToken);
