@@ -76,13 +76,24 @@ jobs:
         run: |
             echo "JFROG_OIDC_TOKEN: ${{ steps.setup.outputs.jf_oidc_token }}"
             echo "JFROG_OIDC_USER: ${{ steps.setup.outputs.jf_oidc_user }}"
+            :; if [ -z 0 ]; then
+              @echo off
+              goto :WINDOWS
+            fi
             if [ -z "${{ steps.setup.outputs.jf_oidc_token }}" ]; then
               exit 1
             fi
             if [ -z "${{ steps.setup.outputs.jf_oidc_user }}" ]; then
               exit 1
             fi
-
+            exit 0
+            :WINDOWS
+            if [steps.setup.outputs.jf_oidc_user]==[] (
+              exit 1
+            )
+            if [steps.setup.outputs.jf_oidc_token]==[] (
+              exit 1
+            )
       # Removing the OIDC integration will remove the Identity Mapping as well
       - name: Delete OIDC integration
         shell: bash
