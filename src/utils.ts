@@ -188,8 +188,6 @@ export class Utils {
         let base64Payload: string = tokenParts[1];
         let utf8Payload: string = Buffer.from(base64Payload, 'base64').toString('utf8');
         let payload: JWTTokenData = JSON.parse(utf8Payload);
-
-        //let payload: JWTTokenData = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString('utf8'));
         if (!payload || !payload.sub) {
             throw new Error(`OIDC invalid access token format`);
         }
