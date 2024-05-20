@@ -270,7 +270,10 @@ describe('extractTokenUser', () => {
 
 describe('decodeOidcToken', () => {
     it('should decode valid OIDC token', () => {
-        const oidcToken = Buffer.from(JSON.stringify({ sub: 'test' })).toString('base64') + '.eyJzdWIiOiJ0ZXN0In0.' + Buffer.from(JSON.stringify({ sub: 'test' })).toString('base64');
+        const oidcToken =
+            Buffer.from(JSON.stringify({ sub: 'test' })).toString('base64') +
+            '.eyJzdWIiOiJ0ZXN0In0.' +
+            Buffer.from(JSON.stringify({ sub: 'test' })).toString('base64');
         const result = Utils.decodeOidcToken(oidcToken);
         expect(result).toEqual({ sub: 'test' });
     });
@@ -281,7 +284,10 @@ describe('decodeOidcToken', () => {
     });
 
     it('should throw error for OIDC token without subject', () => {
-        const oidcToken = Buffer.from(JSON.stringify({ notSub: 'test' })).toString('base64') + '.eyJub3RTdWIiOiJ0ZXN0In0.' + Buffer.from(JSON.stringify({ notSub: 'test' })).toString('base64');
+        const oidcToken =
+            Buffer.from(JSON.stringify({ notSub: 'test' })).toString('base64') +
+            '.eyJub3RTdWIiOiJ0ZXN0In0.' +
+            Buffer.from(JSON.stringify({ notSub: 'test' })).toString('base64');
         expect(() => Utils.decodeOidcToken(oidcToken)).toThrowError('OIDC invalid access token format');
     });
 });

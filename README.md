@@ -195,8 +195,8 @@ Example step utilizing OpenID Connect:
   with:
       oidc-provider-name: setup-jfrog-cli
 ```
-Notice: when using the oidc authentication, the action outputs both the oidc token and the oidc token username which can be used inside the current workflow for logging into the JFrog platform through other actions/clients (for example, for using with docker login).
-The outputs added are jf-oidc-token and jf-oidc-user respectively. 
+
+**Notice:** When using OIDC authentication, this action outputs both the OIDC token and the OIDC token username. These can be utilized within the current workflow to log into the JFrog platform through other actions or clients (e.g., for use with `docker login`). The added outputs are `oidc-token` and `oidc-user`, respectively.
 
 </details>
 

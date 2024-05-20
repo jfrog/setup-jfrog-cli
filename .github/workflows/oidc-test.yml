@@ -74,11 +74,11 @@ jobs:
 
       - name: Test User Output
         shell: bash
-        run: test -n "${{ steps.setup-jfrog-cli.outputs.jf-oidc-user }}"
+        run: test -n "${{ steps.setup-jfrog-cli.outputs.oidc-user }}"
 
       - name: Test Token Output
         shell: bash
-        run: test -n "${{ steps.setup-jfrog-cli.outputs.jf-oidc-token }}"
+        run: test -n "${{ steps.setup-jfrog-cli.outputs.oidc-token }}"
 
       # Removing the OIDC integration will remove the Identity Mapping as well
       - name: Delete OIDC integration
