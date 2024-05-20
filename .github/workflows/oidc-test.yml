@@ -82,7 +82,6 @@ jobs:
             if [ -z "${{ steps.setup.outputs.jf_oidc_user }}" ]; then
               exit 1
             fi
-            exit 1
 
       # Removing the OIDC integration will remove the Identity Mapping as well
       - name: Delete OIDC integration
