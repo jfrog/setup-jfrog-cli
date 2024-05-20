@@ -135,8 +135,11 @@ export class Utils {
         return jfrogCredentials;
     }
 
-    // Output the oidc access token as a secret and the user from the oidc access token subject as a secret
-    // Both are set as secrets to prevent them from being printed in the logs or exported to other workflows
+    /**
+     * Output the OIDC access token as a secret and the user from the OIDC access token subject as a secret.
+     * Both are set as secrets to prevent them from being printed in the logs or exported to other workflows.
+     * @param oidcToken access token received from the JFrog platform during OIDC token exchange
+     */
     private static outputOidcTokenAndUsername(oidcToken: string): void {
         // Making sure the token is treated as a secret
         core.setSecret(oidcToken);
@@ -150,8 +153,13 @@ export class Utils {
         core.setSecret(tokenUser);
         // Output the user from the oidc access token subject extracted from the last section of the subject
         core.setOutput('jf-oidc-user', tokenUser);
-
     }
+
+    /**
+     * Extract the username from the OIDC access token subject.
+     * @param subject OIDC token subject
+     * @returns the username
+     */
     public static extractTokenUser(subject: string): string {
         // Main OIDC user parsing logic
         if (subject.startsWith('jfrt@') || subject.includes('/users/')) {
@@ -159,11 +167,16 @@ export class Utils {
             let userSubstring: string = subject.substring(lastSlashIndex + 1);
             // Return the user extracted from the token
             return userSubstring;
-        } else {
-            // No parsing was needed, returning original sub from the token as the user
-            return subject;
         }
+        // No parsing was needed, returning original sub from the token as the user
+        return subject;
     }
+
+    /**
+     * Decode the OIDC access token and return the payload.
+     * @param oidcToken access token received from the JFrog platform during OIDC token exchange
+     * @returns the payload of the OIDC access token
+     */
     public static decodeOidcToken(oidcToken: string): JWTTokenData {
         // Split jfrogCredentials.accessToken into 3 parts divided by .
         let tokenParts: string[] = oidcToken.split('.');
