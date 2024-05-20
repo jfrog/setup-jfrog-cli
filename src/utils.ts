@@ -127,7 +127,7 @@ export class Utils {
         const responseJson: TokenExchangeResponseData = JSON.parse(responseString);
         jfrogCredentials.accessToken = responseJson.access_token;
         if (jfrogCredentials.accessToken) {
-            this.outputJfrogToken(jfrogCredentials.accessToken);
+            this.outputOidcTokenAndUsername(jfrogCredentials.accessToken);
         }
         if (responseJson.errors) {
             throw new Error(`${JSON.stringify(responseJson.errors)}`);
@@ -137,7 +137,7 @@ export class Utils {
 
     // Output the oidc access token as a secret and the user from the oidc access token subject as a secret
     // Both are set as secrets to prevent them from being printed in the logs or exported to other workflows
-    private static outputJfrogToken(oidcToken: string): void {
+    private static outputOidcTokenAndUsername(oidcToken: string): void {
         // Making sure the token is treated as a secret
         core.setSecret(oidcToken);
         // Output the oidc access token as a secret
