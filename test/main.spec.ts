@@ -245,7 +245,7 @@ test('User agent', () => {
 describe('Job Summaries', () => {
     describe('Job summaries sanity', () => {
         it('should not crash if no files were found', async () => {
-            expect(async () => await Utils.generateJobSummary()).not.toThrow();
+            expect(async () => await Utils.generateWorkflowSummaryMarkdown()).not.toThrow();
         });
     });
 });

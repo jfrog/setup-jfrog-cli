@@ -15,7 +15,7 @@ export class Utils {
     // Default artifactory URL and repository for downloading JFrog CLI
     public static readonly DEFAULT_DOWNLOAD_DETAILS: DownloadDetails = {
         artifactoryUrl: 'https://releases.jfrog.io/artifactory',
-        repository: 'jfrog-cli',
+        repository: 'jfrog-cli'
     } as DownloadDetails;
 
     // The JF_ENV_* prefix for Config Tokens
@@ -31,7 +31,7 @@ export class Utils {
     // Directory name which holds markdown files for the job summary
     private static readonly JOB_SUMMARY_DIR_NAME: string = 'jfrog-command-summary';
     // Job summary section files
-    public static JOB_SUMMARY_MARKDOWN_FILE_NAMES: string[] = ['upload', 'build-info', 'security'];
+    public static JOB_SUMMARY_MARKDOWN_SECTIONS_NAMES: string[] = ['upload', 'build-info', 'security'];
 
     // Inputs
     // Version input
@@ -87,7 +87,7 @@ export class Utils {
             jfrogUrl: process.env.JF_URL,
             accessToken: process.env.JF_ACCESS_TOKEN,
             username: process.env.JF_USER,
-            password: process.env.JF_PASSWORD,
+            password: process.env.JF_PASSWORD
         } as JfrogCredentials;
 
         if (jfrogCredentials.password && !jfrogCredentials.username) {
@@ -109,7 +109,7 @@ export class Utils {
     private static async getJfrogAccessTokenThroughOidcProtocol(
         jfrogCredentials: JfrogCredentials,
         jsonWebToken: string,
-        oidcProviderName: string,
+        oidcProviderName: string
     ): Promise<JfrogCredentials> {
         // If we've reached this stage, the jfrogCredentials.jfrogUrl field should hold a non-empty value obtained from process.env.JF_URL
         const exchangeUrl: string = jfrogCredentials.jfrogUrl!.replace(/\/$/, '') + '/access/api/v1/oidc/token';
@@ -124,7 +124,7 @@ export class Utils {
         }`;
 
         const additionalHeaders: OutgoingHttpHeaders = {
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/json'
         };
 
         const response: HttpClientResponse = await httpClient.post(exchangeUrl, data, additionalHeaders);
@@ -228,6 +228,7 @@ export class Utils {
         let artifactoryUrl: string = downloadDetails.artifactoryUrl.replace(/\/$/, '');
         return `${artifactoryUrl}/${downloadDetails.repository}/v${major}/${version}/${architecture}/${fileName}`;
     }
+
     // Get Config Tokens created on your local machine using JFrog CLI.
     // The Tokens configured with JF_ENV_ environment variables.
     public static getConfigTokens(): Set<string> {
@@ -235,7 +236,7 @@ export class Utils {
             Object.keys(process.env)
                 .filter((envKey) => envKey.match(Utils.CONFIG_TOKEN_PREFIX))
                 .filter((envKey) => process.env[envKey])
-                .map((envKey) => process.env[envKey]?.trim() || ''),
+                .map((envKey) => process.env[envKey]?.trim() || '')
         );
     }
 
@@ -268,7 +269,7 @@ export class Utils {
     public static setCliEnv() {
         Utils.exportVariableIfNotSet(
             'JFROG_CLI_ENV_EXCLUDE',
-            '*password*;*secret*;*key*;*token*;*auth*;JF_ARTIFACTORY_*;JF_ENV_*;JF_URL;JF_USER;JF_PASSWORD;JF_ACCESS_TOKEN',
+            '*password*;*secret*;*key*;*token*;*auth*;JF_ARTIFACTORY_*;JF_ENV_*;JF_URL;JF_USER;JF_PASSWORD;JF_ACCESS_TOKEN'
         );
         Utils.exportVariableIfNotSet('JFROG_CLI_OFFER_CONFIG', 'false');
         Utils.exportVariableIfNotSet('CI', 'true');
@@ -282,16 +283,18 @@ export class Utils {
         }
         Utils.exportVariableIfNotSet(
             'JFROG_CLI_BUILD_URL',
-            process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY + '/actions/runs/' + process.env.GITHUB_RUN_ID,
+            process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY + '/actions/runs/' + process.env.GITHUB_RUN_ID
         );
         Utils.exportVariableIfNotSet('JFROG_CLI_USER_AGENT', Utils.USER_AGENT);
+
+        // Set JF_PROJECT as JF_CLI_BUILD_PROJECT to allow the JFrog CLI to use it as the project key
         let projectKey: string | undefined = process.env.JF_PROJECT;
         if (projectKey) {
             Utils.exportVariableIfNotSet('JFROG_CLI_BUILD_PROJECT', projectKey);
         }
-        let jobSummariesHomeDir: string | undefined = process.env.RUNNER_TEMP;
-        if (jobSummariesHomeDir) {
-            Utils.exportVariableIfNotSet('JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR', jobSummariesHomeDir);
+        let jobSummariesOutputDir: string | undefined = process.env.RUNNER_TEMP;
+        if (jobSummariesOutputDir) {
+            Utils.exportVariableIfNotSet('JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR', jobSummariesOutputDir);
         }
     }
 
@@ -380,8 +383,8 @@ export class Utils {
             if (!jfrogCredentials.jfrogUrl) {
                 throw new Error(
                     `'download-repository' input provided, but no JFrog environment details found. ` +
-                        `Hint - Ensure that the JFrog connection details environment variables are set: ` +
-                        `either a Config Token with a JF_ENV_ prefix or separate env config (JF_URL, JF_USER, JF_PASSWORD, JF_ACCESS_TOKEN)`,
+                    `Hint - Ensure that the JFrog connection details environment variables are set: ` +
+                    `either a Config Token with a JF_ENV_ prefix or separate env config (JF_URL, JF_USER, JF_PASSWORD, JF_ACCESS_TOKEN)`
                 );
             }
             serverObj.artifactoryUrl = jfrogCredentials.jfrogUrl.replace(/\/$/, '') + '/artifactory';
@@ -412,54 +415,59 @@ export class Utils {
      * This function runs as part of post-workflow cleanup function,
      * collects section markdown files and generates a single markdown file.
      */
-    public static async generateJobSummary() {
-        const endFilePath: string | undefined = process.env.GITHUB_STEP_SUMMARY;
-        if (!endFilePath) {
+    public static async generateWorkflowSummaryMarkdown() {
+
+        const githubStepSummaryFilePath: string | undefined = process.env.GITHUB_STEP_SUMMARY;
+        if (!githubStepSummaryFilePath) {
             core.debug('GITHUB_STEP_SUMMARY is not set. Job summary will not be generated.');
             return;
         }
+
         try {
             // Read all sections and construct the final markdown file
-            const fileContent: string = await this.constructJobSummary();
-            if (fileContent.length == 0) {
+            const markdownContent: string = await this.readCLIMarkdownSections();
+            if (markdownContent.length == 0) {
                 core.debug('No job summaries sections found. Job summary will not be generated.');
                 return;
             }
             // Copy the content to the step summary path, to be displayed in the GitHub UI.
-            await fs.writeFile(endFilePath, fileContent);
+            await fs.writeFile(githubStepSummaryFilePath, markdownContent);
             await this.clearJobSummaryDir();
-            core.debug(`Content written to ${endFilePath}`);
         } catch (error) {
             core.warning(`Failed to generate job summary: ${error}`);
         }
     }
 
-    private static async constructJobSummary(): Promise<string> {
+    // Each section should prepare a file called markdown.md. 
+    // This function reads each section file and wraps it with a markdown header
+    private static async readCLIMarkdownSections(): Promise<string> {
         const outputDir: string = Utils.getJobOutputDirectoryPath();
         let fileContent: string = '';
-        let isAnySectionFound: boolean = false;
-        // Read each section
-        for (const markdownFile of Utils.JOB_SUMMARY_MARKDOWN_FILE_NAMES) {
-            try {
-                const fullPath: string = path.join(outputDir, markdownFile, 'markdown.md');
-                const content: string = await fs.readFile(fullPath, 'utf-8');
-                if (content.trim() !== '') {
-                    isAnySectionFound = true;
-                }
-                fileContent += '\n\n' + Utils.wrapSectionContent(markdownFile, content);
-            } catch (error) {
-                core.debug(`Section ${markdownFile} not found or empty, skipping...`);
-            }
+
+        for (const sectionName of Utils.JOB_SUMMARY_MARKDOWN_SECTIONS_NAMES) {
+            fileContent += await Utils.readSummarySection(outputDir, sectionName, fileContent);
         }
 
-        if (isAnySectionFound) {
-            fileContent = this.getInitialContent() + fileContent;
+        // No section was added, return empty string
+        if (fileContent == '') {
+            return '';
         }
+        // Add the main header
+        return this.getMarkdownHeader() + fileContent;
+    }
 
+    private static async readSummarySection(outputDir: string, section: string, fileContent: string) {
+        try {
+            const fullPath: string = path.join(outputDir, section, 'markdown.md');
+            const content: string = await fs.readFile(fullPath, 'utf-8');
+            fileContent += '\n\n' + Utils.wrapCollapsableSection(section, content);
+        } catch (error) {
+            core.debug(`Section ${section} not found or empty, skipping...`);
+        }
         return fileContent;
     }
 
-    private static getInitialContent(): string {
+    private static getMarkdownHeader(): string {
         const [projectPackagesUrl, projectKey] = Utils.getJobSummaryEnvVars();
 
         let packagesLink: string = `<a href="${projectPackagesUrl}">📦 Project ${projectKey} packages </a>`;
@@ -498,7 +506,7 @@ export class Utils {
         await fs.rm(homedir, { recursive: true });
     }
 
-    private static wrapSectionContent(section: string, markdown: string): string {
+    private static wrapCollapsableSection(section: string, markdown: string): string {
         let sectionTitle: string;
         switch (section) {
             case 'upload':
@@ -522,6 +530,7 @@ export interface DownloadDetails {
     repository: string;
     auth: string;
 }
+
 export interface JfrogCredentials {
     jfrogUrl: string | undefined;
     username: string | undefined;
