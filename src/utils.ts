@@ -127,41 +127,46 @@ export class Utils {
         const responseJson: TokenExchangeResponseData = JSON.parse(responseString);
         jfrogCredentials.accessToken = responseJson.access_token;
         if (jfrogCredentials.accessToken) {
-            // output the oidc access token as a secret
-            core.setSecret(jfrogCredentials.accessToken);
-            core.setOutput('jf_oidc_token', jfrogCredentials.accessToken);
-
-            // output the user from the oidc access token subject as a secret
-            //split jfrogCredentials.accessToken into 3 parts divided by .
-            let tokenParts: string[] = jfrogCredentials.accessToken.split('.');
-            if (tokenParts.length != 3) {
-                // this error should not happen since access only generates valid JWT tokens
-                throw new Error(`OIDC invalid access token format`);
-            }
-            //decode the second part of the token
-            let payload: JWTTokenData = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString('utf8'));
-            if (!payload || !payload.sub) {
-                throw new Error(`OIDC invalid access token format`);
-            }
-
-            if (payload.sub.startsWith('jfrt@') || payload.sub.includes('/users/')) {
-                let lastSlashIndex: number = payload.sub.lastIndexOf('/');
-                let lastSubstring: string = payload.sub.substring(lastSlashIndex + 1);
-                //output the user from the oidc access token subject extracted from the last section of the subject
-                core.setOutput('jf_oidc_user', lastSubstring);
-                core.setSecret(lastSubstring);
-            } else {
-                //output the user from the oidc access token subject AS-IS
-                core.setOutput('jf_oidc_user', payload.sub);
-                core.setSecret(payload.sub);
-            }
+            this.outputJfrogToken(jfrogCredentials.accessToken);
         }
         if (responseJson.errors) {
             throw new Error(`${JSON.stringify(responseJson.errors)}`);
         }
         return jfrogCredentials;
     }
+    private static outputJfrogToken(oidcToken: string): void {
+        // Making sure the user is treated as a secret
+        core.setSecret(oidcToken);
+        // Output the oidc access token as a secret
+        core.setOutput('jf_oidc_token', oidcToken);
 
+        // Output the user from the oidc access token subject as a secret
+        // Split jfrogCredentials.accessToken into 3 parts divided by .
+        let tokenParts: string[] = oidcToken.split('.');
+        if (tokenParts.length != 3) {
+            // this error should not happen since access only generates valid JWT tokens
+            throw new Error(`OIDC invalid access token format`);
+        }
+        // Decode the second part of the token
+        let payload: JWTTokenData = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString('utf8'));
+        if (!payload || !payload.sub) {
+            throw new Error(`OIDC invalid access token format`);
+        }
+        // Main OIDC user parsing logic
+        if (payload.sub.startsWith('jfrt@') || payload.sub.includes('/users/')) {
+            let lastSlashIndex: number = payload.sub.lastIndexOf('/');
+            let userSubstring: string = payload.sub.substring(lastSlashIndex + 1);
+            // Making sure the user is treated as a secret
+            core.setSecret(userSubstring);
+            //output the user from the oidc access token subject extracted from the last section of the subject
+            core.setOutput('jf_oidc_user', userSubstring);
+        } else {
+            // Making sure the user is treated as a secret
+            core.setSecret(payload.sub);
+            // Output the user from the oidc access token subject AS-IS
+            core.setOutput('jf_oidc_user', payload.sub);
+        }
+    }
     public static async getAndAddCliToPath(jfrogCredentials: JfrogCredentials) {
         let version: string = core.getInput(Utils.CLI_VERSION_ARG);
         let cliRemote: string = core.getInput(Utils.CLI_REMOTE_ARG);
