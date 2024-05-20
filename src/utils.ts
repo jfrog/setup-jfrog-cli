@@ -141,7 +141,7 @@ export class Utils {
         // Making sure the token is treated as a secret
         core.setSecret(oidcToken);
         // Output the oidc access token as a secret
-        core.setOutput('jf_oidc_token', oidcToken);
+        core.setOutput('jf-oidc-token', oidcToken);
 
         // Output the user from the oidc access token subject as a secret
         let payload: JWTTokenData = this.decodeOidcToken(oidcToken);
@@ -149,7 +149,7 @@ export class Utils {
         // Mark the user as a secret
         core.setSecret(tokenUser);
         // Output the user from the oidc access token subject extracted from the last section of the subject
-        core.setOutput('jf_oidc_user', tokenUser);
+        core.setOutput('jf-oidc-user', tokenUser);
 
     }
     public static extractTokenUser(subject: string): string {

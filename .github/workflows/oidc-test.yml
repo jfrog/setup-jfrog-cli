@@ -76,10 +76,10 @@ jobs:
         shell: bash
         run: |
             echo "os is $RUNNER_OS"           
-            if [ -z "${{ steps.setup.outputs.jf_oidc_token }}" ]; then
+            if [ -z "${{ steps.setup.outputs.jf-oidc-token }}" ]; then
               exit 1
             fi
-            if [ -z "${{ steps.setup.outputs.jf_oidc_user }}" ]; then
+            if [ -z "${{ steps.setup.outputs.jf-oidc-user }}" ]; then
               exit 1
             fi
 
