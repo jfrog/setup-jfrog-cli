@@ -72,13 +72,16 @@ jobs:
         run: |
           jf rt s "some-repo/"
 
-      - name: Test User Output
+      - name: Test outputs
         shell: bash
-        run: test -n "${{ steps.setup-jfrog-cli.outputs.jf-oidc-user }}"
-
-      - name: Test Token Output
-        shell: bash
-        run: test -n "${{ steps.setup-jfrog-cli.outputs.jf-oidc-token }}"
+        run: |
+            echo "os is $RUNNER_OS"           
+            if [ -z "${{ steps.setup.outputs.jf-oidc-token }}" ]; then
+              exit 1
+            fi
+            if [ -z "${{ steps.setup.outputs.jf-oidc-user }}" ]; then
+              exit 1
+            fi
 
       # Removing the OIDC integration will remove the Identity Mapping as well
       - name: Delete OIDC integration
