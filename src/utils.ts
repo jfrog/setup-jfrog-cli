@@ -127,12 +127,71 @@ export class Utils {
         const responseJson: TokenExchangeResponseData = JSON.parse(responseString);
         jfrogCredentials.accessToken = responseJson.access_token;
         if (jfrogCredentials.accessToken) {
-            core.setSecret(jfrogCredentials.accessToken);
+            this.outputOidcTokenAndUsername(jfrogCredentials.accessToken);
         }
         if (responseJson.errors) {
             throw new Error(`${JSON.stringify(responseJson.errors)}`);
         }
         return jfrogCredentials;
+    }
+
+    /**
+     * Output the OIDC access token as a secret and the user from the OIDC access token subject as a secret.
+     * Both are set as secrets to prevent them from being printed in the logs or exported to other workflows.
+     * @param oidcToken access token received from the JFrog platform during OIDC token exchange
+     */
+    private static outputOidcTokenAndUsername(oidcToken: string): void {
+        // Making sure the token is treated as a secret
+        core.setSecret(oidcToken);
+        // Output the oidc access token as a secret
+        core.setOutput('oidc-token', oidcToken);
+
+        // Output the user from the oidc access token subject as a secret
+        let payload: JWTTokenData = this.decodeOidcToken(oidcToken);
+        let tokenUser: string = this.extractTokenUser(payload.sub);
+        // Mark the user as a secret
+        core.setSecret(tokenUser);
+        // Output the user from the oidc access token subject extracted from the last section of the subject
+        core.setOutput('oidc-user', tokenUser);
+    }
+
+    /**
+     * Extract the username from the OIDC access token subject.
+     * @param subject OIDC token subject
+     * @returns the username
+     */
+    public static extractTokenUser(subject: string): string {
+        // Main OIDC user parsing logic
+        if (subject.startsWith('jfrt@') || subject.includes('/users/')) {
+            let lastSlashIndex: number = subject.lastIndexOf('/');
+            let userSubstring: string = subject.substring(lastSlashIndex + 1);
+            // Return the user extracted from the token
+            return userSubstring;
+        }
+        // No parsing was needed, returning original sub from the token as the user
+        return subject;
+    }
+
+    /**
+     * Decode the OIDC access token and return the payload.
+     * @param oidcToken access token received from the JFrog platform during OIDC token exchange
+     * @returns the payload of the OIDC access token
+     */
+    public static decodeOidcToken(oidcToken: string): JWTTokenData {
+        // Split jfrogCredentials.accessToken into 3 parts divided by .
+        let tokenParts: string[] = oidcToken.split('.');
+        if (tokenParts.length != 3) {
+            // this error should not happen since access only generates valid JWT tokens
+            throw new Error(`OIDC invalid access token format`);
+        }
+        // Decode the second part of the token
+        let base64Payload: string = tokenParts[1];
+        let utf8Payload: string = Buffer.from(base64Payload, 'base64').toString('utf8');
+        let payload: JWTTokenData = JSON.parse(utf8Payload);
+        if (!payload || !payload.sub) {
+            throw new Error(`OIDC invalid access token format`);
+        }
+        return payload;
     }
 
     public static async getAndAddCliToPath(jfrogCredentials: JfrogCredentials) {
@@ -410,4 +469,14 @@ export interface JfrogCredentials {
 export interface TokenExchangeResponseData {
     access_token: string;
     errors: string;
+}
+
+export interface JWTTokenData {
+    sub: string;
+    scp: string;
+    aud: string;
+    iss: string;
+    exp: bigint;
+    iat: bigint;
+    jti: string;
 }
