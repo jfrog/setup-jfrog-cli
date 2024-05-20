@@ -2,8 +2,6 @@
 name: OpenID Connect Test
 on:
   push:
-    branches:
-      - '**'
   # Triggers the workflow on labeled PRs only.
   pull_request_target:
     types: [ labeled ]
