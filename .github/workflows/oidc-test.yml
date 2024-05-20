@@ -61,7 +61,7 @@ jobs:
           }'
 
       - name: Setup JFrog CLI
-        id: setup
+        id: setup-jfrog-cli
         uses: ./
         env:
           JF_URL: ${{ secrets.JFROG_PLATFORM_URL }}
@@ -72,16 +72,13 @@ jobs:
         run: |
           jf rt s "some-repo/"
 
-      - name: Test outputs
+      - name: Test User Output
         shell: bash
-        run: |
-            echo "os is $RUNNER_OS"           
-            if [ -z "${{ steps.setup.outputs.jf-oidc-token }}" ]; then
-              exit 1
-            fi
-            if [ -z "${{ steps.setup.outputs.jf-oidc-user }}" ]; then
-              exit 1
-            fi
+        run: test -n "${{ steps.setup-jfrog-cli.outputs.jf-oidc-user }}"
+
+      - name: Test Token Output
+        shell: bash
+        run: test -n "${{ steps.setup-jfrog-cli.outputs.jf-oidc-token }}"
 
       # Removing the OIDC integration will remove the Identity Mapping as well
       - name: Delete OIDC integration
