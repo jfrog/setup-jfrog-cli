@@ -446,7 +446,7 @@ export class Utils {
         let fileContent: string = '';
 
         for (const sectionName of Utils.JOB_SUMMARY_MARKDOWN_SECTIONS_NAMES) {
-            fileContent += await Utils.readSummarySection(outputDir, sectionName, fileContent);
+            fileContent += await Utils.readSummarySection(outputDir, sectionName);
         }
 
         // No section was added, return empty string
@@ -457,15 +457,15 @@ export class Utils {
         return this.getMarkdownHeader() + fileContent;
     }
 
-    private static async readSummarySection(outputDir: string, section: string, fileContent: string) {
+    private static async readSummarySection(outputDir: string, section: string) {
+        let content :string = '';
         try {
             const fullPath: string = path.join(outputDir, section, 'markdown.md');
-            const content: string = await fs.readFile(fullPath, 'utf-8');
-            fileContent += '\n\n' + Utils.wrapCollapsableSection(section, content);
+            content = await fs.readFile(fullPath, 'utf-8');
         } catch (error) {
             core.debug(`Section ${section} not found or empty, skipping...`);
         }
-        return fileContent;
+        return Utils.wrapCollapsableSection(section, content);
     }
 
     private static getMarkdownHeader(): string {
@@ -522,7 +522,7 @@ export class Utils {
             default:
                 throw new Error(`Failed to get unknown section: ${section}, title.`);
         }
-        return `\n<details open>\n\n<summary>  ${sectionTitle} </summary><p></p> \n\n ${markdown} \n\n</details>\n`;
+        return `\n\n\n<details open>\n\n<summary>  ${sectionTitle} </summary><p></p> \n\n ${markdown} \n\n</details>\n\n\n`;
     }
 }
 
