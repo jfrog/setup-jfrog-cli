@@ -3,9 +3,7 @@ name: OpenID Connect Test
 on:
   push:
     branches:
-      - '**'
-    tags-ignore:
-      - '**'
+      - master
   # Triggers the workflow on labeled PRs only.
   pull_request_target:
     types: [ labeled ]
@@ -63,6 +61,7 @@ jobs:
           }'
 
       - name: Setup JFrog CLI
+        id: setup-jfrog-cli
         uses: ./
         env:
           JF_URL: ${{ secrets.JFROG_PLATFORM_URL }}
@@ -72,6 +71,14 @@ jobs:
       - name: Test JFrog CLI
         run: |
           jf rt s "some-repo/"
+
+      - name: Test User Output
+        shell: bash
+        run: test -n "${{ steps.setup-jfrog-cli.outputs.oidc-user }}"
+
+      - name: Test Token Output
+        shell: bash
+        run: test -n "${{ steps.setup-jfrog-cli.outputs.oidc-token }}"
 
       # Removing the OIDC integration will remove the Identity Mapping as well
       - name: Delete OIDC integration
