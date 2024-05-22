@@ -282,8 +282,8 @@ Here's how you do this:
 ## JFrog Job Summary
 
 When using the setup-cli action,
-JFrog CLI commands will automatically produce a summary of the job.
-This summary can be viewed within the GitHub user interface, specifically Actions run page.
+JFrog CLI will automatically generate a summary of all executed commands that support this feature during the workflow.
+This summary can be viewed within the GitHub actions run page.
 
 ![JFrog-Job-Summary](images/JFrog-Job-Summary.png)
 
