@@ -9,7 +9,6 @@ import { join } from 'path';
 import { lt } from 'semver';
 import * as path from 'node:path';
 
-
 export class Utils {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     public static readonly USER_AGENT: string = 'setup-jfrog-cli-github-action/' + require('../package.json').version;
@@ -492,8 +491,8 @@ export class Utils {
                 return;
             }
             // Write to GitHub's job summary
-            core.summary.addRaw(markdownContent, true)
-            await core.summary.write( {overwrite: true});
+            core.summary.addRaw(markdownContent, true);
+            await core.summary.write({ overwrite: true });
             // Clear files
             await this.clearJobSummaryDir();
         } catch (error) {
@@ -523,7 +522,7 @@ export class Utils {
     }
 
     private static async readSummarySection(outputDir: string, section: string) {
-        let content :string = '';
+        let content: string = '';
         try {
             const fullPath: string = path.join(outputDir, section, 'markdown.md');
             content = await fs.readFile(fullPath, 'utf-8');
@@ -594,7 +593,7 @@ export class Utils {
 export enum Section {
     Upload = 'upload',
     BuildInfo = 'build-info',
-    Security = 'security'
+    Security = 'security',
 }
 
 export interface DownloadDetails {
