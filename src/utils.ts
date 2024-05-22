@@ -491,7 +491,9 @@ export class Utils {
                 core.debug('No job summaries sections found. Workflow summary will not be generated.');
                 return;
             }
-            core.summary.addRaw(markdownContent);
+            // Write to GitHub's job summary
+            core.summary.addRaw(markdownContent, true)
+            await core.summary.write( {overwrite: true});
             // Clear files
             await this.clearJobSummaryDir();
         } catch (error) {
