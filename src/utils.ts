@@ -9,6 +9,7 @@ import { join } from 'path';
 import { lt } from 'semver';
 import * as path from 'node:path';
 
+
 export class Utils {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     public static readonly USER_AGENT: string = 'setup-jfrog-cli-github-action/' + require('../package.json').version;
@@ -286,7 +287,7 @@ export class Utils {
         );
         Utils.exportVariableIfNotSet('JFROG_CLI_USER_AGENT', Utils.USER_AGENT);
 
-        // Set JF_PROJECT as JF_CLI_BUILD_PROJECT to allow the JFrog CLI to use it as the project key
+        // Set JF_PROJECT as JFROG_CLI_BUILD_PROJECT to allow the JFrog CLI to use it as the project key
         let projectKey: string | undefined = process.env.JF_PROJECT;
         if (projectKey) {
             Utils.exportVariableIfNotSet('JFROG_CLI_BUILD_PROJECT', projectKey);
@@ -431,7 +432,7 @@ export class Utils {
                 core.debug('No job summaries sections found. Workflow summary will not be generated.');
                 return;
             }
-            await fs.writeFile(githubStepSummaryFilePath, markdownContent);
+            core.summary.addRaw(markdownContent);
             // Clear files
             await this.clearJobSummaryDir();
         } catch (error) {
@@ -439,8 +440,11 @@ export class Utils {
         }
     }
 
-    // Each section should prepare a file called markdown.md. 
-    // This function reads each section file and wraps it with a markdown header
+    /**
+     * Each section should prepare a file called markdown.md.
+     * This function reads each section file and wraps it with a markdown header
+     * @returns <string>
+     */
     private static async readCLIMarkdownSections(): Promise<string> {
         const outputDir: string = Utils.getJobOutputDirectoryPath();
         let fileContent: string = '';
@@ -502,21 +506,21 @@ export class Utils {
     }
 
     private static async clearJobSummaryDir() {
-        const homedir: string = Utils.getJobOutputDirectoryPath();
-        core.debug('Removing Workflow summary directory: ' + homedir);
-        await fs.rm(homedir, { recursive: true });
+        const outputDir: string = Utils.getJobOutputDirectoryPath();
+        core.debug('Removing Workflow summary directory: ' + outputDir);
+        await fs.rm(outputDir, { recursive: true });
     }
 
     private static wrapCollapsableSection(section: string, markdown: string): string {
         let sectionTitle: string;
         switch (section) {
-            case 'upload':
+            case Section.Upload:
                 sectionTitle = `📁 Files uploaded to Artifactory by this workflow`;
                 break;
-            case 'build-info':
+            case Section.BuildInfo:
                 sectionTitle = `📦 Build info published to Artifactory by this workflow`;
                 break;
-            case 'security':
+            case Section.Security:
                 sectionTitle = `🔒 Security Status`;
                 break;
             default:
@@ -524,6 +528,12 @@ export class Utils {
         }
         return `\n\n\n<details open>\n\n<summary>  ${sectionTitle} </summary><p></p> \n\n ${markdown} \n\n</details>\n\n\n`;
     }
+}
+
+export enum Section {
+    Upload = 'upload',
+    BuildInfo = 'build-info',
+    Security = 'security'
 }
 
 export interface DownloadDetails {
