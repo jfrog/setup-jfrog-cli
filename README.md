@@ -282,13 +282,13 @@ Here's how you do this:
 ## JFrog Job Summary
 
 When using the setup-cli action,
-the JFrog CLI commands will automatically generate a Job summary,
-which will be displayed in the GitHub UI, inside the Actions run summary page.
+JFrog CLI commands will automatically produce a summary of the job.
+This summary can be viewed within the GitHub user interface, specifically Actions run page.
+
+![JFrog-Job-Summary](images/JFrog-Job-Summary.png)
 
 ⚠️ Please note that in order for platform links work properly,
 ```JF_URL``` should be set as variable instead of a secret, to avoid GitHub masking the URL.
-
-![JFrog-Job-Summary](images/JFrog-Job-Summary.png)
 
 
 ## Example projects
