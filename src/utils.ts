@@ -504,7 +504,7 @@ export class Utils {
      */
     private static async readCLIMarkdownSections(): Promise<string> {
         const outputDir: string = Utils.getJobOutputDirectoryPath();
-        let fileContent: string = '';
+        let markdownContent: string = '';
 
         for (const sectionName of Utils.JOB_SUMMARY_MARKDOWN_SECTIONS_NAMES) {
             const fullPath: string = path.join(outputDir, sectionName, 'markdown.md');
@@ -512,15 +512,15 @@ export class Utils {
             if (!existsSync(fullPath)) {
                 continue;
             }
-            fileContent += await Utils.readSummarySection(fullPath, sectionName);
+            markdownContent += await Utils.readSummarySection(fullPath, sectionName);
         }
 
         // No section was added, return empty string
-        if (fileContent == '') {
+        if (markdownContent == '') {
             return '';
         }
-        // Add the main header
-        return this.getMarkdownHeader() + fileContent;
+
+        return Utils.wrapContent(markdownContent);
     }
 
     private static async readSummarySection(fullPath: string, section: string) {
@@ -553,7 +553,7 @@ export class Utils {
         let serverObj: any = this.getServerObjFromConfig();
         let platformUrl: string = this.getPlatformUrl(serverObj);
         let projectKey: string = this.getProjectKey(serverObj);
-        if (projectKey !== '') {
+        if (platformUrl !== '' && projectKey !== '') {
             let projectPackagesUrl: string = platformUrl + 'ui/packages' + '?projectKey=' + projectKey;
             packagesLink = `<a href="${projectPackagesUrl}">📦 Project ${projectKey} packages </a>` + '\n\n';
         }
@@ -609,6 +609,14 @@ export class Utils {
                 throw new Error(`Failed to get unknown section: ${section}, title.`);
         }
         return `\n\n\n<details open>\n\n<summary>  ${sectionTitle} </summary><p></p> \n\n ${markdown} \n\n</details>\n\n\n`;
+    }
+
+    private static wrapContent(fileContent: string) {
+        return Utils.getMarkdownHeader() + fileContent + Utils.getMarkdownFooter();
+    }
+
+    private static getMarkdownFooter() {
+        return '\n\n # \n\n Read more about the <a href="https://github.com/jfrog/setup-jfrog-cli/blob/master/README.md#github-job-summaries"> JFrog Job Summaries 🐸 </a>';
     }
 }
 
