@@ -287,6 +287,7 @@ export class Utils {
         let artifactoryUrl: string = downloadDetails.artifactoryUrl.replace(/\/$/, '');
         return `${artifactoryUrl}/${downloadDetails.repository}/v${major}/${version}/${architecture}/${fileName}`;
     }
+
     // Get Config Tokens created on your local machine using JFrog CLI.
     // The Tokens configured with JF_ENV_ environment variables.
     public static getConfigTokens(): Set<string> {
@@ -428,14 +429,7 @@ export class Utils {
             return Utils.DEFAULT_DOWNLOAD_DETAILS;
         }
         let results: DownloadDetails = { repository: repository } as DownloadDetails;
-        let serverObj: any = {};
-
-        for (let configToken of Utils.getConfigTokens()) {
-            serverObj = JSON.parse(Buffer.from(configToken, 'base64').toString());
-            if (serverObj && serverObj.artifactoryUrl) {
-                break;
-            }
-        }
+        let serverObj: any = Utils.getServerObjFromConfig();
         if (!serverObj.artifactoryUrl) {
             // No Config Tokens found, check if Separate Env config exist.
             if (!jfrogCredentials.jfrogUrl) {
@@ -457,6 +451,17 @@ export class Utils {
             results.auth = authString;
         }
         return results;
+    }
+
+    private static getServerObjFromConfig() {
+        let serverObj: any = {};
+        for (let configToken of Utils.getConfigTokens()) {
+            serverObj = JSON.parse(Buffer.from(configToken, 'base64').toString());
+            if (serverObj && serverObj.artifactoryUrl) {
+                break;
+            }
+        }
+        return serverObj;
     }
 
     private static generateAuthString(serverObj: any): string | undefined {
@@ -529,7 +534,7 @@ export class Utils {
     }
 
     private static getMarkdownHeader(): string {
-        const [projectPackagesUrl, projectKey] = Utils.getJobSummaryEnvVars();
+        const [projectPackagesUrl, projectKey] = Utils.getJobSummaryVars();
 
         let packagesLink: string = `<a href="${projectPackagesUrl}">📦 Project ${projectKey} packages </a>`;
         let mainTitle: string = `# $\\textcolor{green}{\\textsf{ 🐸 JFrog Job Summary}}$`;
@@ -537,20 +542,39 @@ export class Utils {
         return mainTitle + '\n\n' + packagesLink + '\n\n';
     }
 
-    private static getJobSummaryEnvVars(): string[] {
+    /**
+     * Get the project key and platform URL from the environment variables or the config file
+     * @private returns [packagesUrl, projectKey]
+     */
+    private static getJobSummaryVars(): string[] {
+        let serverObj: any = this.getServerObjFromConfig();
+        let projectKey: string = this.getProjectKey(serverObj);
+        let platformUrl: string = this.getPlatformUrl(serverObj);
+        let packagesUrl: string = this.constructPackagesUrl(platformUrl, projectKey);
+        return [packagesUrl, projectKey];
+    }
+
+    private static getProjectKey(serverObj: any): string {
         let projectKey: string | undefined = process.env.JF_PROJECT;
+        if (!projectKey) {
+            projectKey = serverObj.project || '';
+        }
+        return projectKey ? projectKey : '';
+    }
+
+    private static getPlatformUrl(serverObj: any): string {
         let platformUrl: string | undefined = process.env.JF_URL;
-        if (projectKey === undefined) {
-            projectKey = '';
+        if (!platformUrl) {
+            platformUrl = serverObj.url;
+            if (!platformUrl) {
+                throw new Error('Platform URL is not set, please set it via environment variable or jf config');
+            }
         }
-        if (platformUrl === undefined) {
-            throw new Error('JF_URL  environment variables are not set.');
-        }
-        if (!platformUrl.endsWith('/')) {
-            platformUrl += '/';
-        }
-        let projectPackagesUrl: string = platformUrl + 'ui/packages' + '?projectKey=' + projectKey;
-        return [projectPackagesUrl, projectKey];
+        return platformUrl.endsWith('/') ? platformUrl : platformUrl + '/';
+    }
+
+    private static constructPackagesUrl(platformUrl: string, projectKey: string): string {
+        return projectKey === '' ? platformUrl + 'ui/packages' : platformUrl + 'ui/packages' + '?projectKey=' + projectKey;
     }
 
     private static getJobOutputDirectoryPath(): string {
