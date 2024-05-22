@@ -2,7 +2,7 @@ import * as core from '@actions/core';
 import { exec } from '@actions/exec';
 import { HttpClient, HttpClientResponse } from '@actions/http-client';
 import * as toolCache from '@actions/tool-cache';
-import { chmodSync, promises as fs } from 'fs';
+import { chmodSync, existsSync, promises as fs } from 'fs';
 import { OutgoingHttpHeaders } from 'http';
 import { arch, platform } from 'os';
 import { join } from 'path';
@@ -475,14 +475,6 @@ export class Utils {
      * and constructs a single markdown file, to be displayed in the GitHub UI.
      */
     public static async generateWorkflowSummaryMarkdown() {
-        // This is the file path that the markdown should be copied to.
-        // In order for GitHub to display this as a job summary in the UI.
-        const githubStepSummaryFilePath: string | undefined = process.env.GITHUB_STEP_SUMMARY;
-        if (!githubStepSummaryFilePath) {
-            core.debug('GITHUB_STEP_SUMMARY is not set. Workflow summary will not be generated.');
-            return;
-        }
-
         try {
             // Read all sections and construct the final markdown file
             const markdownContent: string = await this.readCLIMarkdownSections();
@@ -510,7 +502,12 @@ export class Utils {
         let fileContent: string = '';
 
         for (const sectionName of Utils.JOB_SUMMARY_MARKDOWN_SECTIONS_NAMES) {
-            fileContent += await Utils.readSummarySection(outputDir, sectionName);
+            const fullPath: string = path.join(outputDir, sectionName, 'markdown.md');
+            // Check file exists
+            if (!existsSync(fullPath)) {
+                continue;
+            }
+            fileContent += await Utils.readSummarySection(fullPath, sectionName);
         }
 
         // No section was added, return empty string
@@ -521,15 +518,14 @@ export class Utils {
         return this.getMarkdownHeader() + fileContent;
     }
 
-    private static async readSummarySection(outputDir: string, section: string) {
+    private static async readSummarySection(fullPath: string, section: string) {
         let content: string = '';
         try {
-            const fullPath: string = path.join(outputDir, section, 'markdown.md');
             content = await fs.readFile(fullPath, 'utf-8');
+            return Utils.wrapCollapsableSection(section, content);
         } catch (error) {
-            core.debug(`Section ${section} not found or empty, skipping...`);
+            throw new Error('failed to read section file: ' + fullPath + ' ' + error);
         }
-        return Utils.wrapCollapsableSection(section, content);
     }
 
     private static getMarkdownHeader(): string {
