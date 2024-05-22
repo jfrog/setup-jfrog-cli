@@ -534,24 +534,30 @@ export class Utils {
     }
 
     private static getMarkdownHeader(): string {
-        const [projectPackagesUrl, projectKey] = Utils.getJobSummaryVars();
-
-        let packagesLink: string = `<a href="${projectPackagesUrl}">📦 Project ${projectKey} packages </a>`;
-        let mainTitle: string = `# $\\textcolor{green}{\\textsf{ 🐸 JFrog Job Summary}}$`;
-
-        return mainTitle + '\n\n' + packagesLink + '\n\n';
+        const projectPackagesLinks: string = Utils.getProjectPackagesLink();
+        let mainTitle: string = `# $\\textcolor{green}{\\textsf{ 🐸 JFrog Job Summary}}$` + '\n\n';
+        if (projectPackagesLinks === '') {
+            return mainTitle;
+        } else {
+            return mainTitle + projectPackagesLinks;
+        }
     }
 
     /**
-     * Get the project key and platform URL from the environment variables or the config file
-     * @private returns [packagesUrl, projectKey]
+     * Gets the project packages link to be displayed in the summary
+     * Can returned empty string when the project is not defined
+     * @return <string>
      */
-    private static getJobSummaryVars(): string[] {
+    private static getProjectPackagesLink(): string {
+        let packagesLink: string = '';
         let serverObj: any = this.getServerObjFromConfig();
-        let projectKey: string = this.getProjectKey(serverObj);
         let platformUrl: string = this.getPlatformUrl(serverObj);
-        let packagesUrl: string = this.constructPackagesUrl(platformUrl, projectKey);
-        return [packagesUrl, projectKey];
+        let projectKey: string = this.getProjectKey(serverObj);
+        if (projectKey !== '') {
+            let projectPackagesUrl: string = platformUrl + 'ui/packages' + '?projectKey=' + projectKey;
+            packagesLink = `<a href="${projectPackagesUrl}">📦 Project ${projectKey} packages </a>` + '\n\n';
+        }
+        return packagesLink;
     }
 
     private static getProjectKey(serverObj: any): string {
@@ -571,10 +577,6 @@ export class Utils {
             }
         }
         return platformUrl.endsWith('/') ? platformUrl : platformUrl + '/';
-    }
-
-    private static constructPackagesUrl(platformUrl: string, projectKey: string): string {
-        return projectKey === '' ? platformUrl + 'ui/packages' : platformUrl + 'ui/packages' + '?projectKey=' + projectKey;
     }
 
     private static getJobOutputDirectoryPath(): string {
