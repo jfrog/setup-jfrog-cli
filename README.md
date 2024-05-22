@@ -196,6 +196,8 @@ Example step utilizing OpenID Connect:
       oidc-provider-name: setup-jfrog-cli
 ```
 
+**Notice:** When using OIDC authentication, this action outputs both the OIDC token and the OIDC token username. These can be utilized within the current workflow to log into the JFrog platform through other actions or clients (e.g., for use with `docker login`). The added outputs are `oidc-token` and `oidc-user`, respectively.
+
 </details>
 
 ## Setting the build name and build number when publishing build-info to Artifactory
