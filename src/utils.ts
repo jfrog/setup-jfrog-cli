@@ -543,7 +543,7 @@ export class Utils {
         if (platformUrl === '') {
             return '';
         }
-        if (platformUrl.endsWith('/')) {
+        if (!platformUrl.endsWith('/')) {
             platformUrl = platformUrl + '/';
         }
         let projectKey: string = process.env.JF_PROJECT ? process.env.JF_PROJECT : '';
