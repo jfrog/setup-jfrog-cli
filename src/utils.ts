@@ -529,13 +529,8 @@ export class Utils {
     }
 
     private static getMarkdownHeader(): string {
-        const projectPackagesLinks: string = Utils.getProjectPackagesLink();
         let mainTitle: string = `# $\\textcolor{green}{\\textsf{ 🐸 JFrog Job Summary}}$` + '\n\n';
-        if (projectPackagesLinks === '') {
-            return mainTitle;
-        } else {
-            return mainTitle + projectPackagesLinks;
-        }
+        return mainTitle + Utils.getProjectPackagesLink();
     }
 
     /**
