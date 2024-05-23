@@ -539,19 +539,16 @@ export class Utils {
      * @return <string>
      */
     private static getProjectPackagesLink(): string {
-        let platformUrl: string = this.getPlatformUrl();
+        let platformUrl: string = process.env.JF_URL ? process.env.JF_URL : '';
+        if (platformUrl === '') {
+            return '';
+        }
+        if (platformUrl.endsWith('/')) {
+            platformUrl = platformUrl + '/';
+        }
         let projectKey: string = process.env.JF_PROJECT ? process.env.JF_PROJECT : '';
         let projectPackagesUrl: string = platformUrl + 'ui/packages' + '?projectKey=' + projectKey;
         return `<a href="${projectPackagesUrl}">📦 Project ${projectKey} packages </a>` + '\n\n';
-    }
-
-    private static getPlatformUrl(): string {
-        let platformUrl: string | undefined = process.env.JF_URL;
-
-        if (!platformUrl) {
-            throw new Error('Platform URL is not set, please set it via environment variable or jf config');
-        }
-        return platformUrl.endsWith('/') ? platformUrl : platformUrl + '/';
     }
 
     private static getJobOutputDirectoryPath(): string {
