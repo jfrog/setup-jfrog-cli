@@ -281,15 +281,24 @@ Here's how you do this:
 
 ## JFrog Job Summary
 
-When using the setup-cli action,
-JFrog CLI will automatically generate a summary of all executed commands that support this feature during the workflow.
-This summary can be viewed within the GitHub actions run page.
+When you utilize the setup-cli action,
+the JFrog CLI will automatically create a summary of all the commands that were executed during the workflow,
+provided they support this feature.
+You can view this summary on the GitHub Actions run page.
+
+⚠️ It's important to note that for the platform links to function correctly,
+`JF_URL` should be set as a variable rather than a secret.
+This is to prevent GitHub from masking the URL.
+
+The setup-cli action leverages the command summaries feature of the JFrog CLI
+to generate a detailed summary of the entire workflow.
+If you're interested in learning more about command summaries,
+you can read about it here:
+[JFrog CLI Command Summaries](https://github.com/jfrog/setup-jfrog-cli/blob/master/README.md#github-job-summaries)
+
+Example of full JFrog Job Summary:
 
 ![JFrog-Job-Summary](images/JFrog-Job-Summary.png)
-
-⚠️ Please note that in order for platform links work properly,
-```JF_URL``` should be set as variable instead of a secret, to avoid GitHub masking the URL.
-
 
 ## Example projects
 
