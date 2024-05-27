@@ -549,8 +549,8 @@ export class Utils {
      * @return <string> https://platformUrl/ui/packages?projectKey=projectKey
      */
     private static getProjectPackagesLink(): string {
-        let platformUrl: string = process.env.JF_URL ? process.env.JF_URL : '';
-        if (platformUrl === '') {
+        let platformUrl: string | undefined = process.env.JF_URL;
+        if (!platformUrl) {
             return '';
         }
         if (!platformUrl.endsWith('/')) {
