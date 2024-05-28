@@ -284,7 +284,7 @@ Here's how you do this:
 
 ## JFrog Job Summary
 
-The **setup-jfrog-cli GitHub Action** leverages the command summaries feature of the JFrog CLI
+The **setup-jfrog-cli GitHub Action** leverages the **The Command Summaries** feature of the JFrog CLI
 to generate a detailed summary of the entire workflow.
 
 The summary can be viewed from the GitHub Actions run page.
