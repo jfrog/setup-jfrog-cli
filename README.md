@@ -18,7 +18,7 @@
 -   [Setting JFrog CLI version](#setting-jfrog-cli-version)
 -   [Setting JFrog CLI project key](#Setting-JFrog-CLI-project-Key)
 -   [Downloading JFrog CLI from Artifactory](#downloading-jfrog-cli-from-artifactory)
--   [GitHub Job Summaries](#github-job-summaries)
+-   [GitHub Job Summaries](#JFrog-Job-Summary)
 -   [Example projects](#example-projects)
 -   [Contributions](#contributions)
 -   [References](#references)
@@ -240,7 +240,10 @@ It is also possible to set the latest JFrog CLI version by adding the _version_ 
 
 ## Setting JFrog CLI project key
 
-By default, the JFrog CLI accepts a project flag in each command. 
+[JFrog Projects](https://jfrog.com/help/r/jfrog-platform-administration-documentation/projects) are a management entity that hosts all your resources related to a specific project,
+such as repositories, builds and Release Bundles.
+
+By default, the JFrog CLI accepts a project flag in some of its commands. 
 You can set the project key in the environment variable ```JF_PROJECT``` to avoid passing it in each command.
 
 ```yml
@@ -281,22 +284,20 @@ Here's how you do this:
 
 ## JFrog Job Summary
 
-When you utilize the setup-cli action,
-the JFrog CLI will automatically create a summary of all the commands that were executed during the workflow,
-provided they support this feature.
-You can view this summary on the GitHub Actions run page.
+The **setup-jfrog-cli GitHub Action** leverages the command summaries feature of the JFrog CLI
+to generate a detailed summary of the entire workflow.
 
-⚠️ It's important to note that for the platform links to function correctly,
+The summary can be viewed from the GitHub Actions run page.
+
+A list of supported commands and more information can be found here
+[JFrog CLI Command Summaries](https://github.com/jfrog/documentation/blob/main/jfrog-applications/jfrog-cli/cli-command-summaries.md)
+
+The Job Summary UI includes direct links to the JFrog Platform UI.
+It's important to note that for the platform links to function correctly,
 `JF_URL` should be set as a variable rather than a secret.
 This is to prevent GitHub from masking the URL.
 
-The setup-cli action leverages the command summaries feature of the JFrog CLI
-to generate a detailed summary of the entire workflow.
-If you're interested in learning more about command summaries,
-you can read about it here:
-[JFrog CLI Command Summaries](https://github.com/jfrog/setup-jfrog-cli/blob/master/README.md#github-job-summaries)
-
-Example of full JFrog Job Summary:
+Example JFrog Job Summary:
 
 ![JFrog-Job-Summary](images/JFrog-Job-Summary.png)
 
