@@ -16,8 +16,9 @@
 -   [Authorization](#authorization)
 -   [Setting the build name and build number when publishing build-info to Artifactory](#setting-the-build-name-and-build-number-when-publishing-build-info-to-artifactory)
 -   [Setting JFrog CLI version](#setting-jfrog-cli-version)
+-   [Setting JFrog CLI project key](#Setting-JFrog-CLI-project-Key)
 -   [Downloading JFrog CLI from Artifactory](#downloading-jfrog-cli-from-artifactory)
--   [Set up a FREE JFrog Environment in the Cloud](#set-up-a-free-jfrog-environment-in-the-cloud)
+-   [GitHub Job Summaries](#JFrog-Job-Summary)
 -   [Example projects](#example-projects)
 -   [Contributions](#contributions)
 -   [References](#references)
@@ -237,6 +238,20 @@ It is also possible to set the latest JFrog CLI version by adding the _version_ 
 | Important: Only JFrog CLI versions 1.46.4 or above are supported. |
 | ----------------------------------------------------------------- |
 
+## Setting JFrog CLI project key
+
+[JFrog Projects](https://jfrog.com/help/r/jfrog-platform-administration-documentation/projects) are a management entity that hosts all your resources related to a specific project,
+such as repositories, builds and Release Bundles.
+
+By default, the JFrog CLI accepts a project flag in some of its commands. 
+You can set the project key in the environment variable ```JF_PROJECT``` to avoid passing it in each command.
+
+```yml
+- uses: jfrog/setup-jfrog-cli@v4
+  env:
+      JF_PROJECT: "project-key"
+```
+
 ## Downloading JFrog CLI from Artifactory
 
 If your agent has no Internet access, you can configure the workflow to download JFrog CLI from a [remote repository](https://www.jfrog.com/confluence/display/JFROG/Remote+Repositories) in your JFrog Artifactory, which is configured to proxy the official download URL.
@@ -250,7 +265,7 @@ Here's how you do this:
     - uses: jfrog/setup-jfrog-cli@v4
       env:
           # JFrog platform url (for example: https://acme.jfrog.io)
-          JF_URL: ${{ secrets.JF_URL }}
+          JF_URL: ${{ vars.JF_URL }}
 
           # Basic authentication credentials
           JF_USER: ${{ secrets.JF_USER }}
@@ -267,24 +282,24 @@ Here's how you do this:
 
 -   See instructions for configuring the JFrog connection details under [Storing JFrog connection details as secrets](#storing-jfrog-connection-details-as-secrets).
 
-## Set up a FREE JFrog Environment in the Cloud
+## JFrog Job Summary
 
-Need a FREE JFrog environment in the cloud to use with this GitHub Action? Just run one of the following commands in your terminal. The commands will do the following:
+The **setup-jfrog-cli GitHub Action** leverages the **Command Summaries** feature of the JFrog CLI
+to generate a detailed summary of the entire workflow.
 
-1. Install JFrog CLI on your machine.
-2. Create a FREE JFrog environment in the cloud for you.
+The summary can be viewed from the GitHub Actions run page.
 
-**MacOS and Linux using cUrl**
+A list of supported commands and more information can be found here
+[JFrog CLI Command Summaries Documentation](https://github.com/jfrog/documentation/blob/main/jfrog-applications/jfrog-cli/cli-command-summaries.md)
 
-```
-curl -fL "https://getcli.jfrog.io?setup" | sh
-```
+The Job Summary UI includes direct links to the JFrog Platform UI.
+It's important to note that for the platform links to function correctly,
+`JF_URL` should be set as a variable rather than a secret.
+This is to prevent GitHub from masking the URL.
 
-**Windows using PowerShell**
+Example JFrog Job Summary:
 
-```
-powershell "Start-Process -Wait -Verb RunAs powershell '-NoProfile iwr https://releases.jfrog.io/artifactory/jfrog-cli/v2-jf/[RELEASE]/jfrog-cli-windows-amd64/jf.exe -OutFile $env:SYSTEMROOT\system32\jf.exe'" ; jf setup
-```
+![JFrog-Job-Summary](images/JFrog-Job-Summary.png)
 
 ## Example projects
 
