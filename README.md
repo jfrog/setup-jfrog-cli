@@ -284,13 +284,13 @@ Here's how you do this:
 
 ## JFrog Job Summary
 
-The **setup-jfrog-cli GitHub Action** leverages the **The Command Summaries** feature of the JFrog CLI
+The **setup-jfrog-cli GitHub Action** leverages the **Command Summaries** feature of the JFrog CLI
 to generate a detailed summary of the entire workflow.
 
 The summary can be viewed from the GitHub Actions run page.
 
 A list of supported commands and more information can be found here
-[JFrog CLI Command Summaries](https://github.com/jfrog/documentation/blob/main/jfrog-applications/jfrog-cli/cli-command-summaries.md)
+[JFrog CLI Command Summaries Documentation](https://github.com/jfrog/documentation/blob/main/jfrog-applications/jfrog-cli/cli-command-summaries.md)
 
 The Job Summary UI includes direct links to the JFrog Platform UI.
 It's important to note that for the platform links to function correctly,
