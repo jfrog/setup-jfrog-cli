@@ -291,3 +291,11 @@ describe('decodeOidcToken', () => {
         expect(() => Utils.decodeOidcToken(oidcToken)).toThrowError('OIDC invalid access token format');
     });
 });
+
+describe('Job Summaries', () => {
+    describe('Job summaries sanity', () => {
+        it('should not crash if no files were found', async () => {
+            expect(async () => await Utils.generateWorkflowSummaryMarkdown()).not.toThrow();
+        });
+    });
+});
