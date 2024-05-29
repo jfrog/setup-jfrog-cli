@@ -18,7 +18,7 @@
 -   [Setting JFrog CLI version](#setting-jfrog-cli-version)
 -   [Setting JFrog CLI project key](#Setting-JFrog-CLI-project-Key)
 -   [Downloading JFrog CLI from Artifactory](#downloading-jfrog-cli-from-artifactory)
--   [GitHub Job Summaries](#JFrog-Job-Summary)
+-   [GitHub Job Summaries](#jfrog-job-summary)
 -   [Example projects](#example-projects)
 -   [Contributions](#contributions)
 -   [References](#references)
@@ -290,7 +290,7 @@ to generate a detailed summary of the entire workflow.
 The summary can be viewed from the GitHub Actions run page.
 
 A list of supported commands and more information can be found here
-[JFrog CLI Command Summaries Documentation](https://github.com/jfrog/documentation/blob/main/jfrog-applications/jfrog-cli/cli-command-summaries.md)
+[JFrog CLI Command Summaries Documentation](https://docs.jfrog-applications.jfrog.io/jfrog-applications/jfrog-cli/cli-command-summaries)
 
 The Job Summary UI includes direct links to the JFrog Platform UI.
 It's important to note that for the platform links to function correctly,
