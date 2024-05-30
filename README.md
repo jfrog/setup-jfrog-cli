@@ -18,7 +18,7 @@
 -   [Setting JFrog CLI version](#setting-jfrog-cli-version)
 -   [Setting the JFrog project key](#setting-the-jfrog-project-key)
 -   [Downloading JFrog CLI from Artifactory](#downloading-jfrog-cli-from-artifactory)
--   [GitHub Job Summaries](#jfrog-job-summary)
+-   [JFrog Job Summary](#jfrog-job-summary)
 -   [Example projects](#example-projects)
 -   [Contributions](#contributions)
 -   [References](#references)
