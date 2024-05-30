@@ -16,7 +16,7 @@
 -   [Authorization](#authorization)
 -   [Setting the build name and build number when publishing build-info to Artifactory](#setting-the-build-name-and-build-number-when-publishing-build-info-to-artifactory)
 -   [Setting JFrog CLI version](#setting-jfrog-cli-version)
--   [Setting JFrog CLI project key](#Setting-JFrog-CLI-project-Key)
+-   [Setting the JFrog project key](#setting-the-jfrog-project-key)
 -   [Downloading JFrog CLI from Artifactory](#downloading-jfrog-cli-from-artifactory)
 -   [GitHub Job Summaries](#jfrog-job-summary)
 -   [Example projects](#example-projects)
@@ -238,7 +238,7 @@ It is also possible to set the latest JFrog CLI version by adding the _version_ 
 | Important: Only JFrog CLI versions 1.46.4 or above are supported. |
 | ----------------------------------------------------------------- |
 
-## Setting JFrog CLI project key
+## Setting the JFrog project key
 
 [JFrog Projects](https://jfrog.com/help/r/jfrog-platform-administration-documentation/projects) are a management entity that hosts all your resources related to a specific project,
 such as repositories, builds and Release Bundles.
