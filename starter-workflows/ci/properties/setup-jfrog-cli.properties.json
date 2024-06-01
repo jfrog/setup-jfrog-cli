@@ -1,0 +1,25 @@
+{
+    "name": "Setup JFrog CLI",
+    "description": "Set up JFrog CLI in your GitHub Actions workflow.",
+    "iconName": "setup-jfrog-cli",
+    "categories": [
+      "Continuous integration",
+      "Dependency management",
+      "Go",
+      "Artifactory",
+      "C#",
+      "Dockerfile",
+      "Go Module",
+      "Gradle",
+      "Java",
+      "JavaScript",
+      "Maven POM",
+      "npm",
+      "NPM Config",
+      "Pip",
+      "Pip Requirements",
+      "Python",
+      "Yarn"
+    ],
+    "creator": "JFrog"
+  }
