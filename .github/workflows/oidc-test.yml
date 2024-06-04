@@ -38,7 +38,7 @@ jobs:
         run: |
           curl -X POST "${{ secrets.JFROG_PLATFORM_URL }}/access/api/v1/oidc" -H "Content-Type: application/json" -H "Authorization: Bearer ${{ secrets.JFROG_PLATFORM_RT_TOKEN }}" -d '{
           "name": "${{ env.OIDC_PROVIDER_NAME }}",
-          "issuer_url": "https://token.actions.githubusercontent.com",
+          "issuer_url": "https://token.actions.githubusercontent.com/",
           "provider_type": "GitHub",
           "description": "This is a test configuration created for OIDC-Access integration test" }'
 
@@ -80,7 +80,7 @@ jobs:
         shell: bash
         run: test -n "${{ steps.setup-jfrog-cli.outputs.oidc-token }}"
 
-      # Removing the OIDC integration will remove the Identity Mapping as well
+      # Removing the OIDC integration will remove the Identity Mapping as well BLABLA
       - name: Delete OIDC integration
         shell: bash
         if: always()
