@@ -100,6 +100,14 @@ export class Utils {
             password: process.env.JF_PASSWORD,
         } as JfrogCredentials;
 
+        // Mark the credentials as secrets to prevent them from being printed in the logs or exported to other workflows
+        if (jfrogCredentials.accessToken) {
+            core.setSecret(jfrogCredentials.accessToken);
+        }
+        if (jfrogCredentials.password) {
+            core.setSecret(jfrogCredentials.password);
+        }
+
         if (jfrogCredentials.password && !jfrogCredentials.username) {
             throw new Error('JF_PASSWORD is configured, but the JF_USER environment variable was not set.');
         }
@@ -416,7 +424,7 @@ export class Utils {
     /**
      * Execute JFrog CLI command.
      * This GitHub Action downloads the requested 'jfrog' executable and stores it as 'jfrog' and 'jf'.
-     * Therefore the 'jf' executable is expected to be in the path also for older CLI versions.
+     * Therefore, the 'jf' executable is expected to be in the path also for older CLI versions.
      * @param args - CLI arguments
      */
     public static async runCli(args: string[]) {
