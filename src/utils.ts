@@ -416,7 +416,7 @@ export class Utils {
     /**
      * Execute JFrog CLI command.
      * This GitHub Action downloads the requested 'jfrog' executable and stores it as 'jfrog' and 'jf'.
-     * Therefore the 'jf' executable is expected to be in the path also for older CLI versions.
+     * Therefore, the 'jf' executable is expected to be in the path also for older CLI versions.
      * @param args - CLI arguments
      */
     public static async runCli(args: string[]) {
