@@ -382,6 +382,7 @@ export class Utils {
     public static async configJFrogServers(jfrogCredentials: JfrogCredentials) {
         let cliConfigCmd: string[] = ['config'];
         for (let configToken of Utils.getConfigTokens()) {
+            // Mark the credentials as secrets to prevent them from being printed in the logs or exported to other workflows
             core.setSecret(configToken);
             await Utils.runCli(cliConfigCmd.concat('import', configToken));
         }
