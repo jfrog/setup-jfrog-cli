@@ -382,6 +382,7 @@ export class Utils {
     public static async configJFrogServers(jfrogCredentials: JfrogCredentials) {
         let cliConfigCmd: string[] = ['config'];
         for (let configToken of Utils.getConfigTokens()) {
+            core.setSecret(configToken);
             await Utils.runCli(cliConfigCmd.concat('import', configToken));
         }
 
