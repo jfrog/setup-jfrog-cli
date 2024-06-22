@@ -106,6 +106,13 @@ export class Utils {
         if (jfrogCredentials.username && !jfrogCredentials.accessToken && !jfrogCredentials.password) {
             throw new Error('JF_USER is configured, but the JF_PASSWORD or JF_ACCESS_TOKEN environment variables were not set.');
         }
+        // Mark the credentials as secrets to prevent them from being printed in the logs or exported to other workflows
+        if (jfrogCredentials.accessToken) {
+            core.setSecret(jfrogCredentials.accessToken);
+        }
+        if (jfrogCredentials.password) {
+            core.setSecret(jfrogCredentials.password);
+        }
         return jfrogCredentials;
     }
 
@@ -375,6 +382,8 @@ export class Utils {
     public static async configJFrogServers(jfrogCredentials: JfrogCredentials) {
         let cliConfigCmd: string[] = ['config'];
         for (let configToken of Utils.getConfigTokens()) {
+            // Mark the credentials as secrets to prevent them from being printed in the logs or exported to other workflows
+            core.setSecret(configToken);
             await Utils.runCli(cliConfigCmd.concat('import', configToken));
         }
 
