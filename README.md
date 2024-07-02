@@ -301,6 +301,14 @@ Example JFrog Job Summary:
 
 ![JFrog-Job-Summary](images/JFrog-Job-Summary.png)
 
+Disabling Job Summaries:
+
+```yml
+- uses: jfrog/setup-jfrog-cli@v4
+  with:
+    job-summary-enabled: false
+```
+
 ## Example projects
 
 To help you get started, you can use [these](https://github.com/jfrog/project-examples/tree/master/github-action-examples) sample projects on GitHub.
