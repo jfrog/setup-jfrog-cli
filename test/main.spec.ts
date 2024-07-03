@@ -1,4 +1,6 @@
 import * as os from 'os';
+import * as core from '@actions/core';
+
 import { Utils, DownloadDetails, JfrogCredentials } from '../src/utils';
 jest.mock('os');
 
@@ -297,5 +299,38 @@ describe('Job Summaries', () => {
         it('should not crash if no files were found', async () => {
             expect(async () => await Utils.generateWorkflowSummaryMarkdown()).not.toThrow();
         });
+    });
+});
+
+jest.mock('@actions/core', () => ({
+    getInput: jest.fn(),
+    exportVariable: jest.fn().mockImplementation((name: string, val: string) => {
+        process.env[name] = val;
+    }),
+}));
+
+describe('Command Summaries Feature Flag', () => {
+    beforeEach(() => {
+        delete process.env.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR;
+        delete process.env.RUNNER_TEMP;
+    });
+
+    it('should set JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR if JOB_SUMMARY_ENABLED is true', () => {
+        process.env.RUNNER_TEMP = '/tmp';
+        (core.getInput as jest.Mock).mockReturnValue('true');
+        Utils.setCliEnv();
+        expect(process.env.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR).toBe('/tmp');
+    });
+
+    it('should not set JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR if JOB_SUMMARY_ENABLED is false', () => {
+        (core.getInput as jest.Mock).mockReturnValue('false');
+        Utils.setCliEnv();
+        expect(process.env.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR).toBeUndefined();
+    });
+
+    it('should not set JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR if RUNNER_TEMP is not set', () => {
+        (core.getInput as jest.Mock).mockReturnValue('true');
+        Utils.setCliEnv();
+        expect(process.env.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR).toBeUndefined();
     });
 });

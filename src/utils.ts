@@ -366,7 +366,7 @@ export class Utils {
         // Check for command summaries feature flag
         // If JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR is not set, the CLI won't record any data.
         let commandSummariesFeatureFlag: string = core.getInput(Utils.JOB_SUMMARY_ENABLED) || 'true';
-        if (commandSummariesFeatureFlag==="true") {
+        if (commandSummariesFeatureFlag === 'true') {
             let commandSummariesOutputDir: string | undefined = process.env.RUNNER_TEMP;
             if (commandSummariesOutputDir) {
                 Utils.exportVariableIfNotSet('JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR', commandSummariesOutputDir);
