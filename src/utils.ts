@@ -564,7 +564,7 @@ export class Utils {
      */
     static isColorSchemeSupported() {
         let serverUrl: string = process.env.GITHUB_SERVER_URL || '';
-        return serverUrl.includes('github.com');
+        return serverUrl.startsWith('https://github.com');
     }
 
     /**
