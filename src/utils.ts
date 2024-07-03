@@ -557,12 +557,14 @@ export class Utils {
         return mainTitle + Utils.getProjectPackagesLink();
     }
 
+    /**
+     * Check if the color scheme is supported in the GitHub UI.
+     * Currently, GitHub enterprise does not support the color scheme $\textcolor{}.
+     * @returns <boolean> true if the color scheme is supported, false otherwise.
+     */
     private static isColorSchemeSupported() {
         let serverUrl: string = process.env.GITHUB_SERVER_URL || '';
-        let testBoolean: boolean = serverUrl.includes('github.com');
-        core.info('Color scheme supported: ' + testBoolean);
-        core.info('server url is : ' + serverUrl);
-        return testBoolean;
+        return serverUrl.includes('github.com');
     }
 
     /**
