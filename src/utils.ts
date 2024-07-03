@@ -562,7 +562,7 @@ export class Utils {
      * Currently, GitHub enterprise does not support the color scheme $\textcolor{}.
      * @returns <boolean> true if the color scheme is supported, false otherwise.
      */
-    private static isColorSchemeSupported() {
+    static isColorSchemeSupported() {
         let serverUrl: string = process.env.GITHUB_SERVER_URL || '';
         return serverUrl.includes('github.com');
     }
