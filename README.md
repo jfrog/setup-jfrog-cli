@@ -301,7 +301,8 @@ Example JFrog Job Summary:
 
 ![JFrog-Job-Summary](images/JFrog-Job-Summary.png)
 
-Disabling Job Summaries:
+
+Job summaries can be disabled by setting the `job-summary-enabled` input to `false`.
 
 ```yml
 - uses: jfrog/setup-jfrog-cli@v4
