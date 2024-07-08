@@ -559,10 +559,15 @@ export class Utils {
 
     /**
      * Check if the color scheme is supported in the GitHub UI.
-     * Currently, GitHub enterprise does not support the color scheme $\textcolor{}.
+     * Currently, GitHub enterprise does not support the color LaTex scheme $\textcolor{}.
+     * This scheme is part of the LaTeX/Mathematics scheme.
+     *
+     * For more info about the scheme see:
+     * https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/writing-mathematical-expressions
+     *
      * @returns <boolean> true if the color scheme is supported, false otherwise.
      */
-    static isColorSchemeSupported() {
+    static isColorSchemeSupported(): boolean {
         let serverUrl: string = process.env.GITHUB_SERVER_URL || '';
         return serverUrl.startsWith('https://github.com');
     }
