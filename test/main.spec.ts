@@ -2,6 +2,12 @@ import * as os from 'os';
 
 import { Utils, DownloadDetails, JfrogCredentials } from '../src/utils';
 jest.mock('os');
+jest.mock('@actions/core', () => ({
+    ...jest.requireActual('@actions/core'),
+    getBooleanInput: jest.fn().mockImplementation(() => {
+        return false;
+    }),
+}));
 
 const DEFAULT_CLI_URL: string = 'https://releases.jfrog.io/artifactory/jfrog-cli/';
 const CUSTOM_CLI_URL: string = 'http://127.0.0.1:8081/artifactory/jfrog-cli-remote/';
@@ -30,13 +36,6 @@ beforeEach(() => {
         delete process.env[envKey];
     });
 });
-
-jest.mock('@actions/core', () => ({
-    ...jest.requireActual('@actions/core'), // This line ensures that other functions from @actions/core are not affected
-    getBooleanInput: jest.fn().mockImplementation(() => {
-        return false;
-    }),
-}));
 
 test('Get Config Tokens', async () => {
     let configTokens: Set<string> = Utils.getConfigTokens();
@@ -306,32 +305,31 @@ describe('Job Summaries', () => {
             expect(async () => await Utils.generateWorkflowSummaryMarkdown()).not.toThrow();
         });
     });
-});
+    describe('Command Summaries Disable Flag', () => {
+        beforeEach(() => {
+            delete process.env.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR;
+            delete process.env.RUNNER_TEMP;
+        });
 
-describe('Command Summaries Disable Flag', () => {
-    beforeEach(() => {
-        delete process.env.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR;
-        delete process.env.RUNNER_TEMP;
-    });
+        it('should not set JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR if disable-job-summary is true', () => {
+            jest.doMock('@actions/core', () => ({
+                getBooleanInput: jest.fn().mockImplementation(() => {
+                    return true;
+                }),
+            }));
+            Utils.setCliEnv();
+            expect(process.env.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR).toBeUndefined();
+        });
 
-    it('should not set JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR if disable-job-summary is true', () => {
-        jest.doMock('@actions/core', () => ({
-            getBooleanInput: jest.fn().mockImplementation(() => {
-                return true;
-            }),
-        }));
-        Utils.setCliEnv();
-        expect(process.env.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR).toBeUndefined();
-    });
-
-    it('should set JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR if disable-job-summary is false', () => {
-        process.env.RUNNER_TEMP = '/tmp';
-        jest.mock('@actions/core', () => ({
-            getBooleanInput: jest.fn().mockImplementation(() => {
-                return false;
-            }),
-        }));
-        Utils.setCliEnv();
-        expect(process.env.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR).toBe('/tmp');
+        it('should set JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR if disable-job-summary is false', () => {
+            process.env.RUNNER_TEMP = '/tmp';
+            jest.mock('@actions/core', () => ({
+                getBooleanInput: jest.fn().mockImplementation(() => {
+                    return false;
+                }),
+            }));
+            Utils.setCliEnv();
+            expect(process.env.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR).toBe('/tmp');
+        });
     });
 });
