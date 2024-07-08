@@ -53,7 +53,7 @@ export class Utils {
     // OpenID Connect provider_name input
     private static readonly OIDC_INTEGRATION_PROVIDER_NAME: string = 'oidc-provider-name';
     // Job Summaries feature flag
-    private static readonly JOB_SUMMARY_ENABLED: string = 'job-summary-enabled';
+    private static readonly JOB_SUMMARY_DISABLE: string = 'disable-job-summary';
 
     /**
      * Retrieves server credentials for accessing JFrog's server
@@ -363,14 +363,21 @@ export class Utils {
             Utils.exportVariableIfNotSet('JFROG_CLI_BUILD_PROJECT', projectKey);
         }
 
-        // Check for command summaries feature flag
-        // If JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR is not set, the CLI won't record any data.
-        let commandSummariesFeatureFlag: string = core.getInput(Utils.JOB_SUMMARY_ENABLED) || 'true';
-        if (commandSummariesFeatureFlag === 'true') {
-            let commandSummariesOutputDir: string | undefined = process.env.RUNNER_TEMP;
-            if (commandSummariesOutputDir) {
-                Utils.exportVariableIfNotSet('JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR', commandSummariesOutputDir);
-            }
+        // Enable Job summaries if needed
+        if (!core.getBooleanInput(Utils.JOB_SUMMARY_DISABLE)) {
+            Utils.enableJobSummaries();
+        }
+    }
+
+    /**
+     * Enabling job summary is done by setting the output dir for the summaries.
+     * If the output dir is not set, the CLI won't generate the summary markdown files.
+     * @private
+     */
+    private static enableJobSummaries() {
+        let commandSummariesOutputDir: string | undefined = process.env.RUNNER_TEMP;
+        if (commandSummariesOutputDir) {
+            Utils.exportVariableIfNotSet('JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR', commandSummariesOutputDir);
         }
     }
 
