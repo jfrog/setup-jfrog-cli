@@ -3,6 +3,7 @@ import * as os from 'os';
 import { Utils, DownloadDetails, JfrogCredentials } from '../src/utils';
 jest.mock('os');
 jest.mock('@actions/core', () => ({
+    // Retain the original functionality of other methods
     ...jest.requireActual('@actions/core'),
     getBooleanInput: jest.fn().mockImplementation(() => {
         return false;
