@@ -372,7 +372,6 @@ export class Utils {
     /**
      * Enabling job summary is done by setting the output dir for the summaries.
      * If the output dir is not set, the CLI won't generate the summary markdown files.
-     * @private
      */
     private static enableJobSummaries() {
         let commandSummariesOutputDir: string | undefined = process.env.RUNNER_TEMP;
