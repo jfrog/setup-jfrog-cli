@@ -17,6 +17,7 @@ inputs:
         required: false
     disable-job-summary:
         description: "By default, this is false. If set to true, the job summary will be disabled"
+        default: "false"
         required: false
 outputs:
     oidc-token:
