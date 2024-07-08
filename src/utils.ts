@@ -502,6 +502,7 @@ export class Utils {
                 return;
             }
             // Write to GitHub's job summary
+            core.info(markdownContent);
             core.summary.addRaw(markdownContent, true);
             await core.summary.write({ overwrite: true });
             // Clear files
