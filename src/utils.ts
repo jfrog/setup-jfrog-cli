@@ -562,6 +562,9 @@ export class Utils {
      * Currently, GitHub enterprise does not support the color LaTex scheme $\textcolor{}.
      * This scheme is part of the LaTeX/Mathematics scheme.
      *
+     * Currently, the scheme is not supported by GitHub Enterprise version 3.13,
+     * which is the latest version at the time of writing this comment.
+     *
      * For more info about the scheme see:
      * https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/writing-mathematical-expressions
      *
@@ -582,8 +585,6 @@ export class Utils {
         if (!platformUrl) {
             return '';
         }
-        // Change protocol to avoid masking of the URL and breaking it.
-        platformUrl = platformUrl.replace(/^https:\/\//i, 'http://');
         if (!platformUrl.endsWith('/')) {
             platformUrl = platformUrl + '/';
         }
