@@ -502,7 +502,6 @@ export class Utils {
                 return;
             }
             // Write to GitHub's job summary
-            core.info(markdownContent);
             core.summary.addRaw(markdownContent, true);
             await core.summary.write({ overwrite: true });
             // Clear files
@@ -583,7 +582,8 @@ export class Utils {
         if (!platformUrl) {
             return '';
         }
-        platformUrl = platformUrl.replace(/^https:\/\//i, "http://");
+        // Change protocol to avoid masking of the URL and breaking it.
+        platformUrl = platformUrl.replace(/^https:\/\//i, 'http://');
         if (!platformUrl.endsWith('/')) {
             platformUrl = platformUrl + '/';
         }
