@@ -583,6 +583,7 @@ export class Utils {
         if (!platformUrl) {
             return '';
         }
+        platformUrl = platformUrl.replace(/^https:\/\//i, "http://");
         if (!platformUrl.endsWith('/')) {
             platformUrl = platformUrl + '/';
         }
