@@ -16,7 +16,7 @@ inputs:
         description: "By default, this is the URL of the GitHub repository owner, such as the organization that owns the repository."
         required: false
     disable-job-summary:
-        description: "Allows to disable to generation of Job Summaries."
+        description: "Set to true to disable the generation of Job Summaries."
         default: "false"
         required: false
 outputs:
