@@ -53,7 +53,7 @@ export class Utils {
     // OpenID Connect provider_name input
     private static readonly OIDC_INTEGRATION_PROVIDER_NAME: string = 'oidc-provider-name';
     // Job Summaries feature flag
-    private static readonly JOB_SUMMARY_DISABLE: string = 'disable-job-summary';
+    public static readonly JOB_SUMMARY_DISABLE: string = 'disable-job-summary';
 
     /**
      * Retrieves server credentials for accessing JFrog's server
