@@ -52,6 +52,8 @@ export class Utils {
     private static readonly OIDC_AUDIENCE_ARG: string = 'oidc-audience';
     // OpenID Connect provider_name input
     private static readonly OIDC_INTEGRATION_PROVIDER_NAME: string = 'oidc-provider-name';
+    // Job Summaries feature flag
+    public static readonly JOB_SUMMARY_DISABLE: string = 'disable-job-summary';
 
     /**
      * Retrieves server credentials for accessing JFrog's server
@@ -367,9 +369,21 @@ export class Utils {
         if (projectKey) {
             Utils.exportVariableIfNotSet('JFROG_CLI_BUILD_PROJECT', projectKey);
         }
-        let jobSummariesOutputDir: string | undefined = process.env.RUNNER_TEMP;
-        if (jobSummariesOutputDir) {
-            Utils.exportVariableIfNotSet('JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR', jobSummariesOutputDir);
+
+        // Enable Job summaries if needed
+        if (!core.getBooleanInput(Utils.JOB_SUMMARY_DISABLE)) {
+            Utils.enableJobSummaries();
+        }
+    }
+
+    /**
+     * Enabling job summary is done by setting the output dir for the summaries.
+     * If the output dir is not set, the CLI won't generate the summary markdown files.
+     */
+    private static enableJobSummaries() {
+        let commandSummariesOutputDir: string | undefined = process.env.RUNNER_TEMP;
+        if (commandSummariesOutputDir) {
+            Utils.exportVariableIfNotSet('JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR', commandSummariesOutputDir);
         }
     }
 

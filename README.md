@@ -71,7 +71,7 @@ You can use these environment variables in your workflow as follows:
 - uses: jfrog/setup-jfrog-cli@v4
   env:
     # JFrog platform url (for example: https://acme.jfrog.io)
-    JF_URL: ${{ secrets.JF_URL }}
+    JF_URL: ${{ vars.JF_URL }}
 
     # Basic authentication credentials
     JF_USER: ${{ secrets.JF_USER }}
@@ -192,7 +192,7 @@ Example step utilizing OpenID Connect:
 ```yml
 - uses: jfrog/setup-jfrog-cli@v4
   env:
-      JF_URL: ${{ secrets.JF_URL }}
+      JF_URL: ${{ vars.JF_URL }}
   with:
       oidc-provider-name: setup-jfrog-cli
 ```
@@ -302,6 +302,15 @@ This is to prevent GitHub from masking the URL.
 Example JFrog Job Summary:
 
 ![JFrog-Job-Summary](images/JFrog-Job-Summary.png)
+
+
+Job summaries can be disabled by setting the `disable-job-summary` input to `true`.
+
+```yml
+- uses: jfrog/setup-jfrog-cli@v4
+  with:
+    disable-job-summary: true
+```
 
 ## Example projects
 
