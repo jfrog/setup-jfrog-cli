@@ -16,9 +16,9 @@
 -   [Authorization](#authorization)
 -   [Setting the build name and build number when publishing build-info to Artifactory](#setting-the-build-name-and-build-number-when-publishing-build-info-to-artifactory)
 -   [Setting JFrog CLI version](#setting-jfrog-cli-version)
--   [Setting JFrog CLI project key](#Setting-JFrog-CLI-project-Key)
+-   [Setting the JFrog project key](#setting-the-jfrog-project-key)
 -   [Downloading JFrog CLI from Artifactory](#downloading-jfrog-cli-from-artifactory)
--   [GitHub Job Summaries](#JFrog-Job-Summary)
+-   [JFrog Job Summary](#jfrog-job-summary)
 -   [Example projects](#example-projects)
 -   [Contributions](#contributions)
 -   [References](#references)
@@ -238,7 +238,7 @@ It is also possible to set the latest JFrog CLI version by adding the _version_ 
 | Important: Only JFrog CLI versions 1.46.4 or above are supported. |
 | ----------------------------------------------------------------- |
 
-## Setting JFrog CLI project key
+## Setting the JFrog project key
 
 [JFrog Projects](https://jfrog.com/help/r/jfrog-platform-administration-documentation/projects) are a management entity that hosts all your resources related to a specific project,
 such as repositories, builds and Release Bundles.
@@ -287,12 +287,14 @@ Here's how you do this:
 The **setup-jfrog-cli GitHub Action** leverages the **Command Summaries** feature of the JFrog CLI
 to generate a detailed summary of the entire workflow.
 
-The summary can be viewed from the GitHub Actions run page.
+The summary can be viewed from the GitHub Actions run page and is enabled by default.
 
-A list of supported commands and more information can be found here
-[JFrog CLI Command Summaries Documentation](https://github.com/jfrog/documentation/blob/main/jfrog-applications/jfrog-cli/cli-command-summaries.md)
+The summary will include the summary of CLI commands which support this feature.
+To read more about the JFrog CLI supported commands, visit the following link:
+[JFrog CLI Command Summaries Documentation](https://docs.jfrog-applications.jfrog.io/jfrog-applications/jfrog-cli/cli-command-summaries)
 
-The Job Summary UI includes direct links to the JFrog Platform UI.
+
+Notice that the Job Summary UI includes direct links to the JFrog Platform UI.
 It's important to note that for the platform links to function correctly,
 `JF_URL` should be set as a variable rather than a secret.
 This is to prevent GitHub from masking the URL.
