@@ -299,3 +299,20 @@ describe('Job Summaries', () => {
         });
     });
 });
+
+describe('isColorSchemeSupported', () => {
+    it('should return true if GITHUB_SERVER_URL includes github.com', () => {
+        process.env.GITHUB_SERVER_URL = 'https://github.com';
+        expect(Utils.isColorSchemeSupported()).toBe(true);
+    });
+
+    it('should return false if GITHUB_SERVER_URL does not include github.com', () => {
+        process.env.GITHUB_SERVER_URL = 'https://enterprise.github.com';
+        expect(Utils.isColorSchemeSupported()).toBe(false);
+    });
+
+    it('should return false if GITHUB_SERVER_URL is undefined', () => {
+        delete process.env.GITHUB_SERVER_URL;
+        expect(Utils.isColorSchemeSupported()).toBe(false);
+    });
+});

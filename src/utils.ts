@@ -496,7 +496,7 @@ export class Utils {
     public static async generateWorkflowSummaryMarkdown() {
         try {
             // Read all sections and construct the final markdown file
-            const markdownContent: string = await this.readCLIMarkdownSections();
+            const markdownContent: string = await this.readCLIMarkdownSectionsAndWrap();
             if (markdownContent.length == 0) {
                 core.debug('No job summaries sections found. Workflow summary will not be generated.');
                 return;
@@ -516,7 +516,7 @@ export class Utils {
      * This function reads each section file and wraps it with a markdown header
      * @returns <string> the content of the markdown file as string, warped in a collapsable section.
      */
-    private static async readCLIMarkdownSections(): Promise<string> {
+    private static async readCLIMarkdownSectionsAndWrap(): Promise<string> {
         const outputDir: string = Utils.getJobOutputDirectoryPath();
         let markdownContent: string = '';
 
@@ -548,8 +548,31 @@ export class Utils {
     }
 
     private static getMarkdownHeader(): string {
-        let mainTitle: string = `# $\\textcolor{green}{\\textsf{ 🐸 JFrog Job Summary}}$` + '\n\n';
+        let mainTitle: string;
+        if (Utils.isColorSchemeSupported()) {
+            mainTitle = `# $\\textcolor{green}{\\textsf{ 🐸 JFrog Job Summary}}$` + '\n\n';
+        } else {
+            mainTitle = `# 🐸 JFrog Job Summary` + '\n\n';
+        }
         return mainTitle + Utils.getProjectPackagesLink();
+    }
+
+    /**
+     * Check if the color scheme is supported in the GitHub UI.
+     * Currently, GitHub enterprise does not support the color LaTex scheme $\textcolor{}.
+     * This scheme is part of the LaTeX/Mathematics scheme.
+     *
+     * Currently, the scheme is not supported by GitHub Enterprise version 3.13,
+     * which is the latest version at the time of writing this comment.
+     *
+     * For more info about the scheme see:
+     * https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/writing-mathematical-expressions
+     *
+     * @returns <boolean> true if the color scheme is supported, false otherwise.
+     */
+    static isColorSchemeSupported(): boolean {
+        let serverUrl: string = process.env.GITHUB_SERVER_URL || '';
+        return serverUrl.startsWith('https://github.com');
     }
 
     /**
