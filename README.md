@@ -217,6 +217,8 @@ are registered as the build artifacts.
       jf rt bp
 ```
 
+You may override the default build name and number by setting the above variables in your workflow.
+
 ## Setting JFrog CLI version
 
 By default, the JFrog CLI version set in [action.yml](https://github.com/jfrog/setup-jfrog-cli/blob/master/action.yml) is used. To set a specific version, add the _version_ input as follows:
