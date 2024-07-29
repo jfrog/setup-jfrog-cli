@@ -36,11 +36,11 @@ export class Utils {
     public static readonly SETUP_JFROG_CLI_SERVER_ID: string = 'setup-jfrog-cli-server';
     // Directory name which holds markdown files for the Workflow summary
     private static readonly JOB_SUMMARY_DIR_NAME: string = 'jfrog-command-summary';
-    // Workflow summary section files
+    // Workflow summary section files. Order of sections in this array impacts the order in the final markdown.
     public static JOB_SUMMARY_MARKDOWN_SECTIONS_NAMES: MarkdownSection[] = [
-        MarkdownSection.Upload,
-        MarkdownSection.BuildInfo,
         MarkdownSection.Security,
+        MarkdownSection.BuildInfo,
+        MarkdownSection.Upload,
     ];
 
     // Inputs
@@ -533,22 +533,27 @@ export class Utils {
     private static async readCLIMarkdownSectionsAndWrap(): Promise<string> {
         const outputDir: string = Utils.getJobOutputDirectoryPath();
         let markdownContent: string = '';
+        const sectionContents: { [key: string]: string } = {};
 
+        // Read all sections.
         for (const sectionName of Utils.JOB_SUMMARY_MARKDOWN_SECTIONS_NAMES) {
             const fullPath: string = path.join(outputDir, sectionName, 'markdown.md');
-            // Check file exists
-            if (!existsSync(fullPath)) {
-                continue;
+            if (existsSync(fullPath)) {
+                sectionContents[sectionName] = await Utils.readSummarySection(fullPath, sectionName);
             }
-            markdownContent += await Utils.readSummarySection(fullPath, sectionName);
         }
 
-        // No section was added, return empty string
-        if (markdownContent == '') {
-            return '';
+        // If build info was published, remove generic upload section to avoid duplications with generic modules.
+        if (sectionContents[MarkdownSection.BuildInfo] != '') {
+            sectionContents[MarkdownSection.Upload] = '';
         }
 
-        return Utils.wrapContent(markdownContent);
+        // Append sections in order.
+        for (const sectionName of Utils.JOB_SUMMARY_MARKDOWN_SECTIONS_NAMES) {
+            markdownContent += sectionContents[sectionName] || '';
+        }
+
+        return markdownContent ? Utils.wrapContent(markdownContent) : '';
     }
 
     private static async readSummarySection(fullPath: string, section: MarkdownSection) {
