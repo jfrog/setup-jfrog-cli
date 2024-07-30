@@ -293,10 +293,10 @@ The summary can be viewed from the GitHub Actions run page and is enabled by def
 ### Preconditions
 To fully leverage from the JFrog Job Summary, one should:
 1. Use JFrog CLI version 2.62.0 or above.
-2. Set `JF_URL` as variable rather than a secret (see note below).
+2. Set `JF_URL` as a variable rather than a secret (see note below).
 3. [Collect build info](https://docs.jfrog-applications.jfrog.io/jfrog-applications/jfrog-cli/cli-for-jfrog-artifactory/build-integration) and [publish](https://docs.jfrog-applications.jfrog.io/jfrog-applications/jfrog-cli/cli-for-jfrog-artifactory/build-integration#publishing-build-info) it using JFrog CLI.
 
-> **_NOTE:_** The Job Summary UI includes direct links to the JFrog Platform UI.
+> **_NOTE:_** The Job Summary includes direct links to the JFrog Platform UI.
 For the links to function correctly,
 `JF_URL` should be set as a variable rather than a secret.
 This is to prevent GitHub from masking the URL.
