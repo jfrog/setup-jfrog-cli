@@ -286,24 +286,24 @@ Here's how you do this:
 
 ## JFrog Job Summary
 
-The **setup-jfrog-cli GitHub Action** leverages the **Command Summaries** feature of the JFrog CLI
-to generate a detailed summary of the entire workflow.
+Jobs using this GitHub action will output a summary of some of the key commands that were performed using JFrog CLI.
 
 The summary can be viewed from the GitHub Actions run page and is enabled by default.
 
-The summary will include the summary of CLI commands which support this feature.
-To read more about the JFrog CLI supported commands, visit the following link:
-[JFrog CLI Command Summaries Documentation](https://docs.jfrog-applications.jfrog.io/jfrog-applications/jfrog-cli/cli-command-summaries)
+### Preconditions
+To fully leverage from the JFrog Job Summary, one should:
+1. Use JFrog CLI version 2.62.0 or above.
+2. Set `JF_URL` as variable rather than a secret (see note below).
+3. [Collect build info](https://docs.jfrog-applications.jfrog.io/jfrog-applications/jfrog-cli/cli-for-jfrog-artifactory/build-integration) and [publish](https://docs.jfrog-applications.jfrog.io/jfrog-applications/jfrog-cli/cli-for-jfrog-artifactory/build-integration#publishing-build-info) it using JFrog CLI.
 
-
-Notice that the Job Summary UI includes direct links to the JFrog Platform UI.
-It's important to note that for the platform links to function correctly,
+> **_NOTE:_** The Job Summary UI includes direct links to the JFrog Platform UI.
+For the links to function correctly,
 `JF_URL` should be set as a variable rather than a secret.
 This is to prevent GitHub from masking the URL.
 
 Example JFrog Job Summary:
 
-![JFrog-Job-Summary](images/JFrog-Job-Summary.png)
+![JFrog-Job-Summary](images/job_summary.png)
 
 
 Job summaries can be disabled by setting the `disable-job-summary` input to `true`.
@@ -313,6 +313,14 @@ Job summaries can be disabled by setting the `disable-job-summary` input to `tru
   with:
     disable-job-summary: true
 ```
+
+### Behind the scenes
+The **setup-jfrog-cli GitHub Action** leverages the **Command Summaries** feature of the JFrog CLI
+to generate a detailed summary of the entire workflow.
+
+The final summary will include the summary of each CLI command that supports this feature.
+To read more about the JFrog CLI supported commands, visit the following link:
+[JFrog CLI Command Summaries Documentation](https://docs.jfrog-applications.jfrog.io/jfrog-applications/jfrog-cli/cli-command-summaries).
 
 ## Example projects
 
