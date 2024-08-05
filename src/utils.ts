@@ -134,7 +134,7 @@ export class Utils {
         const exchangeUrl: string = jfrogCredentials.jfrogUrl!.replace(/\/$/, '') + '/access/api/v1/oidc/token';
         core.debug('Exchanging GitHub JSON web token with a JFrog access token...');
 
-        let projectKey: string = process.env.JF_PROJECT ? process.env.JF_PROJECT : '';
+        let projectKey: string = process.env.JF_PROJECT || '';
 
         const httpClient: HttpClient = new HttpClient();
         const data: string = `{
