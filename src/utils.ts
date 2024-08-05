@@ -134,12 +134,15 @@ export class Utils {
         const exchangeUrl: string = jfrogCredentials.jfrogUrl!.replace(/\/$/, '') + '/access/api/v1/oidc/token';
         core.debug('Exchanging GitHub JSON web token with a JFrog access token...');
 
+        let projectKey: string = process.env.JF_PROJECT ? process.env.JF_PROJECT : '';
+
         const httpClient: HttpClient = new HttpClient();
         const data: string = `{
             "grant_type": "urn:ietf:params:oauth:grant-type:token-exchange",
             "subject_token_type": "urn:ietf:params:oauth:token-type:id_token",
             "subject_token": "${jsonWebToken}",
-            "provider_name": "${oidcProviderName}"
+            "provider_name": "${oidcProviderName}",
+            "project_key": "${projectKey}"
         }`;
 
         const additionalHeaders: OutgoingHttpHeaders = {
