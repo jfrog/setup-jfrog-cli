@@ -38,7 +38,7 @@ Additionally, the Action incorporates the following features when utilizing JFro
 ```yml
 - uses: jfrog/setup-jfrog-cli@v4
 - run: jf --version
-  # + Authentication method
+# + Authentication method
 ```
 
 ## Authentication Methods
