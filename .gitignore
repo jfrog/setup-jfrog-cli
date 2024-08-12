@@ -1,4 +1,14 @@
-__tests__/runner/*
-.idea/*
+# IDEs
+.idea
+.vscode
+*.iml
+
 node_modules/.package-lock.json
-.DS_Store
+__tests__/runner/*
+
+# Vim
+*~
+*.swp
+
+# IOS
+*.DS_Store
