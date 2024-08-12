@@ -16,8 +16,7 @@
         "lint": "npx eslint -c .eslintrc.js --ext .ts src",
         "compile": "tsc",
         "postinstall": "npm run compile",
-        "test": "npx jest --colors",
-        "prepare": "npx husky install .husky"
+        "test": "npx jest --colors"
     },
     "repository": {
         "type": "git",
