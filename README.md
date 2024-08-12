@@ -47,12 +47,11 @@ JFrog CLI integrates with the JFrog Platform. In order to facilitate this connec
 There exist three methods to provide these details, and you only need to choose **one** method:
 
 <details>
-    <summary>Storing the connection details using separate environment variables</summary>
+    <summary>🔐Storing the connection details using separate environment variables</summary>
     
-The connection details of the JFrog platform used by JFrog CLI can be stored as secrets.
-You can use one of the following two methods to define and store the JFrog Platform connection details as secrets.
+The connection details of the JFrog platform used by JFrog CLI can be stored as [GitHub secrets](https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions#creating-secrets-for-a-repository), or [GitHub Variables](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/variables) for non-secret values.
 
-You can set the connection details to your JFrog Platform by using one of the following environment variables combinations:
+You can set the connection details to your JFrog Platform by using one of the following combinations:
 
 1. JF_URL (no authentication)
 2. JF_URL + JF_USER + JF_PASSWORD (basic authentication)
@@ -63,8 +62,8 @@ You can use these environment variables in your workflow as follows:
 ```yml
 - uses: jfrog/setup-jfrog-cli@v4
   env:
-    # JFrog platform url (for example: https://acme.jfrog.io)
-    JF_URL: ${{ vars.JF_URL }}
+    # JFrog Platform url (for example: https://acme.jfrog.io)
+    JF_URL: ${{ vars.JF_URL }} # or 'https://acme.jfrog.io' or ${{ secrets.JF_URL }}
 
     # Basic authentication credentials
     JF_USER: ${{ secrets.JF_USER }}
@@ -82,7 +81,7 @@ You can use these environment variables in your workflow as follows:
 </details>
 
 <details>
-    <summary>Connecting to JFrog using OIDC (OpenID Connect)</summary>
+    <summary>👤Connecting to JFrog using OIDC (OpenID Connect)</summary>
 
 ### General
 
@@ -155,7 +154,7 @@ Example step utilizing OpenID Connect:
 </details>
 
 <details>
-    <summary>Storing the connection details using single Config Token</summary>
+    <summary>⚙️Storing the connection details using single Config Token</summary>
 
 1. Make sure JFrog CLI is installed on your local machine by running `jf -v`.
 2. Configure the details of the JFrog platform by running `jf c add`.
