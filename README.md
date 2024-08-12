@@ -63,7 +63,7 @@ You can use these environment variables in your workflow as follows:
 ```yml
 - uses: jfrog/setup-jfrog-cli@v4
   env:
-    # JFrog Platform url (for example: https://acme.jfrog.io)
+    # JFrog Platform url
     JF_URL: ${{ vars.JF_URL }} # or 'https://acme.jfrog.io' or ${{ secrets.JF_URL }}
 
     # Basic authentication credentials
