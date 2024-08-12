@@ -213,7 +213,7 @@ are registered as the build artifacts.
 - run: |
       jf rt download "my-repo/artifacts/*" local-dir/
       jf rt upload "local-dir/*" new-repo/my-artifacts/
-      jf build-publish
+      jf rt build-publish
 ```
 
 You may override the default build name and number by setting the above variables in your workflow.
