@@ -75,9 +75,6 @@ You can use these environment variables in your workflow as follows:
     jf rt ping
 ```
 
-| Important: If both Config Token(`JF_ENV_*`) and separate environment variables(`JF_URL`, ...) are provided, the default config will be the Config Token. To make the above separate environment variables as the default config use `jf c use setup-jfrog-cli-server` |
-|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-
 </details>
 
 <details>
@@ -197,6 +194,9 @@ If you have multiple Config Tokens as secrets, you can use all of them in the wo
 
 | Important: When exposing more than one JFrog configuration to the Action, you should always add the `jf c use` command to specify the server to use. |
 |------------------------------------------------------------------------------------------------------------------------------------------------------|
+
+| Important: If both Config Token(`JF_ENV_*`) and separate environment variables(`JF_URL`, ...) are provided, the default config will be the Config Token. To make the above separate environment variables as the default config use `jf c use setup-jfrog-cli-server` |
+|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 
 </details>
 
