@@ -29,7 +29,7 @@ This GitHub Action downloads, installs and configures [JFrog CLI](https://docs.j
 
 Additionally, the Action incorporates the following features when utilizing JFrog CLI to interact with the JFrog Platform:
 
--   Two distinct methods are available for authenticating with the JFrog Platform. Explore more details [here](#Authentication-Methods)
+-   Three distinct methods are available for authenticating with the JFrog Platform. Explore more details [here](#Authentication-Methods)
 -   There's no need to add the _build name_ and _build number_ options and arguments to commands which accept them.
     All build related operations will be automatically recorded with the _Workflow Name_ as build name and _Run Number_ as build number.
 
@@ -49,7 +49,8 @@ There exist three methods to provide these details, and you only need to choose 
 <details>
     <summary>🔐 Storing the connection details using separate environment variables</summary>
     
-The connection details of the JFrog platform used by JFrog CLI can be stored as [GitHub secrets](https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions#creating-secrets-for-a-repository), or [GitHub Variables](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/variables) for non-secret values.
+
+The connection details of the JFrog platform used by this action can be stored as [GitHub secrets](https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions#creating-secrets-for-a-repository) (or [GitHub Variables](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/variables) for non-secret values)
 
 You can set the connection details to your JFrog Platform by using one of the following combinations:
 
@@ -152,6 +153,7 @@ Example step utilizing OpenID Connect:
 
 <details>
     <summary>⚙️ Storing the connection details using single Config Token</summary>
+
 
 1. Make sure JFrog CLI is installed on your local machine by running `jf -v`.
 2. Configure the details of the JFrog platform by running `jf c add`.
