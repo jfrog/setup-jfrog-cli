@@ -47,7 +47,7 @@ JFrog CLI integrates with the JFrog Platform. In order to facilitate this connec
 There exist three methods to provide these details, and you only need to choose **one** method:
 
 <details>
-    <summary>🔐 Storing the connection details using separate environment variables</summary>
+    <summary>🔐 Storing the connection details using environment variables</summary>
 
 ### 
 The connection details of the JFrog platform used by this action can be stored as [GitHub secrets](https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions#creating-secrets-for-a-repository) (or [GitHub Variables](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/variables) for non-secret values)
@@ -64,7 +64,7 @@ You can use these environment variables in your workflow as follows:
 - uses: jfrog/setup-jfrog-cli@v4
   env:
     # JFrog Platform url
-    JF_URL: ${{ vars.JF_URL }} # or 'https://acme.jfrog.io' or ${{ secrets.JF_URL }}
+    JF_URL: ${{ vars.JF_URL }} # or 'https://acme.jfrog.io'
 
     # Basic authentication credentials
     JF_USER: ${{ secrets.JF_USER }}
@@ -270,16 +270,8 @@ Here's how you do this:
       env:
           # JFrog platform url (for example: https://acme.jfrog.io)
           JF_URL: ${{ vars.JF_URL }}
+          JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
 
-          # Basic authentication credentials
-          JF_USER: ${{ secrets.JF_USER }}
-          JF_PASSWORD: ${{ secrets.JF_PASSWORD }}
-
-          # JFrog platform access token (if JF_USER and JF_PASSWORD are not provided)
-          # JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
-
-          # Same can be achieved with a Config Token using JF_ENV_1 environment variable
-          # JF_ENV_1: ${{ secrets.JF_SECRET_ENV_1 }}
       with:
           download-repository: jfrog-cli-remote
     ```
