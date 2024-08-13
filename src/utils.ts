@@ -570,7 +570,7 @@ export class Utils {
     }
 
     private static getMarkdownHeader(): string {
-        let mainTitle: string = `![summary-header](https://github.com/EyalDelarea/setup-jfrog-cli/blob/improve_summary_ui/images/summary_header.png)` + '\n\n';
+        let mainTitle: string = `![summary-header](https://raw.githubusercontent.com/EyalDelarea/setup-jfrog-cli/improve_summary_ui/images/summary_header.png)` + '\n\n';
         return mainTitle + Utils.getProjectPackagesLink();
     }
 
