@@ -1,5 +1,5 @@
 # This action is an integration test for setup-jfrog-cli workflow
-name: OpenID Connect Test
+name: Integration Test
 on:
   push:
     branches:
