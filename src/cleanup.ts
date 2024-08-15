@@ -27,6 +27,7 @@ async function publishBuildInfoIfNeeded() {
     console.log('Response:', response);
     console.log(hasUnpublishedModules(response))
 
+    await Utils.runCli(['npm-config', '--repo-resolve', 'npm-virtual']);
     await Utils.runCli(['npm', 'i']);
 
     response = await Utils.runCliWithOutput(['rt', 'bp', '--dry-run']);
