@@ -7,6 +7,8 @@ async function cleanup() {
         if (!Utils.addCachedCliToPath()) {
             return;
         }
+       let response : string = await Utils.runCliWithOutput(['rt', 'bp', '--dry-run']);
+        console.log(response);
         await Utils.removeJFrogServers();
         if (!core.getBooleanInput(Utils.JOB_SUMMARY_DISABLE)) {
             await Utils.generateWorkflowSummaryMarkdown();
