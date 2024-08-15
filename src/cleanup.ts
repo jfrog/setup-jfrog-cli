@@ -31,7 +31,6 @@ async function publishBuildInfoIfNeeded() {
     await Utils.runCli(['npm', 'i']);
 
     response = await Utils.runCliAndGetOutput(['rt', 'bp', '--dry-run']);
-    console.log('Response:', response);
     console.log(hasUnpublishedModules(response))
 }
 
@@ -43,10 +42,8 @@ function hasUnpublishedModules(responseStr: string): boolean {
     try {
         // Parse the JSON string to an object
         const response : BuildInfoResponse = JSON.parse(responseStr);
-        console.log('json:', response);
-        console.log('modules:', response.modules);
         // Check if the "modules" key exists and if it's an array with more than one item
-        return response.modules && Array.isArray(response.modules) && response.modules.length > 0;
+        return response.modules != undefined && Array.isArray(response.modules) && response.modules.length > 0;
     } catch (error) {
         console.error('Failed to parse JSON:', error);
         return false; // Return false if parsing fails
