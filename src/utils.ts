@@ -1,5 +1,5 @@
 import * as core from '@actions/core';
-import {exec, ExecOutput, getExecOutput} from '@actions/exec';
+import { exec, ExecOutput, getExecOutput } from '@actions/exec';
 import { HttpClient, HttpClientResponse } from '@actions/http-client';
 import * as toolCache from '@actions/tool-cache';
 import { chmodSync, existsSync, promises as fs } from 'fs';
@@ -462,12 +462,12 @@ export class Utils {
      * Therefore, the 'jf' executable is expected to be in the path also for older CLI versions.
      * @param args - CLI arguments
      */
-    public static async runCliWithOutput(args: string[]) : Promise<string>{
-        let output: ExecOutput = await getExecOutput('jf', args);
+    public static async runCliWithOutput(args: string[]): Promise<string> {
+        let output: ExecOutput = await getExecOutput('jf', args, { silent: true });
         if (output.exitCode !== core.ExitCode.Success) {
             throw new Error('JFrog CLI exited with exit code ' + output.exitCode);
         }
-        return output.stdout
+        return output.stdout;
     }
 
     /**

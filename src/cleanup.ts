@@ -6,7 +6,7 @@ async function cleanup() {
         if (!Utils.addCachedCliToPath()) {
             return;
         }
-       let response : string = await Utils.runCliWithOutput(['rt', 'bp', '--dry-run']);
+        let response: string = await Utils.runCliWithOutput(['rt', 'bp', '--dry-run', '--detailed-summary', 'false']);
         console.log(response);
 
         core.startGroup('Cleanup JFrog CLI servers configuration');
