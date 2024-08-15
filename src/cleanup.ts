@@ -23,14 +23,14 @@ async function cleanup() {
 
 async function publishBuildInfoIfNeeded() {
     core.exportVariable('JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR', '');
-    let response: string = await Utils.runCliWithOutput(['rt', 'bp', '--dry-run']);
+    let response: string = await Utils.runCliAndGetOutput(['rt', 'bp', '--dry-run']);
     console.log('Response:', response);
     console.log(hasUnpublishedModules(response))
 
     await Utils.runCli(['npm-config', '--repo-resolve', 'npm-virtual']);
     await Utils.runCli(['npm', 'i']);
 
-    response = await Utils.runCliWithOutput(['rt', 'bp', '--dry-run']);
+    response = await Utils.runCliAndGetOutput(['rt', 'bp', '--dry-run']);
     console.log('Response:', response);
     console.log(hasUnpublishedModules(response))
 }
@@ -43,7 +43,8 @@ function hasUnpublishedModules(responseStr: string): boolean {
     try {
         // Parse the JSON string to an object
         const response : BuildInfoResponse = JSON.parse(responseStr);
-
+        console.log('json:', response);
+        console.log('modules:', response.modules);
         // Check if the "modules" key exists and if it's an array with more than one item
         return response.modules && Array.isArray(response.modules) && response.modules.length > 0;
     } catch (error) {

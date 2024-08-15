@@ -467,8 +467,12 @@ export class Utils {
      * @returns The standard output of the CLI command as a string.
      * @throws An error if the JFrog CLI command exits with a non-success code.
      */
-    public static async runCliWithOutput(args: string[]): Promise<string> {
-        let output: ExecOutput = await getExecOutput('jf', args, { silent: true });
+    public static async runCliAndGetOutput(args: string[]): Promise<string> {
+        const workingDirectory = process.env.GITHUB_WORKSPACE;
+        if (!workingDirectory) {
+            throw new Error('GITHUB_WORKSPACE is not defined.');
+        }
+        let output: ExecOutput = await getExecOutput('jf', args, { silent: true ,  cwd: workingDirectory,});
         if (output.exitCode !== core.ExitCode.Success) {
             throw new Error('JFrog CLI exited with exit code ' + output.exitCode);
         }
