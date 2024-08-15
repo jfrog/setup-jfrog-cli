@@ -8,8 +8,8 @@ async function cleanup() {
         }
 
         if (await hasUnpublishedModules()) {
-            let buildPublishResponseStr : string = await Utils.runCliAndGetOutput(['rt', 'bp']);
-            console.log(buildPublishResponseStr)
+            let buildPublishResponseStr: string = await Utils.runCliAndGetOutput(['rt', 'bp']);
+            console.log(buildPublishResponseStr);
         }
 
         core.startGroup('Cleanup JFrog CLI servers configuration');
@@ -37,14 +37,13 @@ async function hasUnpublishedModules(): Promise<boolean> {
         const responseStr: string = await Utils.runCliAndGetOutput(['rt', 'bp', '--dry-run']);
 
         // Parse the JSON string to an object
-        const response : BuildPublishResponse = JSON.parse(responseStr);
+        const response: BuildPublishResponse = JSON.parse(responseStr);
         // Check if the "modules" key exists and if it's an array with more than one item
         return response.modules != undefined && Array.isArray(response.modules) && response.modules.length > 0;
     } catch (error) {
         console.error('Failed to parse JSON:', error);
         return false; // Return false if parsing fails
-    }
-    finally {
+    } finally {
         core.exportVariable('JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR', origValue);
     }
 }
