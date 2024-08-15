@@ -1,5 +1,5 @@
 # This action is an integration test for setup-jfrog-cli workflow
-name: Integration Test
+name: Post Build Publish Test
 on:
   push:
     branches:
@@ -16,7 +16,7 @@ permissions:
   id-token: write
 
 jobs:
-  Integration-Test:
+  Post-Build-Publish-Test:
     if: contains(github.event.pull_request.labels.*.name, 'safe to test') || github.event_name == 'push'
     name: setup-jfrog-cli integration test (${{ matrix.os }})
     strategy:
@@ -38,3 +38,8 @@ jobs:
       - name: Test JFrog CLI ping to Artifactory
         run: |
           jf rt ping
+
+      - name: Add npm modules to local build-info
+        run: |
+          jf npm-config --repo-resolve npm-virtual
+          jf npm install
