@@ -1,7 +1,7 @@
 import * as os from 'os';
 import * as core from '@actions/core';
 
-import {Utils, DownloadDetails, JfrogCredentials, JWTTokenData} from '../src/utils';
+import { Utils, DownloadDetails, JfrogCredentials, JWTTokenData } from '../src/utils';
 jest.mock('os');
 jest.mock('@actions/core');
 
@@ -247,47 +247,47 @@ test('User agent', () => {
 
 describe('extractTokenUser', () => {
     it('should extract user from subject starting with jfrt@', () => {
-        const subject : string = 'jfrt@/users/johndoe';
-        const result : string  = Utils.extractTokenUser(subject);
+        const subject: string = 'jfrt@/users/johndoe';
+        const result: string = Utils.extractTokenUser(subject);
         expect(result).toBe('johndoe');
     });
 
     it('should extract user from subject containing /users/', () => {
-        const subject : string = '/users/johndoe';
-        const result : string = Utils.extractTokenUser(subject);
+        const subject: string = '/users/johndoe';
+        const result: string = Utils.extractTokenUser(subject);
         expect(result).toBe('johndoe');
     });
 
     it('should return original subject when it does not start with jfrt@ or contain /users/', () => {
-        const subject : string = 'johndoe';
-        const result : string = Utils.extractTokenUser(subject);
+        const subject: string = 'johndoe';
+        const result: string = Utils.extractTokenUser(subject);
         expect(result).toBe(subject);
     });
 
     it('should handle empty subject', () => {
-        const subject : string = '';
-        const result : string = Utils.extractTokenUser(subject);
+        const subject: string = '';
+        const result: string = Utils.extractTokenUser(subject);
         expect(result).toBe(subject);
     });
 });
 
 describe('decodeOidcToken', () => {
     it('should decode valid OIDC token', () => {
-        const oidcToken : string =
+        const oidcToken: string =
             Buffer.from(JSON.stringify({ sub: 'test' })).toString('base64') +
             '.eyJzdWIiOiJ0ZXN0In0.' +
             Buffer.from(JSON.stringify({ sub: 'test' })).toString('base64');
-        const result : JWTTokenData = Utils.decodeOidcToken(oidcToken);
+        const result: JWTTokenData = Utils.decodeOidcToken(oidcToken);
         expect(result).toEqual({ sub: 'test' });
     });
 
     it('should throw error for OIDC token with invalid format', () => {
-        const oidcToken : string = 'invalid.token.format';
+        const oidcToken: string = 'invalid.token.format';
         expect(() => Utils.decodeOidcToken(oidcToken)).toThrow(SyntaxError);
     });
 
     it('should throw error for OIDC token without subject', () => {
-        const oidcToken : string =
+        const oidcToken: string =
             Buffer.from(JSON.stringify({ notSub: 'test' })).toString('base64') +
             '.eyJub3RTdWIiOiJ0ZXN0In0.' +
             Buffer.from(JSON.stringify({ notSub: 'test' })).toString('base64');
@@ -321,9 +321,9 @@ describe('Job Summaries', () => {
             myCore.getBooleanInput = jest.fn().mockImplementation(() => {
                 return false;
             });
-            (myCore.exportVariable = jest.fn().mockImplementation((name: string, val: string) => {
+            myCore.exportVariable = jest.fn().mockImplementation((name: string, val: string) => {
                 process.env[name] = val;
-            }));
+            });
             Utils.setCliEnv();
             expect(process.env.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR).toBe('/tmp');
         });
