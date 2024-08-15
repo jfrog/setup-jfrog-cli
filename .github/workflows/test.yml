@@ -1,6 +1,11 @@
 name: "Test"
-on: [push, pull_request]
-
+on:
+  push:
+    branches:
+      - '**'
+    tags-ignore:
+      - '**'
+  pull_request:
 jobs:
   test:
     runs-on: ${{ matrix.os }}
@@ -16,6 +21,7 @@ jobs:
       # Checkout and install prerequisites
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Setup NodeJS
         uses: actions/setup-node@v4
         with:
@@ -27,6 +33,7 @@ jobs:
         uses: ./
         with:
           version: ${{ matrix.version }}
+
       - name: Setup default JFrog CLI
         if: matrix.version == ''
         uses: ./

@@ -3,10 +3,13 @@ import { Utils } from './utils';
 
 async function cleanup() {
     try {
-        core.startGroup('Cleanup JFrog CLI servers configuration');
         if (!Utils.addCachedCliToPath()) {
             return;
         }
+       let response : string = await Utils.runCliWithOutput(['rt', 'bp', '--dry-run']);
+        console.log(response);
+
+        core.startGroup('Cleanup JFrog CLI servers configuration');
         await Utils.removeJFrogServers();
         if (!core.getBooleanInput(Utils.JOB_SUMMARY_DISABLE)) {
             await Utils.generateWorkflowSummaryMarkdown();
