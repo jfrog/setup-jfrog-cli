@@ -457,10 +457,15 @@ export class Utils {
     }
 
     /**
-     * Execute JFrog CLI command.
+     * Execute JFrog CLI command and capture its output.
      * This GitHub Action downloads the requested 'jfrog' executable and stores it as 'jfrog' and 'jf'.
      * Therefore, the 'jf' executable is expected to be in the path also for older CLI versions.
+     * The command's output is captured and returned as a string.
+     * The command is executed silently, meaning its output will not be printed to the console.
+     * If the command fails (i.e., exits with a non-success code), an error is thrown.
      * @param args - CLI arguments
+     * @returns The standard output of the CLI command as a string.
+     * @throws An error if the JFrog CLI command exits with a non-success code.
      */
     public static async runCliWithOutput(args: string[]): Promise<string> {
         let output: ExecOutput = await getExecOutput('jf', args, { silent: true });

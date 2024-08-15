@@ -6,8 +6,8 @@ async function cleanup() {
         if (!Utils.addCachedCliToPath()) {
             return;
         }
-        let response: string = await Utils.runCliWithOutput(['rt', 'bp', '--dry-run', '--detailed-summary', 'false']);
-        console.log(response);
+
+        await publishBuildInfoIfNeeded();
 
         core.startGroup('Cleanup JFrog CLI servers configuration');
         await Utils.removeJFrogServers();
@@ -18,6 +18,36 @@ async function cleanup() {
         core.setFailed((<any>error).message);
     } finally {
         core.endGroup();
+    }
+}
+
+async function publishBuildInfoIfNeeded() {
+    core.exportVariable('JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR', '');
+    let response: string = await Utils.runCliWithOutput(['rt', 'bp', '--dry-run']);
+    console.log('Response:', response);
+    console.log(hasUnpublishedModules(response))
+
+    await Utils.runCli(['npm', 'i']);
+
+    response = await Utils.runCliWithOutput(['rt', 'bp', '--dry-run']);
+    console.log('Response:', response);
+    console.log(hasUnpublishedModules(response))
+}
+
+interface BuildInfoResponse {
+    modules: any[];
+}
+
+function hasUnpublishedModules(responseStr: string): boolean {
+    try {
+        // Parse the JSON string to an object
+        const response : BuildInfoResponse = JSON.parse(responseStr);
+
+        // Check if the "modules" key exists and if it's an array with more than one item
+        return response.modules && Array.isArray(response.modules) && response.modules.length > 0;
+    } catch (error) {
+        console.error('Failed to parse JSON:', error);
+        return false; // Return false if parsing fails
     }
 }
 
