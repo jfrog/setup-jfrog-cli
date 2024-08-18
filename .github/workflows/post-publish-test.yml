@@ -32,8 +32,8 @@ jobs:
         id: setup-jfrog-cli
         uses: ./
         env:
-          JF_URL: ${{ secrets.PLATFORM_URL }}
-          JF_ACCESS_TOKEN: ${{ vars.PLATFORM_ADMIN_TOKEN }}
+          JF_URL: ${{ vars.PLATFORM_URL }}
+          JF_ACCESS_TOKEN: ${{ secrets.PLATFORM_ADMIN_TOKEN }}
 
       - name: Test JFrog CLI ping to Artifactory
         run: |
