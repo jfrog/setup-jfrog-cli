@@ -11,8 +11,7 @@ async function cleanup() {
         core.startGroup('Publish build info if needed');
         if (!core.getBooleanInput(Utils.POST_BUILD_PUBLISH_DISABLE)) {
             if (await hasUnpublishedModules()) {
-                let buildPublishResponse: string = await Utils.runCliAndGetOutput(['rt', buildPublishCmd]);
-                console.log(buildPublishResponse);
+                await Utils.runCliAndGetOutput(['rt', buildPublishCmd]);
             }
         }
     } catch (error) {
