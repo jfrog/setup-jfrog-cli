@@ -12,7 +12,7 @@ async function cleanup() {
             // Generate summary Markdown from data files
             await Utils.runCli(['create-summary-markdown']);
             // Combine to a unified report
-            await Utils.createUnifiedReport();
+            await Utils.setMarkdownAsJobSummary();
         }
     } catch (error) {
         core.setFailed((<any>error).message);
