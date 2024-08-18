@@ -6,14 +6,11 @@ async function cleanup() {
         return;
     }
     try {
-        core.startGroup('Publish build info if needed');
         if (!core.getBooleanInput(Utils.AUTO_BUILD_PUBLISH_DISABLE)) {
             await collectAndPublishBuildInfoIfNeeded();
         }
     } catch (error) {
         console.warn('failed while attempting to publish build info: ' + error);
-    } finally {
-        core.endGroup();
     }
 
     try {
@@ -62,15 +59,15 @@ async function collectAndPublishBuildInfoIfNeeded() {
         return;
     }
 
-    core.startGroup('Running "jf rt build-collect-env" to add environment variables to the build info');
+    core.startGroup('Collect environment variables information');
     await Utils.runCli(['rt', 'build-collect-env'], { cwd: workingDirectory });
     core.endGroup();
 
-    core.startGroup('Running "jf rt build-add-git" to add git information to the build info');
+    core.startGroup('Collect the Git revision and URL from the local .git directory');
     await Utils.runCli(['rt', 'build-add-git'], { cwd: workingDirectory });
     core.endGroup();
 
-    core.startGroup('Running "jf rt build-publish" to publish the build info to JFrog Artifactory');
+    core.startGroup('Publish the build info to JFrog Artifactory');
     await Utils.runCli(['rt', 'build-publish'], { cwd: workingDirectory });
     core.endGroup();
 }
