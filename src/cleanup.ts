@@ -9,7 +9,10 @@ async function cleanup() {
         }
         await Utils.removeJFrogServers();
         if (!core.getBooleanInput(Utils.JOB_SUMMARY_DISABLE)) {
-            await Utils.generateWorkflowSummaryMarkdown();
+            // Generate summary Markdown from data files
+            await Utils.runCli(['create-summary-markdown']);
+            // Combine to a unified report
+            await Utils.createUnifiedReport();
         }
     } catch (error) {
         core.setFailed((<any>error).message);

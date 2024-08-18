@@ -298,7 +298,7 @@ describe('decodeOidcToken', () => {
 describe('Job Summaries', () => {
     describe('Job summaries sanity', () => {
         it('should not crash if no files were found', async () => {
-            expect(async () => await Utils.generateWorkflowSummaryMarkdown()).not.toThrow();
+            expect(async () => await Utils.createUnifiedReport()).not.toThrow();
         });
     });
     describe('Command Summaries Disable Flag', () => {
