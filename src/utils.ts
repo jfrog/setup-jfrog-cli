@@ -316,7 +316,9 @@ export class Utils {
 
     public static async getActualVersion(downloadDir: string, fileName: string): Promise<string> {
         try {
-            let output: ExecOutput = await getExecOutput(join(downloadDir, fileName), [`--version`]);
+            const jfrogCliPath: string = join(downloadDir, fileName);
+            chmodSync(jfrogCliPath, 0o555);
+            let output: ExecOutput = await getExecOutput(jfrogCliPath, [`--version`]);
             // Split the output by spaces and get the last part (jf version 2.63.2)
             const outputParts: string[] = output.stdout.trim().split(' ');
             return outputParts[outputParts.length - 1];
