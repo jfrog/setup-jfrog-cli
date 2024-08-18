@@ -57,7 +57,7 @@ export class Utils {
     private static readonly OIDC_INTEGRATION_PROVIDER_NAME: string = 'oidc-provider-name';
     // Job Summaries feature disable flag
     public static readonly JOB_SUMMARY_DISABLE: string = 'disable-job-summary';
-    // Post build publish feature disable flag
+    // Auto build publish feature disable flag
     public static readonly AUTO_BUILD_PUBLISH_DISABLE: string = 'disable-auto-build-publish';
 
     /**
