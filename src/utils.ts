@@ -449,9 +449,10 @@ export class Utils {
      * This GitHub Action downloads the requested 'jfrog' executable and stores it as 'jfrog' and 'jf'.
      * Therefore, the 'jf' executable is expected to be in the path also for older CLI versions.
      * @param args - CLI arguments
+     * @param options - Execution options
      */
-    public static async runCli(args: string[]) {
-        let res: number = await exec('jf', args);
+    public static async runCli(args: string[], options?: ExecOptions) {
+        let res: number = await exec('jf', args, options);
         if (res !== core.ExitCode.Success) {
             throw new Error('JFrog CLI exited with exit code ' + res);
         }
@@ -470,11 +471,7 @@ export class Utils {
      * @throws An error if the JFrog CLI command exits with a non-success code.
      */
     public static async runCliAndGetOutput(args: string[], options?: ExecOptions): Promise<string> {
-        const workingDirectory: string | undefined = process.env.GITHUB_WORKSPACE;
-        if (!workingDirectory) {
-            throw new Error('GITHUB_WORKSPACE is not defined.');
-        }
-        let output: ExecOutput = await getExecOutput('jf', args, { ...options, cwd: workingDirectory });
+        let output: ExecOutput = await getExecOutput('jf', args, options);
         if (output.exitCode !== core.ExitCode.Success) {
             throw new Error('JFrog CLI exited with exit code ' + output.exitCode);
         }
