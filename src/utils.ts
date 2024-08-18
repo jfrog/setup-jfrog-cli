@@ -58,7 +58,7 @@ export class Utils {
     // Job Summaries feature disable flag
     public static readonly JOB_SUMMARY_DISABLE: string = 'disable-job-summary';
     // Post build publish feature disable flag
-    public static readonly POST_BUILD_PUBLISH_DISABLE: string = 'disable-post-build-publish';
+    public static readonly AUTO_BUILD_PUBLISH_DISABLE: string = 'disable-auto-build-publish';
 
     /**
      * Retrieves server credentials for accessing JFrog's server

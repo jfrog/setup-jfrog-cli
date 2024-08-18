@@ -9,7 +9,7 @@ async function cleanup() {
     }
     try {
         core.startGroup('Publish build info if needed');
-        if (!core.getBooleanInput(Utils.POST_BUILD_PUBLISH_DISABLE)) {
+        if (!core.getBooleanInput(Utils.AUTO_BUILD_PUBLISH_DISABLE)) {
             if (await hasUnpublishedModules()) {
                 await Utils.runCliAndGetOutput(['rt', buildPublishCmd]);
             }
