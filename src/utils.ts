@@ -477,7 +477,7 @@ export class Utils {
         if (!workingDirectory) {
             throw new Error('GITHUB_WORKSPACE is not defined.');
         }
-        let output: ExecOutput = await getExecOutput('jf', args, { silent: true, cwd: workingDirectory });
+        let output: ExecOutput = await getExecOutput('jf', args, { cwd: workingDirectory });
         if (output.exitCode !== core.ExitCode.Success) {
             throw new Error('JFrog CLI exited with exit code ' + output.exitCode);
         }

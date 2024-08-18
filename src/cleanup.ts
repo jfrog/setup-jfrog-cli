@@ -4,20 +4,24 @@ import { Utils } from './utils';
 const buildPublishCmd: string = 'build-publish';
 
 async function cleanup() {
+    if (!Utils.addCachedCliToPath()) {
+        return;
+    }
     try {
-        if (!Utils.addCachedCliToPath()) {
-            return;
-        }
-
+        core.startGroup('Publish build info if needed');
         if (!core.getBooleanInput(Utils.POST_BUILD_PUBLISH_DISABLE)) {
-            core.startGroup('Publish build info if needed');
             if (await hasUnpublishedModules()) {
                 let buildPublishResponse: string = await Utils.runCliAndGetOutput(['rt', buildPublishCmd]);
                 console.log(buildPublishResponse);
             }
-            core.endGroup();
         }
+    } catch (error) {
+        console.warn('failed while attempting to publish build info: ' + error);
+    } finally {
+        core.endGroup();
+    }
 
+    try {
         core.startGroup('Cleanup JFrog CLI servers configuration');
         await Utils.removeJFrogServers();
         if (!core.getBooleanInput(Utils.JOB_SUMMARY_DISABLE)) {
