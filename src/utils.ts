@@ -244,14 +244,14 @@ export class Utils {
         let downloadDetails: DownloadDetails = Utils.extractDownloadDetails(cliRemote, jfrogCredentials);
         let url: string = Utils.getCliUrl(major, version, jfrogFileName, downloadDetails);
         core.info('Downloading JFrog CLI from ' + url);
-        let downloadDir: string = await toolCache.downloadTool(url, undefined, downloadDetails.auth);
+        let downloadedExecutable: string = await toolCache.downloadTool(url, undefined, downloadDetails.auth);
 
         // Cache 'jf' and 'jfrog' executables
         if (version == Utils.LATEST_RELEASE_VERSION) {
-            version = await Utils.getActualVersion(downloadDir, jfrogFileName);
+            version = await Utils.getActualVersion(downloadedExecutable);
         }
-        await this.cacheAndAddPath(downloadDir, version, jfFileName);
-        await this.cacheAndAddPath(downloadDir, version, jfrogFileName);
+        await this.cacheAndAddPath(downloadedExecutable, version, jfFileName);
+        await this.cacheAndAddPath(downloadedExecutable, version, jfrogFileName);
     }
 
     /**
@@ -301,12 +301,12 @@ export class Utils {
 
     /**
      * Add JFrog CLI executables to cache and to the system path.
-     * @param downloadDir - The directory whereby the CLI was downloaded to
+     * @param downloadedExecutable - Path to the downloaded JFrog CLI executable
      * @param version     - JFrog CLI version
      * @param fileName    - 'jf', 'jfrog', 'jf.exe', or 'jfrog.exe'
      */
-    private static async cacheAndAddPath(downloadDir: string, version: string, fileName: string) {
-        let cliDir: string = await toolCache.cacheFile(downloadDir, fileName, fileName, version);
+    private static async cacheAndAddPath(downloadedExecutable: string, version: string, fileName: string) {
+        let cliDir: string = await toolCache.cacheFile(downloadedExecutable, fileName, fileName, version);
 
         if (!Utils.isWindows()) {
             chmodSync(join(cliDir, fileName), 0o555);
@@ -314,11 +314,10 @@ export class Utils {
         core.addPath(cliDir);
     }
 
-    public static async getActualVersion(downloadDir: string, fileName: string): Promise<string> {
+    public static async getActualVersion(downloadedExecutable: string): Promise<string> {
         try {
-            const jfrogCliPath: string = join(downloadDir, fileName);
-            chmodSync(jfrogCliPath, 0o555);
-            let output: ExecOutput = await getExecOutput(jfrogCliPath, [`--version`]);
+            chmodSync(downloadedExecutable, 0o555);
+            let output: ExecOutput = await getExecOutput(downloadedExecutable, [`--version`]);
             // Split the output by spaces and get the last part (jf version 2.63.2)
             const outputParts: string[] = output.stdout.trim().split(' ');
             return outputParts[outputParts.length - 1];
