@@ -8,16 +8,7 @@ async function cleanup() {
     try {
         core.startGroup('Publish build info if needed');
         if (!core.getBooleanInput(Utils.AUTO_BUILD_PUBLISH_DISABLE)) {
-            const workingDirectory: string = getWorkingDirectory();
-
-            if (await hasUnpublishedModules(workingDirectory)) {
-                // Running build-collect-env to collect environment variables and add them to the build info
-                await Utils.runCli(['rt', 'build-collect-env'], { cwd: workingDirectory });
-                // Running build-add-git to add git information to the build info
-                await Utils.runCli(['rt', 'build-add-git'], { cwd: workingDirectory });
-                // Running build-publish to publish the build info to artifactory
-                await Utils.runCli(['rt', 'build-publish'], { cwd: workingDirectory });
-            }
+            await collectAndPublishBuildInfoIfNeeded();
         }
     } catch (error) {
         console.warn('failed while attempting to publish build info: ' + error);
@@ -62,6 +53,26 @@ async function hasUnpublishedModules(workingDirectory: string): Promise<boolean>
     } finally {
         core.exportVariable(Utils.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV, origValue);
     }
+}
+
+async function collectAndPublishBuildInfoIfNeeded() {
+    const workingDirectory: string = getWorkingDirectory();
+    // Check if there are any unpublished modules
+    if (!(await hasUnpublishedModules(workingDirectory))) {
+        return;
+    }
+
+    core.startGroup('Running "jf rt build-collect-env" to add environment variables to the build info');
+    await Utils.runCli(['rt', 'build-collect-env'], { cwd: workingDirectory });
+    core.endGroup();
+
+    core.startGroup('Running "jf rt build-add-git" to add git information to the build info');
+    await Utils.runCli(['rt', 'build-add-git'], { cwd: workingDirectory });
+    core.endGroup();
+
+    core.startGroup('Running "jf rt build-publish" to publish the build info to JFrog Artifactory');
+    await Utils.runCli(['rt', 'build-publish'], { cwd: workingDirectory });
+    core.endGroup();
 }
 
 function getWorkingDirectory(): string {

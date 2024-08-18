@@ -19,8 +19,8 @@ inputs:
         description: "Set to true to disable the generation of Job Summaries."
         default: "false"
         required: false
-    disable-post-build-publish:
-        description: "Set to true to disable the post build-info publish task."
+    disable-auto-build-publish:
+        description: "Set to true to disable the automatic build-info publish task."
         default: "false"
         required: false
 outputs:
