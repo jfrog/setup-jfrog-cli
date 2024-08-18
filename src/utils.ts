@@ -540,12 +540,6 @@ export class Utils {
     private static async readCommandSummaryMarkdown(): Promise<string> {
         let markdownContent: string = '';
         markdownContent = await Utils.readMarkdownContent();
-        // TODO move this logic to the CLI.
-        // // If build info was published, remove generic upload section to avoid duplications with generic modules.
-        // if (sectionContents[MarkdownSection.BuildInfo] != '') {
-        //     sectionContents[MarkdownSection.Upload] = '';
-        // }
-
         // Check if the header can be accessed via the internet to decide if to use the image or the text header
         this.isSummaryHeaderAccessible = await this.isHeaderPngAccessible();
         return markdownContent ? Utils.wrapContent(markdownContent) : '';
