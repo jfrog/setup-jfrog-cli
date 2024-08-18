@@ -248,6 +248,7 @@ export class Utils {
         core.info('Downloading JFrog CLI from ' + url);
         let downloadedExecutable: string = await toolCache.downloadTool(url, undefined, downloadDetails.auth);
 
+        // Cache 'jf' and 'jfrog' executables
         await this.cacheAndAddPath(downloadedExecutable, version, jfFileName);
         await this.cacheAndAddPath(downloadedExecutable, version, jfrogFileName);
 
