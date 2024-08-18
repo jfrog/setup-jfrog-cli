@@ -63,7 +63,7 @@ async function collectAndPublishBuildInfoIfNeeded() {
     await Utils.runCli(['rt', 'build-collect-env'], { cwd: workingDirectory });
     core.endGroup();
 
-    core.startGroup('Collect the Git revision and URL from the local .git directory');
+    core.startGroup('Collect the Git information');
     await Utils.runCli(['rt', 'build-add-git'], { cwd: workingDirectory });
     core.endGroup();
 
