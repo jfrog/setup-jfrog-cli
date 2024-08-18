@@ -8,6 +8,7 @@ import { arch, platform } from 'os';
 import * as path from 'path';
 import { join } from 'path';
 import { lt } from 'semver';
+import { findAllVersions } from '@actions/tool-cache';
 
 export enum MarkdownSection {
     Upload = 'upload',
@@ -246,6 +247,9 @@ export class Utils {
         let downloadDir: string = await toolCache.downloadTool(url, undefined, downloadDetails.auth);
 
         // Cache 'jf' and 'jfrog' executables
+        if (version == Utils.LATEST_RELEASE_VERSION) {
+            version = await Utils.getActualVersion(downloadDir, jfrogFileName);
+        }
         await this.cacheAndAddPath(downloadDir, version, jfFileName);
         await this.cacheAndAddPath(downloadDir, version, jfrogFileName);
     }
@@ -257,6 +261,12 @@ export class Utils {
         let version: string = core.getInput(Utils.CLI_VERSION_ARG);
         if (version === Utils.LATEST_CLI_VERSION) {
             version = Utils.LATEST_RELEASE_VERSION;
+            let versions: string[] = toolCache.findAllVersions(Utils.getJfExecutableName());
+            console.log(versions);
+            if (versions.length == 0) {
+                return false;
+            }
+            version = versions[0];
         }
         let jfrogCliPath: string = toolCache.find(Utils.getJfExecutableName(), version);
         if (!jfrogCliPath) {
@@ -296,9 +306,6 @@ export class Utils {
      * @param fileName    - 'jf', 'jfrog', 'jf.exe', or 'jfrog.exe'
      */
     private static async cacheAndAddPath(downloadDir: string, version: string, fileName: string) {
-        if (version == Utils.LATEST_RELEASE_VERSION) {
-            version = await Utils.getActualVersion(downloadDir, fileName);
-        }
         let cliDir: string = await toolCache.cacheFile(downloadDir, fileName, fileName, version);
 
         if (!Utils.isWindows()) {
@@ -311,7 +318,7 @@ export class Utils {
         try {
             let output: ExecOutput = await getExecOutput(join(downloadDir, fileName), [`--version`]);
             // Split the output by spaces and get the last part (jf version 2.63.2)
-            const outputParts = output.stdout.trim().split(' ');
+            const outputParts: string[] = output.stdout.trim().split(' ');
             return outputParts[outputParts.length - 1];
         } catch (error) {
             console.error('Error getting version:', error);
