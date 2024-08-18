@@ -1,5 +1,5 @@
 import * as core from '@actions/core';
-import { exec, ExecOutput, getExecOutput } from '@actions/exec';
+import { exec, ExecOptions, ExecOutput, getExecOutput } from '@actions/exec';
 import { HttpClient, HttpClientResponse } from '@actions/http-client';
 import * as toolCache from '@actions/tool-cache';
 import { chmodSync, existsSync, promises as fs } from 'fs';
@@ -469,15 +469,16 @@ export class Utils {
      * The command is executed silently, meaning its output will not be printed to the console.
      * If the command fails (i.e., exits with a non-success code), an error is thrown.
      * @param args - CLI arguments
+     * @param options
      * @returns The standard output of the CLI command as a string.
      * @throws An error if the JFrog CLI command exits with a non-success code.
      */
-    public static async runCliAndGetOutput(args: string[]): Promise<string> {
+    public static async runCliAndGetOutput(args: string[], options?: ExecOptions): Promise<string> {
         const workingDirectory: string | undefined = process.env.GITHUB_WORKSPACE;
         if (!workingDirectory) {
             throw new Error('GITHUB_WORKSPACE is not defined.');
         }
-        let output: ExecOutput = await getExecOutput('jf', args, { cwd: workingDirectory });
+        let output: ExecOutput = await getExecOutput('jf', args, { ...options, cwd: workingDirectory });
         if (output.exitCode !== core.ExitCode.Success) {
             throw new Error('JFrog CLI exited with exit code ' + output.exitCode);
         }
