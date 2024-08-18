@@ -36,6 +36,9 @@ export class Utils {
     public static readonly SETUP_JFROG_CLI_SERVER_ID: string = 'setup-jfrog-cli-server';
     // Directory name which holds markdown files for the Workflow summary
     private static readonly JOB_SUMMARY_DIR_NAME: string = 'jfrog-command-summary';
+    // JFrog CLI command summary output directory environment variable
+    public static readonly JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV: string = 'JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR';
+
     // Workflow summary section files. Order of sections in this array impacts the order in the final markdown.
     public static JOB_SUMMARY_MARKDOWN_SECTIONS_NAMES: MarkdownSection[] = [
         MarkdownSection.Security,
@@ -386,7 +389,7 @@ export class Utils {
     private static enableJobSummaries() {
         let commandSummariesOutputDir: string | undefined = process.env.RUNNER_TEMP;
         if (commandSummariesOutputDir) {
-            Utils.exportVariableIfNotSet('JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR', commandSummariesOutputDir);
+            Utils.exportVariableIfNotSet(Utils.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV, commandSummariesOutputDir);
         }
     }
 
@@ -468,7 +471,7 @@ export class Utils {
      * @throws An error if the JFrog CLI command exits with a non-success code.
      */
     public static async runCliAndGetOutput(args: string[]): Promise<string> {
-        const workingDirectory = process.env.GITHUB_WORKSPACE;
+        const workingDirectory : string | undefined = process.env.GITHUB_WORKSPACE;
         if (!workingDirectory) {
             throw new Error('GITHUB_WORKSPACE is not defined.');
         }
@@ -643,9 +646,9 @@ export class Utils {
     }
 
     private static getJobOutputDirectoryPath(): string {
-        const outputDir: string | undefined = process.env.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR;
+        const outputDir: string | undefined = process.env[Utils.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV];
         if (!outputDir) {
-            throw new Error('Jobs home directory is undefined, JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR is not set.');
+            throw new Error('Jobs home directory is undefined, ' + Utils.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV + ' is not set.');
         }
         return path.join(outputDir, Utils.JOB_SUMMARY_DIR_NAME);
     }

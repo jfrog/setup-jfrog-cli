@@ -1,16 +1,20 @@
 import * as core from '@actions/core';
 import { Utils } from './utils';
 
+const buildPublishCmd : string = 'build-publish';
+
 async function cleanup() {
     try {
         if (!Utils.addCachedCliToPath()) {
             return;
         }
 
+        core.startGroup('Publish build info if needed');
         if (await hasUnpublishedModules()) {
-            let buildPublishResponseStr: string = await Utils.runCliAndGetOutput(['rt', 'bp']);
-            console.log(buildPublishResponseStr);
+            let buildPublishResponse: string = await Utils.runCliAndGetOutput(['rt', buildPublishCmd]);
+            console.log(buildPublishResponse);
         }
+        core.endGroup();
 
         core.startGroup('Cleanup JFrog CLI servers configuration');
         await Utils.removeJFrogServers();
@@ -29,12 +33,14 @@ interface BuildPublishResponse {
 }
 
 async function hasUnpublishedModules(): Promise<boolean> {
-    // Save the old value of the environment variable
-    const origValue = process.env.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR;
+    // Save the old value of the environment variable to revert it later
+    const origValue: string | undefined = process.env[Utils.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV];
     try {
-        core.exportVariable('JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR', '');
+        // Avoid saving a command summary for this dry-run command
+        core.exportVariable(Utils.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV, '');
 
-        const responseStr: string = await Utils.runCliAndGetOutput(['rt', 'bp', '--dry-run']);
+        // Running build-publish command with a dry-run flag to check if there are any unpublished modules
+        const responseStr: string = await Utils.runCliAndGetOutput(['rt', buildPublishCmd, '--dry-run']);
 
         // Parse the JSON string to an object
         const response: BuildPublishResponse = JSON.parse(responseStr);
@@ -44,7 +50,7 @@ async function hasUnpublishedModules(): Promise<boolean> {
         console.error('Failed to parse JSON:', error);
         return false; // Return false if parsing fails
     } finally {
-        core.exportVariable('JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR', origValue);
+        core.exportVariable(Utils.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV, origValue);
     }
 }
 
