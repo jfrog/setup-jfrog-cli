@@ -4,9 +4,9 @@ import { Utils } from './utils';
 async function cleanup() {
     try {
         core.startGroup('Cleanup JFrog CLI servers configuration');
-        if (!Utils.addCachedCliToPath()) {
-            return;
-        }
+        const jfrogCliPath: string = core.getState(Utils.JFROG_CLI_PATH_STATE);
+        core.addPath(jfrogCliPath);
+
         await Utils.removeJFrogServers();
         if (!core.getBooleanInput(Utils.JOB_SUMMARY_DISABLE)) {
             await Utils.generateWorkflowSummaryMarkdown();

@@ -33,6 +33,8 @@ export class Utils {
     private static readonly LATEST_CLI_VERSION: string = 'latest';
     // The value in the download URL to set to get the latest version
     private static readonly LATEST_RELEASE_VERSION: string = '[RELEASE]';
+    // State name for saving JFrog CLI path to use on cleanup
+    public static readonly JFROG_CLI_PATH_STATE: string = 'JFROG_CLI_PATH_STATE';
     // The default server id name for separate env config
     public static readonly SETUP_JFROG_CLI_SERVER_ID: string = 'setup-jfrog-cli-server';
     // Directory name which holds markdown files for the Workflow summary
@@ -246,12 +248,11 @@ export class Utils {
         core.info('Downloading JFrog CLI from ' + url);
         let downloadedExecutable: string = await toolCache.downloadTool(url, undefined, downloadDetails.auth);
 
-        // Cache 'jf' and 'jfrog' executables
-        if (version == Utils.LATEST_RELEASE_VERSION) {
-            version = await Utils.getActualVersion(downloadedExecutable);
-        }
         await this.cacheAndAddPath(downloadedExecutable, version, jfFileName);
         await this.cacheAndAddPath(downloadedExecutable, version, jfrogFileName);
+
+        // Save the JFrog CLI path to use on cleanup
+        core.saveState(Utils.JFROG_CLI_PATH_STATE, toolCache.find(jfFileName, version));
     }
 
     /**
@@ -260,13 +261,6 @@ export class Utils {
     public static addCachedCliToPath(): boolean {
         let version: string = core.getInput(Utils.CLI_VERSION_ARG);
         if (version === Utils.LATEST_CLI_VERSION) {
-            version = Utils.LATEST_RELEASE_VERSION;
-            let versions: string[] = toolCache.findAllVersions(Utils.getJfExecutableName());
-            console.log(versions);
-            if (versions.length == 0) {
-                return false;
-            }
-            version = versions[0];
         }
         let jfrogCliPath: string = toolCache.find(Utils.getJfExecutableName(), version);
         if (!jfrogCliPath) {
@@ -312,19 +306,6 @@ export class Utils {
             chmodSync(join(cliDir, fileName), 0o555);
         }
         core.addPath(cliDir);
-    }
-
-    public static async getActualVersion(downloadedExecutable: string): Promise<string> {
-        try {
-            chmodSync(downloadedExecutable, 0o555);
-            let output: ExecOutput = await getExecOutput(downloadedExecutable, [`--version`]);
-            // Split the output by spaces and get the last part (jf version 2.63.2)
-            const outputParts: string[] = output.stdout.trim().split(' ');
-            return outputParts[outputParts.length - 1];
-        } catch (error) {
-            console.error('Error getting version:', error);
-            throw error;
-        }
     }
 
     public static getCliUrl(major: string, version: string, fileName: string, downloadDetails: DownloadDetails): string {
