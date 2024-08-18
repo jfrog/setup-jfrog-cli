@@ -1,7 +1,7 @@
 import * as core from '@actions/core';
 import { Utils } from './utils';
 
-const buildPublishCmd : string = 'build-publish';
+const buildPublishCmd: string = 'build-publish';
 
 async function cleanup() {
     try {
@@ -9,12 +9,14 @@ async function cleanup() {
             return;
         }
 
-        core.startGroup('Publish build info if needed');
-        if (await hasUnpublishedModules()) {
-            let buildPublishResponse: string = await Utils.runCliAndGetOutput(['rt', buildPublishCmd]);
-            console.log(buildPublishResponse);
+        if (!core.getBooleanInput(Utils.POST_BUILD_PUBLISH_DISABLE)) {
+            core.startGroup('Publish build info if needed');
+            if (await hasUnpublishedModules()) {
+                let buildPublishResponse: string = await Utils.runCliAndGetOutput(['rt', buildPublishCmd]);
+                console.log(buildPublishResponse);
+            }
+            core.endGroup();
         }
-        core.endGroup();
 
         core.startGroup('Cleanup JFrog CLI servers configuration');
         await Utils.removeJFrogServers();

@@ -55,8 +55,10 @@ export class Utils {
     private static readonly OIDC_AUDIENCE_ARG: string = 'oidc-audience';
     // OpenID Connect provider_name input
     private static readonly OIDC_INTEGRATION_PROVIDER_NAME: string = 'oidc-provider-name';
-    // Job Summaries feature flag
+    // Job Summaries feature disable flag
     public static readonly JOB_SUMMARY_DISABLE: string = 'disable-job-summary';
+    // Post build publish feature disable flag
+    public static readonly POST_BUILD_PUBLISH_DISABLE: string = 'disable-post-build-publish';
 
     /**
      * Retrieves server credentials for accessing JFrog's server
@@ -471,7 +473,7 @@ export class Utils {
      * @throws An error if the JFrog CLI command exits with a non-success code.
      */
     public static async runCliAndGetOutput(args: string[]): Promise<string> {
-        const workingDirectory : string | undefined = process.env.GITHUB_WORKSPACE;
+        const workingDirectory: string | undefined = process.env.GITHUB_WORKSPACE;
         if (!workingDirectory) {
             throw new Error('GITHUB_WORKSPACE is not defined.');
         }
