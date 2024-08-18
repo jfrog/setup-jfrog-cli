@@ -10,7 +10,7 @@ async function cleanup() {
         await Utils.removeJFrogServers();
         if (!core.getBooleanInput(Utils.JOB_SUMMARY_DISABLE)) {
             // Generate summary Markdown from data files
-            await Utils.runCli(['create-summary-markdown']);
+            await Utils.runCli(['generate-summary-markdown']);
             // Combine to a unified report
             await Utils.setMarkdownAsJobSummary();
         }
