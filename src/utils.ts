@@ -1,13 +1,13 @@
 import * as core from '@actions/core';
-import { exec } from '@actions/exec';
+import { exec, ExecOutput, getExecOutput } from '@actions/exec';
 import { HttpClient, HttpClientResponse } from '@actions/http-client';
 import * as toolCache from '@actions/tool-cache';
 import { chmodSync, existsSync, promises as fs } from 'fs';
 import { OutgoingHttpHeaders } from 'http';
 import { arch, platform } from 'os';
+import * as path from 'path';
 import { join } from 'path';
 import { lt } from 'semver';
-import * as path from 'path';
 
 export enum MarkdownSection {
     Upload = 'upload',
@@ -296,12 +296,27 @@ export class Utils {
      * @param fileName    - 'jf', 'jfrog', 'jf.exe', or 'jfrog.exe'
      */
     private static async cacheAndAddPath(downloadDir: string, version: string, fileName: string) {
+        if (version == Utils.LATEST_RELEASE_VERSION) {
+            version = await Utils.getActualVersion(downloadDir, fileName);
+        }
         let cliDir: string = await toolCache.cacheFile(downloadDir, fileName, fileName, version);
 
         if (!Utils.isWindows()) {
             chmodSync(join(cliDir, fileName), 0o555);
         }
         core.addPath(cliDir);
+    }
+
+    public static async getActualVersion(downloadDir: string, fileName: string): Promise<string> {
+        try {
+            let output: ExecOutput = await getExecOutput(join(downloadDir, fileName), [`--version`]);
+            // Split the output by spaces and get the last part (jf version 2.63.2)
+            const outputParts = output.stdout.trim().split(' ');
+            return outputParts[outputParts.length - 1];
+        } catch (error) {
+            console.error('Error getting version:', error);
+            throw error;
+        }
     }
 
     public static getCliUrl(major: string, version: string, fileName: string, downloadDetails: DownloadDetails): string {
