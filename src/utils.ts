@@ -419,10 +419,6 @@ export class Utils {
         await Utils.runCli(['c', 'rm', '--quiet']);
     }
 
-    public static async buildPublishIfNeeded() {
-        await Utils.runCli(['c', 'rm', '--quiet']);
-    }
-
     public static getArchitecture() {
         if (Utils.isWindows()) {
             return 'windows-amd64';
