@@ -1,5 +1,6 @@
 import * as core from '@actions/core';
 import { Utils } from './utils';
+import {HttpClient, HttpClientResponse} from '@actions/http-client';
 
 async function cleanup() {
     if (!addCachedCliToPath()) {
@@ -8,6 +9,12 @@ async function cleanup() {
     try {
         if (!core.getBooleanInput(Utils.AUTO_BUILD_PUBLISH_DISABLE)) {
             await collectAndPublishBuildInfoIfNeeded();
+
+            // The following check is only relevant when the cleanup function is running inside a GitHub Actions test workflow
+            if (!core.getBooleanInput('AUTO_BUILD_PUBLISH_TEST')) {
+                // Check that build info was published successfully
+                await checkBuildInfoExistsInArtifactory();
+            }
         }
     } catch (error) {
         core.warning('failed while attempting to publish build info: ' + error);
@@ -89,6 +96,35 @@ function getWorkingDirectory(): string {
         throw new Error('GITHUB_WORKSPACE is not defined.');
     }
     return workingDirectory;
+}
+
+async function checkBuildInfoExistsInArtifactory() {
+    const buildName: string | undefined = process.env.JFROG_CLI_BUILD_NAME;
+    const buildNumber: string | undefined = process.env.JFROG_CLI_BUILD_NUMBER;
+    if (!buildName || !buildNumber) {
+        core.warning('Build name or number is not defined.');
+        return;
+    }
+    // Define the API endpoint for the build-info
+    const url: string = `http://localhost:8081/artifactory/api/build/${buildName}/${buildNumber}`;
+
+    try {
+        // Send GET request to the API
+        const response: HttpClientResponse = await new HttpClient().get(url);
+
+        // Check if the status is 200 (OK)
+        const statusCode: number | undefined = response.message.statusCode;
+        if (statusCode === 200) {
+            core.info(`Build-info exists for ${buildName} #${buildNumber}: Status ${statusCode}`);
+            return true;
+        } else {
+            core.info(`Build-info not found for ${buildName} #${buildNumber}: Status ${statusCode}`);
+            return false;
+        }
+    } catch (error) {
+        core.error(`Error occurred while making the API request - '${url}' :${error}`);
+        return false;
+    }
 }
 
 cleanup();

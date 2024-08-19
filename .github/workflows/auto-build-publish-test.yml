@@ -1,4 +1,4 @@
-name: Post Build Publish Test
+name: Auto Build Publish Test
 on:
   push:
     branches:
@@ -12,7 +12,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  Post-Build-Publish-Test:
+  Auto-Build-Publish-Test:
     if: contains(github.event.pull_request.labels.*.name, 'safe to test') || github.event_name == 'push'
     name: setup-jfrog-cli integration test (${{ matrix.os }})
     strategy:
@@ -36,6 +36,9 @@ jobs:
           JF_URL: http://localhost:8081/
           JF_USER: admin
           JF_PASSWORD: password
+
+      - name: Save variable for post cleanup to tell the cleanup job that we are in a test environment
+        run: echo "::save-state name=AUTO_BUILD_PUBLISH_TEST::true"
 
       - name: Create NPM Remote Repository JSON
         uses: jsdaniell/create-json@v1.2.3
