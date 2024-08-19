@@ -39,8 +39,8 @@ jobs:
           JF_USER: admin
           JF_PASSWORD: password
 
-      - name: Save variable for post cleanup to tell the cleanup job that we are in a test environment
-        run: echo "AUTO_BUILD_PUBLISH_TEST=true" >> $GITHUB_STATE
+      - name: Set AUTO_BUILD_PUBLISH_TEST to true to run post cleanup test for auto build publish feature
+        run: echo 'AUTO_BUILD_PUBLISH_TEST="true"' >> $GITHUB_STATE
 
       - name: Create NPM Remote Repository JSON
         uses: jsdaniell/create-json@v1.2.3
