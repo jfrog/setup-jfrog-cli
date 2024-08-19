@@ -252,24 +252,8 @@ export class Utils {
         await this.cacheAndAddPath(downloadedExecutable, version, jfFileName);
         await this.cacheAndAddPath(downloadedExecutable, version, jfrogFileName);
 
-        // Save the JFrog CLI path to use on cleanup
+        // Save the JFrog CLI path to use on cleanup. saveState/getState are methods to pass data between a step, and it's cleanup function.
         core.saveState(Utils.JFROG_CLI_PATH_STATE, toolCache.find(jfFileName, version));
-    }
-
-    /**
-     * Fetch the JFrog CLI path from the tool cache and append it to the PATH environment variable. Employ this approach during the cleanup phase.
-     */
-    public static addCachedCliToPath(): boolean {
-        let version: string = core.getInput(Utils.CLI_VERSION_ARG);
-        if (version === Utils.LATEST_CLI_VERSION) {
-        }
-        let jfrogCliPath: string = toolCache.find(Utils.getJfExecutableName(), version);
-        if (!jfrogCliPath) {
-            core.warning(`Could not find JFrog CLI version '${version}' in tool cache`);
-            return false;
-        }
-        core.addPath(jfrogCliPath);
-        return true;
     }
 
     /**
