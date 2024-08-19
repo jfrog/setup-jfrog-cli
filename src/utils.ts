@@ -33,7 +33,7 @@ export class Utils {
     // The value in the download URL to set to get the latest version
     private static readonly LATEST_RELEASE_VERSION: string = '[RELEASE]';
     // State name for saving JFrog CLI path to use on cleanup
-    public static readonly JFROG_CLI_PATH_STATE: string = 'JFROG_CLI_PATH_STATE';
+    public static readonly JF_CLI_PATH_STATE: string = 'JF_CLI_PATH_STATE';
     // The default server id name for separate env config
     public static readonly SETUP_JFROG_CLI_SERVER_ID: string = 'setup-jfrog-cli-server';
     // Directory name which holds markdown files for the Workflow summary
@@ -257,7 +257,7 @@ export class Utils {
         await this.cacheAndAddPath(downloadedExecutable, version, jfrogFileName);
 
         // Save the JFrog CLI path to use on cleanup. saveState/getState are methods to pass data between a step, and it's cleanup function.
-        core.saveState(Utils.JFROG_CLI_PATH_STATE, toolCache.find(jfFileName, version));
+        core.saveState(Utils.JF_CLI_PATH_STATE, toolCache.find(jfFileName, version));
     }
 
     /**
@@ -461,6 +461,8 @@ export class Utils {
     public static async runCliAndGetOutput(args: string[], options?: ExecOptions): Promise<string> {
         let output: ExecOutput = await getExecOutput('jf', args, options);
         if (output.exitCode !== core.ExitCode.Success) {
+            core.info(output.stdout)
+            core.info(output.stderr)
             throw new Error('JFrog CLI exited with exit code ' + output.exitCode);
         }
         return output.stdout;

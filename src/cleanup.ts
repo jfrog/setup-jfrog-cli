@@ -28,12 +28,12 @@ async function cleanup() {
 
 function addCachedCliToPath(): boolean {
     // Get the JFrog CLI path from step state. saveState/getState are methods to pass data between a step, and it's cleanup function.
-    const jfrogCliPath: string = core.getState(Utils.JFROG_CLI_PATH_STATE);
-    if (!jfrogCliPath) {
+    const jfCliPath: string = core.getState(Utils.JF_CLI_PATH_STATE);
+    if (!jfCliPath) {
         // This means that the JFrog CLI was not installed in the first place, because there was a failure in the installation step.
         return false;
     }
-    core.addPath(jfrogCliPath);
+    core.addPath(jfCliPath);
     return true;
 }
 
@@ -56,7 +56,7 @@ async function hasUnpublishedModules(workingDirectory: string): Promise<boolean>
         // Check if the "modules" key exists and if it's an array with more than one item
         return response.modules != undefined && Array.isArray(response.modules) && response.modules.length > 0;
     } catch (error) {
-        core.error('Failed to parse JSON: ' + error);
+        core.error('Failed to parse JSON:' + error);
         return false; // Return false if parsing fails
     } finally {
         core.exportVariable(Utils.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV, origValue);
