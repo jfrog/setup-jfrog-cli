@@ -23,6 +23,9 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Setup Go with cache
+        uses: jfrog/.github/actions/install-go-with-cache@main
+
       - name: Install local Artifactory
         uses: jfrog/.github/actions/install-local-artifactory@main
         with:
