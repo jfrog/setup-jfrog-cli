@@ -24,14 +24,36 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Install local Artifactory
+        uses: jfrog/.github/actions/install-local-artifactory@main
+        with:
+          RTLIC: ${{ secrets.RTLIC }}
+
       - name: Setup JFrog CLI
         id: setup-jfrog-cli
         uses: ./
         env:
-          JF_URL: ${{ vars.PLATFORM_URL }}
-          JF_ACCESS_TOKEN: ${{ secrets.PLATFORM_ADMIN_TOKEN }}
+          JF_URL: http://localhost:8081/
+          JF_USER: admin
+          JF_PASSWORD: password
+
+      - name: Create NPM Remote Repository JSON
+        uses: jsdaniell/create-json@v1.2.3
+        with:
+          name: "npm-remote-template.json"
+          json: '{
+            "key": "npm-remote",
+            "rclass": "remote",
+            "packageType": "npm",
+            "url": "https://registry.npmjs.org"
+          }'
+
+      - name: Configure Artifactory NPM Remote Repository
+        run: jf rt repo-create npm-remote-template.json
+        shell: bash
 
       - name: Add npm modules to local build-info
         run: |
-          jf npm-config --repo-resolve npm-virtual
+          jf 
+          jf npm-config --repo-resolve npm-remote
           jf npm install
