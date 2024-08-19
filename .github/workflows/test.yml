@@ -8,14 +8,14 @@ on:
   pull_request:
 jobs:
   test:
-    name: Test (${{ matrix.os }}) - CLI ${{ matrix.cli-version }}
-    runs-on: ${{ matrix.os }}-latest
+    name: Test ${{ matrix.os }} - CLI (${{ matrix.cli-version || 'default' }})
+    runs-on: ${{ matrix.os }}
     env:
       JF_ENV_LOCAL: eyJ2ZXJzaW9uIjoxLCJ1cmwiOiJodHRwOi8vMTI3LjAuMC4xOjgwODEvYXJ0aWZhY3RvcnkvIiwidXNlciI6ImFkbWluIiwicGFzc3dvcmQiOiJBUEI3REVaUlBpSHFIRFRRb2tMa3g5aGh6S1QiLCJzZXJ2ZXJJZCI6ImxvY2FsIn0=
 
     strategy:
       matrix:
-        os: [ ubuntu, windows, macos ]
+        os: [ ubuntu-latest, windows-latest, macos-13 ]
         cli-version: [ "", "latest", "1.46.4" ]
       fail-fast: false
     steps:
