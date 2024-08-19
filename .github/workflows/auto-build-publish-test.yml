@@ -14,7 +14,6 @@ concurrency:
 jobs:
   Auto-Build-Publish-Test:
     if: contains(github.event.pull_request.labels.*.name, 'safe to test') || github.event_name == 'push'
-    name: setup-jfrog-cli integration test (${{ matrix.os }})
     strategy:
       fail-fast: false
       matrix:
