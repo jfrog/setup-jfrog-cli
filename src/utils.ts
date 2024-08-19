@@ -1,5 +1,5 @@
 import * as core from '@actions/core';
-import { exec, ExecOutput, getExecOutput } from '@actions/exec';
+import {exec} from '@actions/exec';
 import { HttpClient, HttpClientResponse } from '@actions/http-client';
 import * as toolCache from '@actions/tool-cache';
 import { chmodSync, existsSync, promises as fs } from 'fs';
@@ -8,7 +8,6 @@ import { arch, platform } from 'os';
 import * as path from 'path';
 import { join } from 'path';
 import { lt } from 'semver';
-import { findAllVersions } from '@actions/tool-cache';
 
 export enum MarkdownSection {
     Upload = 'upload',
@@ -281,8 +280,8 @@ export class Utils {
     /**
      * Add JFrog CLI executables to cache and to the system path.
      * @param downloadedExecutable - Path to the downloaded JFrog CLI executable
-     * @param version     - JFrog CLI version
-     * @param fileName    - 'jf', 'jfrog', 'jf.exe', or 'jfrog.exe'
+     * @param version              - JFrog CLI version
+     * @param fileName             - 'jf', 'jfrog', 'jf.exe', or 'jfrog.exe'
      */
     private static async cacheAndAddPath(downloadedExecutable: string, version: string, fileName: string) {
         let cliDir: string = await toolCache.cacheFile(downloadedExecutable, fileName, fileName, version);
