@@ -40,7 +40,7 @@ jobs:
           JF_PASSWORD: password
 
       - name: Save variable for post cleanup to tell the cleanup job that we are in a test environment
-        run: echo "::save-state name=AUTO_BUILD_PUBLISH_TEST::true"
+        run: echo "AUTO_BUILD_PUBLISH_TEST=true" >> $GITHUB_STATE
 
       - name: Create NPM Remote Repository JSON
         uses: jsdaniell/create-json@v1.2.3
@@ -59,6 +59,5 @@ jobs:
 
       - name: Add npm modules to local build-info
         run: |
-          jf 
           jf npm-config --repo-resolve npm-remote
           jf npm install
