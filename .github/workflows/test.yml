@@ -8,7 +8,7 @@ on:
   pull_request:
 jobs:
   test:
-    name: Test ${{ matrix.os }} - CLI (${{ matrix.cli-version || 'default' }})
+    name: Test (${{ matrix.os }}) - (CLI ${{ matrix.cli-version || 'default' }})
     runs-on: ${{ matrix.os }}
     env:
       JF_ENV_LOCAL: eyJ2ZXJzaW9uIjoxLCJ1cmwiOiJodHRwOi8vMTI3LjAuMC4xOjgwODEvYXJ0aWZhY3RvcnkvIiwidXNlciI6ImFkbWluIiwicGFzc3dvcmQiOiJBUEI3REVaUlBpSHFIRFRRb2tMa3g5aGh6S1QiLCJzZXJ2ZXJJZCI6ImxvY2FsIn0=
