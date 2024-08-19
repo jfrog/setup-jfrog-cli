@@ -509,7 +509,7 @@ export class Utils {
         return results;
     }
 
-    private static generateAuthString(serverObj: any): string | undefined {
+    public static generateAuthString(serverObj: any): string | undefined {
         if (serverObj.accessToken) {
             return 'Bearer ' + Buffer.from(serverObj.accessToken).toString();
         } else if (serverObj.user && serverObj.password) {

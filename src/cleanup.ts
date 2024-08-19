@@ -1,6 +1,7 @@
 import * as core from '@actions/core';
 import { Utils } from './utils';
 import {HttpClient, HttpClientResponse} from '@actions/http-client';
+import http from "http";
 
 const AUTO_BUILD_PUBLISH_TEST: string = 'AUTO_BUILD_PUBLISH_TEST';
 
@@ -101,31 +102,26 @@ function getWorkingDirectory(): string {
 }
 
 async function checkBuildInfoExistsInArtifactory() {
-    const buildName: string | undefined = process.env.JFROG_CLI_BUILD_NAME;
-    const buildNumber: string | undefined = process.env.JFROG_CLI_BUILD_NUMBER;
-    if (!buildName || !buildNumber) {
-        core.warning('Build name or number is not defined.');
-        return;
-    }
     // Define the API endpoint for the build-info
-    const url: string = `http://localhost:8081/artifactory/api/build/${buildName}/${buildNumber}`;
-
+    const url: string = `${process.env.JF_URL}/artifactory/api/build/${process.env.JFROG_CLI_BUILD_NAME}/${process.env.JFROG_CLI_BUILD_NUMBER}`;
+    const headers: http.OutgoingHttpHeaders = {
+        Authorization: Utils.generateAuthString({user: process.env.JF_USER, password: process.env.JF_PASSWORD}),
+    };
     try {
         // Send GET request to the API
-        const response: HttpClientResponse = await new HttpClient().get(url);
+        const response: HttpClientResponse = await new HttpClient().get(url, headers);
 
         // Check if the status is 200 (OK)
         const statusCode: number | undefined = response.message.statusCode;
-        if (statusCode === 200) {
-            core.info(`Build-info exists for ${buildName} #${buildNumber}: Status ${statusCode}`);
-            return true;
-        } else {
-            core.info(`Build-info not found for ${buildName} #${buildNumber}: Status ${statusCode}`);
-            return false;
+        if (statusCode !== 200) {
+            core.info(`Build-info not found. Status ${statusCode}, Response: ${await response.readBody()}`);
+            return;
         }
+        core.info(`Build-info successfully published!`);
+        return;
     } catch (error) {
         core.error(`Error occurred while making the API request - '${url}' :${error}`);
-        return false;
+        return;
     }
 }
 
