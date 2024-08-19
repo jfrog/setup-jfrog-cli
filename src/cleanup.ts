@@ -2,6 +2,8 @@ import * as core from '@actions/core';
 import { Utils } from './utils';
 import {HttpClient, HttpClientResponse} from '@actions/http-client';
 
+const AUTO_BUILD_PUBLISH_TEST: string = 'AUTO_BUILD_PUBLISH_TEST';
+
 async function cleanup() {
     if (!addCachedCliToPath()) {
         return;
@@ -11,7 +13,7 @@ async function cleanup() {
             await collectAndPublishBuildInfoIfNeeded();
 
             // The following check is only relevant when the cleanup function is running inside a GitHub Actions test workflow
-            if (!core.getBooleanInput('AUTO_BUILD_PUBLISH_TEST')) {
+            if (!core.getState(AUTO_BUILD_PUBLISH_TEST)) {
                 // Check that build info was published successfully
                 await checkBuildInfoExistsInArtifactory();
             }
