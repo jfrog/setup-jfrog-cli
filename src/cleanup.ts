@@ -56,7 +56,7 @@ async function hasUnpublishedModules(workingDirectory: string): Promise<boolean>
         // Check if the "modules" key exists and if it's an array with more than one item
         return response.modules != undefined && Array.isArray(response.modules) && response.modules.length > 0;
     } catch (error) {
-        core.error('Failed to parse JSON:' + error);
+        core.error('Failed to parse JSON: ' + error);
         return false; // Return false if parsing fails
     } finally {
         core.exportVariable(Utils.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV, origValue);
