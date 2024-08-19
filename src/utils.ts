@@ -279,15 +279,16 @@ export class Utils {
      * @param fileName             - 'jf', 'jfrog', 'jf.exe', or 'jfrog.exe'
      */
     private static async cacheAndAddPath(downloadedExecutable: string, version: string, fileName: string) {
-        let cachedPath: string = await toolCache.cacheFile(downloadedExecutable, fileName, fileName, version);
+        let cliCacheDir: string = await toolCache.cacheFile(downloadedExecutable, fileName, fileName, version);
+        core.addPath(cliCacheDir);
 
+        const cliCachePath: string = join(cliCacheDir, fileName)
         if (!Utils.isWindows()) {
-            chmodSync(cachedPath, 0o555);
+            chmodSync(cliCachePath, 0o555);
         }
-        core.addPath(cachedPath);
 
         // Save the JFrog CLI path to use on cleanup. saveState/getState are methods to pass data between a step, and it's cleanup function.
-        core.saveState(fileName, cachedPath);
+        core.saveState(fileName, cliCachePath);
     }
 
     public static getCliUrl(major: string, version: string, fileName: string, downloadDetails: DownloadDetails): string {
