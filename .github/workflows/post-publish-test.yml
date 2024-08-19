@@ -11,9 +11,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}-${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  id-token: write
-
 jobs:
   Post-Build-Publish-Test:
     if: contains(github.event.pull_request.labels.*.name, 'safe to test') || github.event_name == 'push'
@@ -33,10 +30,6 @@ jobs:
         env:
           JF_URL: ${{ vars.PLATFORM_URL }}
           JF_ACCESS_TOKEN: ${{ secrets.PLATFORM_ADMIN_TOKEN }}
-
-      - name: Test JFrog CLI ping to Artifactory
-        run: |
-          jf rt ping
 
       - name: Add npm modules to local build-info
         run: |
