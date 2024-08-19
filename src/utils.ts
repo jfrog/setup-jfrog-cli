@@ -55,7 +55,7 @@ export class Utils {
     private static readonly OIDC_AUDIENCE_ARG: string = 'oidc-audience';
     // OpenID Connect provider_name input
     private static readonly OIDC_INTEGRATION_PROVIDER_NAME: string = 'oidc-provider-name';
-    // Job Summaries feature flag
+    // Job Summaries feature disable flag
     public static readonly JOB_SUMMARY_DISABLE: string = 'disable-job-summary';
 
     /**
