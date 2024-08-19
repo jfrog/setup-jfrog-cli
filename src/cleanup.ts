@@ -70,13 +70,26 @@ async function collectAndPublishBuildInfoIfNeeded() {
         return;
     }
 
-    core.startGroup('Collect environment variables information');
-    await Utils.runCli(['rt', 'build-collect-env'], { cwd: workingDirectory });
-    core.endGroup();
+    // The flow here is to collect the environment variables and Git information before publishing the build info.
+    // We allow these steps to fail, and we don't want to fail the entire build publish if they do.
 
-    core.startGroup('Collect the Git information');
-    await Utils.runCli(['rt', 'build-add-git'], { cwd: workingDirectory });
-    core.endGroup();
+    try {
+        core.startGroup('Collect environment variables information');
+        await Utils.runCli(['rt', 'build-collect-env'], {cwd: workingDirectory});
+    } catch (error) {
+        core.warning('failed while attempting to collect environment variables information: ' + error);
+    } finally {
+        core.endGroup();
+    }
+
+    try {
+        core.startGroup('Collect the Git information');
+        await Utils.runCli(['rt', 'build-add-git'], {cwd: workingDirectory});
+    } catch (error) {
+        core.warning('failed while attempting to collect Git information: ' + error);
+    } finally {
+        core.endGroup();
+    }
 
     core.startGroup('Publish the build info to JFrog Artifactory');
     await Utils.runCli(['rt', 'build-publish'], { cwd: workingDirectory });
