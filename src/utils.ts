@@ -1,5 +1,5 @@
 import * as core from '@actions/core';
-import {exec} from '@actions/exec';
+import { exec } from '@actions/exec';
 import { HttpClient, HttpClientResponse } from '@actions/http-client';
 import * as toolCache from '@actions/tool-cache';
 import { chmodSync, existsSync, promises as fs } from 'fs';
@@ -282,13 +282,12 @@ export class Utils {
         let cliCacheDir: string = await toolCache.cacheFile(downloadedExecutable, fileName, fileName, version);
         core.addPath(cliCacheDir);
 
-        const cliCachePath: string = join(cliCacheDir, fileName)
-        if (!Utils.isWindows()) {
-            chmodSync(cliCachePath, 0o555);
-        }
-
         // Save the JFrog CLI path to use on cleanup. saveState/getState are methods to pass data between a step, and it's cleanup function.
-        core.saveState(fileName, cliCachePath);
+        core.saveState(fileName, cliCacheDir);
+
+        if (!Utils.isWindows()) {
+            chmodSync(join(cliCacheDir, fileName), 0o555);
+        }
     }
 
     public static getCliUrl(major: string, version: string, fileName: string, downloadDetails: DownloadDetails): string {
