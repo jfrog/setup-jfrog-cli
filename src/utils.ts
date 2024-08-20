@@ -465,8 +465,8 @@ export class Utils {
     public static async runCliAndGetOutput(args: string[], options?: ExecOptions): Promise<string> {
         let output: ExecOutput = await getExecOutput('jf', args, options);
         if (output.exitCode !== core.ExitCode.Success) {
-            core.info(output.stdout)
-            core.info(output.stderr)
+            core.info(output.stdout);
+            core.info(output.stderr);
             throw new Error('JFrog CLI exited with exit code ' + output.exitCode);
         }
         return output.stdout;

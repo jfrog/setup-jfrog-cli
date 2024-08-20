@@ -2,10 +2,10 @@ import * as core from '@actions/core';
 import { Utils } from './utils';
 
 async function cleanup() {
-        if (!addCachedJfToPath()) {
-            core.error('Could not find JFrog CLI path in the step state. Skipping cleanup.');
-            return;
-        }
+    if (!addCachedJfToPath()) {
+        core.error('Could not find JFrog CLI path in the step state. Skipping cleanup.');
+        return;
+    }
     try {
         if (!core.getBooleanInput(Utils.AUTO_BUILD_PUBLISH_DISABLE)) {
             await collectAndPublishBuildInfoIfNeeded();
@@ -76,7 +76,7 @@ async function collectAndPublishBuildInfoIfNeeded() {
 
     try {
         core.startGroup('Collect environment variables information');
-        await Utils.runCli(['rt', 'build-collect-env'], {cwd: workingDirectory});
+        await Utils.runCli(['rt', 'build-collect-env'], { cwd: workingDirectory });
     } catch (error) {
         core.warning('failed while attempting to collect environment variables information: ' + error);
     } finally {
@@ -85,7 +85,7 @@ async function collectAndPublishBuildInfoIfNeeded() {
 
     try {
         core.startGroup('Collect the Git information');
-        await Utils.runCli(['rt', 'build-add-git'], {cwd: workingDirectory});
+        await Utils.runCli(['rt', 'build-add-git'], { cwd: workingDirectory });
     } catch (error) {
         core.warning('failed while attempting to collect Git information: ' + error);
     } finally {
