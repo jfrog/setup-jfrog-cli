@@ -21,7 +21,7 @@ async function cleanup() {
 
 function addCachedJfToPath(): boolean {
     // Get the JFrog CLI path from step state. saveState/getState are methods to pass data between a step, and it's cleanup function.
-    const jfrogCliPath: string = core.getState('jf');
+    const jfrogCliPath: string = core.getState(Utils.JFROG_CLI_PATH_STATE);
     if (!jfrogCliPath) {
         // This means that the JFrog CLI was not installed in the first place, because there was a failure in the installation step.
         return false;
