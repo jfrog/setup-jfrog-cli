@@ -5,9 +5,9 @@ import * as toolCache from '@actions/tool-cache';
 import { chmodSync, existsSync, promises as fs } from 'fs';
 import { OutgoingHttpHeaders } from 'http';
 import { arch, platform } from 'os';
+import * as path from 'path';
 import { join } from 'path';
 import { lt } from 'semver';
-import * as path from 'path';
 
 export enum MarkdownSection {
     Upload = 'upload',
@@ -32,6 +32,8 @@ export class Utils {
     private static readonly LATEST_CLI_VERSION: string = 'latest';
     // The value in the download URL to set to get the latest version
     private static readonly LATEST_RELEASE_VERSION: string = '[RELEASE]';
+    // State name for saving JFrog CLI path to use on cleanup
+    public static readonly JFROG_CLI_PATH_STATE: string = 'JFROG_CLI_PATH_STATE';
     // The default server id name for separate env config
     public static readonly SETUP_JFROG_CLI_SERVER_ID: string = 'setup-jfrog-cli-server';
     // Directory name which holds markdown files for the Workflow summary
@@ -52,7 +54,7 @@ export class Utils {
     private static readonly OIDC_AUDIENCE_ARG: string = 'oidc-audience';
     // OpenID Connect provider_name input
     private static readonly OIDC_INTEGRATION_PROVIDER_NAME: string = 'oidc-provider-name';
-    // Job Summaries feature flag
+    // Job Summaries feature disable flag
     public static readonly JOB_SUMMARY_DISABLE: string = 'disable-job-summary';
     // Source URL holding the markdown header image
     private static MARKDOWN_HEADER_PNG_URL: string =
@@ -246,28 +248,14 @@ export class Utils {
         let downloadDetails: DownloadDetails = Utils.extractDownloadDetails(cliRemote, jfrogCredentials);
         let url: string = Utils.getCliUrl(major, version, jfrogFileName, downloadDetails);
         core.info('Downloading JFrog CLI from ' + url);
-        let downloadDir: string = await toolCache.downloadTool(url, undefined, downloadDetails.auth);
+        let downloadedExecutable: string = await toolCache.downloadTool(url, undefined, downloadDetails.auth);
 
         // Cache 'jf' and 'jfrog' executables
-        await this.cacheAndAddPath(downloadDir, version, jfFileName);
-        await this.cacheAndAddPath(downloadDir, version, jfrogFileName);
-    }
+        await this.cacheAndAddPath(downloadedExecutable, version, jfFileName);
+        await this.cacheAndAddPath(downloadedExecutable, version, jfrogFileName);
 
-    /**
-     * Fetch the JFrog CLI path from the tool cache and append it to the PATH environment variable. Employ this approach during the cleanup phase.
-     */
-    public static addCachedCliToPath(): boolean {
-        let version: string = core.getInput(Utils.CLI_VERSION_ARG);
-        if (version === Utils.LATEST_CLI_VERSION) {
-            version = Utils.LATEST_RELEASE_VERSION;
-        }
-        let jfrogCliPath: string = toolCache.find(Utils.getJfExecutableName(), version);
-        if (!jfrogCliPath) {
-            core.warning(`Could not find JFrog CLI version '${version}' in tool cache`);
-            return false;
-        }
-        core.addPath(jfrogCliPath);
-        return true;
+        // Save the JFrog CLI path to use on cleanup. saveState/getState are methods to pass data between a step, and it's cleanup function.
+        core.saveState(Utils.JFROG_CLI_PATH_STATE, toolCache.find(jfFileName, version));
     }
 
     /**
@@ -294,12 +282,12 @@ export class Utils {
 
     /**
      * Add JFrog CLI executables to cache and to the system path.
-     * @param downloadDir - The directory whereby the CLI was downloaded to
-     * @param version     - JFrog CLI version
-     * @param fileName    - 'jf', 'jfrog', 'jf.exe', or 'jfrog.exe'
+     * @param downloadedExecutable - Path to the downloaded JFrog CLI executable
+     * @param version              - JFrog CLI version
+     * @param fileName             - 'jf', 'jfrog', 'jf.exe', or 'jfrog.exe'
      */
-    private static async cacheAndAddPath(downloadDir: string, version: string, fileName: string) {
-        let cliDir: string = await toolCache.cacheFile(downloadDir, fileName, fileName, version);
+    private static async cacheAndAddPath(downloadedExecutable: string, version: string, fileName: string) {
+        let cliDir: string = await toolCache.cacheFile(downloadedExecutable, fileName, fileName, version);
 
         if (!Utils.isWindows()) {
             chmodSync(join(cliDir, fileName), 0o555);
