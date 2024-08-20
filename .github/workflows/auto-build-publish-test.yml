@@ -62,4 +62,12 @@ jobs:
       - name: Post Step to Test the Auto Build-Publish post step
         uses: gacts/run-and-post-run@v1
         with:
-          post: echo "Second post"
+          post: |
+            # Search for the build info and get the count
+            count=$(jf rt search "artifactory-build-info/${GITHUB_WORKFLOW}/${GITHUB_RUN_NUMBER}-*" --count 2>/dev/null)
+            
+            # Exit with an error if the search command failed or result is zero
+            if [ $exit_code -ne 0 ] || [ "count" -eq 0 ]; then
+             echo "Search command failed or no build info found."
+             exit 1
+            fi
