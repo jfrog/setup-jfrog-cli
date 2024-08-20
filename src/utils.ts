@@ -32,8 +32,8 @@ export class Utils {
     private static readonly LATEST_CLI_VERSION: string = 'latest';
     // The value in the download URL to set to get the latest version
     private static readonly LATEST_RELEASE_VERSION: string = '[RELEASE]';
-    // State name for saving JFrog CLI path to use on cleanup
-    public static readonly JFROG_CLI_PATH_STATE: string = 'JFROG_CLI_PATH_STATE';
+    // State name for saving JF CLI path to use on cleanup
+    public static readonly JF_CLI_PATH_STATE: string = 'JF_CLI_PATH_STATE';
     // The default server id name for separate env config
     public static readonly SETUP_JFROG_CLI_SERVER_ID: string = 'setup-jfrog-cli-server';
     // Directory name which holds markdown files for the Workflow summary
@@ -289,11 +289,11 @@ export class Utils {
 
         if (!Utils.isWindows()) {
             chmodSync(join(jfCacheDir, jfFileName), 0o555);
-            chmodSync(join(jfrogCacheDir, jfFileName), 0o555);
+            chmodSync(join(jfrogCacheDir, jfrogFileName), 0o555);
         }
 
         // Save the JF CLI path to use on cleanup. saveState/getState are methods to pass data between a step, and it's cleanup function.
-        core.saveState(Utils.JFROG_CLI_PATH_STATE, jfCacheDir);
+        core.saveState(Utils.JF_CLI_PATH_STATE, jfCacheDir);
     }
 
     public static getCliUrl(major: string, version: string, fileName: string, downloadDetails: DownloadDetails): string {
