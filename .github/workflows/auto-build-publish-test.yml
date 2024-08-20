@@ -58,3 +58,10 @@ jobs:
         run: |
           jf npm-config --repo-resolve npm-remote
           jf npm install
+
+      - name: Configure Artifactory NPM Remote Repository
+        run: jf rt repo-create npm-remote-template.json
+        shell: bash
+
+      - name: Run cleanup script to test it
+        run: node lib/cleanup.js
