@@ -2,9 +2,10 @@ import * as core from '@actions/core';
 import { Utils } from './utils';
 
 async function cleanup() {
-    if (!addCachedCliToPath()) {
-        return;
-    }
+        if (!addCachedJfToPath()) {
+            core.error('Could not find JFrog CLI path in the step state. Skipping cleanup.');
+            return;
+        }
     try {
         if (!core.getBooleanInput(Utils.AUTO_BUILD_PUBLISH_DISABLE)) {
             await collectAndPublishBuildInfoIfNeeded();
@@ -26,7 +27,7 @@ async function cleanup() {
     }
 }
 
-function addCachedCliToPath(): boolean {
+function addCachedJfToPath(): boolean {
     // Get the JFrog CLI path from step state. saveState/getState are methods to pass data between a step, and it's cleanup function.
     const jfCliPath: string = core.getState(Utils.JF_CLI_PATH_STATE);
     if (!jfCliPath) {
