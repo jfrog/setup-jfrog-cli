@@ -37,8 +37,8 @@ jobs:
           post: |
             jf c add --url http://localhost:8081/ --user admin --password password \
             count=$(jf rt search "artifactory-build-info/${GITHUB_WORKFLOW}/${GITHUB_RUN_NUMBER}-*" --count 2>stderr.log); \
-            cat stderr.log; \
             exit_code=$?; \
+            cat stderr.log; \
             if [ $exit_code -ne 0 ]; then \
               echo "Command failed with exit code $exit_code."; \
               exit 1; \
