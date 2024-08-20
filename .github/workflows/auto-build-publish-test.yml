@@ -35,17 +35,16 @@ jobs:
         uses: gacts/run-and-post-run@v1
         with:
           post: |
-            # Run the command and capture stdout and stderr
-            count=$(jf rt search "artifactory-build-info/${GITHUB_WORKFLOW}/${GITHUB_RUN_NUMBER}-*" --count 2>stderr.log) /
-            cat stderr.log /
-            exit_code=$? /
-            if [ $exit_code -ne 0 ]; then /
-              echo "Command failed with exist error 1."; /
-              exit 1; /
-            fi /
-            if [ "$count" -eq 0 ]; then /
-              echo "No build info found."; /
-              exit 1; /
+            count=$(jf rt search "artifactory-build-info/${GITHUB_WORKFLOW}/${GITHUB_RUN_NUMBER}-*" --count 2>stderr.log); \
+            cat stderr.log; \
+            exit_code=$?; \
+            if [ $exit_code -ne 0 ]; then \
+              echo "Command failed with exit code $exit_code."; \
+              exit 1; \
+            fi; \
+            if [ "$count" -eq 0 ]; then \
+              echo "No build info found."; \
+              exit 1; \
             fi
 
       - name: Setup JFrog CLI
