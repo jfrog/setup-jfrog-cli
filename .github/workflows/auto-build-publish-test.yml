@@ -35,6 +35,7 @@ jobs:
         uses: gacts/run-and-post-run@v1
         with:
           post: |
+            jf c add --url http://localhost:8081/ --user admin --password password \
             count=$(jf rt search "artifactory-build-info/${GITHUB_WORKFLOW}/${GITHUB_RUN_NUMBER}-*" --count 2>stderr.log); \
             cat stderr.log; \
             exit_code=$?; \
