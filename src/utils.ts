@@ -197,8 +197,9 @@ export class Utils {
         // Main OIDC user parsing logic
         if (subject.startsWith('jfrt@') || subject.includes('/users/')) {
             let lastSlashIndex: number = subject.lastIndexOf('/');
+            let userSubstring: string = subject.substring(lastSlashIndex + 1);
             // Return the user extracted from the token
-            return subject.substring(lastSlashIndex + 1);
+            return userSubstring;
         }
         // No parsing was needed, returning original sub from the token as the user
         return subject;
@@ -300,7 +301,6 @@ export class Utils {
         let artifactoryUrl: string = downloadDetails.artifactoryUrl.replace(/\/$/, '');
         return `${artifactoryUrl}/${downloadDetails.repository}/v${major}/${version}/${architecture}/${fileName}`;
     }
-
     // Get Config Tokens created on your local machine using JFrog CLI.
     // The Tokens configured with JF_ENV_ environment variables.
     public static getConfigTokens(): Set<string> {
@@ -530,6 +530,7 @@ export class Utils {
         markdownContent = await Utils.readMarkdownContent();
         // Check if the header can be accessed via the internet to decide if to use the image or the text header
         this.isSummaryHeaderAccessible = await this.isHeaderPngAccessible();
+        core.debug('Header image is accessible: ' + this.isSummaryHeaderAccessible);
         return markdownContent ? Utils.wrapContent(markdownContent) : '';
     }
 

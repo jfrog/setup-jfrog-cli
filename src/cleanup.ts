@@ -9,7 +9,9 @@ async function cleanup() {
         if (!core.getBooleanInput(Utils.JOB_SUMMARY_DISABLE)) {
             core.startGroup('Generate Job Summary');
             await Utils.runCli(['generate-summary-markdown']);
+            core.debug('settings markdown as job summary');
             await Utils.setMarkdownAsJobSummary();
+            core.debug('Job summary generated successfully');
             core.endGroup();
         }
         core.startGroup('Remove JFrog Servers');
