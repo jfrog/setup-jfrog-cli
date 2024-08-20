@@ -59,5 +59,7 @@ jobs:
           jf npm-config --repo-resolve npm-remote
           jf npm install
 
-      - name: Run cleanup script to test it
-        run: node lib/cleanup.js
+      - name: Post Step to Test the Auto Build-Publish post step
+        uses: gacts/run-and-post-run@v1
+        with:
+          post: echo "Second post"
