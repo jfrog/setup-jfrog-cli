@@ -8,13 +8,11 @@ async function cleanup() {
         }
         if (!core.getBooleanInput(Utils.JOB_SUMMARY_DISABLE)) {
             core.startGroup('Generate Job Summary');
-            core.info('generating summary....');
             await Utils.runCli(['generate-summary-markdown']);
-            core.info('done generating summary....');
             await Utils.setMarkdownAsJobSummary();
             core.endGroup();
         }
-        core.startGroup('Cleanup JFrog CLI servers configuration');
+        core.startGroup('Remove JFrog Servers');
         await Utils.removeJFrogServers();
     } catch (error) {
         core.setFailed((<any>error).message);
