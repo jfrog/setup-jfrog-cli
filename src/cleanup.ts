@@ -14,9 +14,9 @@ async function cleanup() {
             core.debug('Job summary generated successfully');
             core.endGroup();
         }
-        core.startGroup('Remove JFrog Servers');
-        await Utils.removeJFrogServers();
-        core.endGroup();
+        // core.startGroup('Remove JFrog Servers');
+        // await Utils.removeJFrogServers();
+        // core.endGroup();
     } catch (error) {
         core.setFailed((<any>error).message);
     }
