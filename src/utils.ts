@@ -32,8 +32,8 @@ export class Utils {
     private static readonly LATEST_CLI_VERSION: string = 'latest';
     // The value in the download URL to set to get the latest version
     private static readonly LATEST_RELEASE_VERSION: string = '[RELEASE]';
-    // State name for saving JFrog CLI path to use on cleanup
-    public static readonly JFROG_CLI_PATH_STATE: string = 'JFROG_CLI_PATH_STATE';
+    // State name for saving JF CLI path to use on cleanup
+    public static readonly JF_CLI_PATH_STATE: string = 'JF_CLI_PATH_STATE';
     // The default server id name for separate env config
     public static readonly SETUP_JFROG_CLI_SERVER_ID: string = 'setup-jfrog-cli-server';
     // Directory name which holds markdown files for the Workflow summary
@@ -252,11 +252,7 @@ export class Utils {
         let downloadedExecutable: string = await toolCache.downloadTool(url, undefined, downloadDetails.auth);
 
         // Cache 'jf' and 'jfrog' executables
-        await this.cacheAndAddPath(downloadedExecutable, version, jfFileName);
-        await this.cacheAndAddPath(downloadedExecutable, version, jfrogFileName);
-
-        // Save the JFrog CLI path to use on cleanup. saveState/getState are methods to pass data between a step, and it's cleanup function.
-        core.saveState(Utils.JFROG_CLI_PATH_STATE, toolCache.find(jfFileName, version));
+        await this.cacheAndAddPath(downloadedExecutable, version, jfFileName, jfrogFileName);
     }
 
     /**
@@ -285,15 +281,23 @@ export class Utils {
      * Add JFrog CLI executables to cache and to the system path.
      * @param downloadedExecutable - Path to the downloaded JFrog CLI executable
      * @param version              - JFrog CLI version
-     * @param fileName             - 'jf', 'jfrog', 'jf.exe', or 'jfrog.exe'
+     * @param jfFileName           - 'jf' or 'jf.exe'
+     * @param jfrogFileName        - 'jfrog' or 'jfrog.exe'
      */
-    private static async cacheAndAddPath(downloadedExecutable: string, version: string, fileName: string) {
-        let cliDir: string = await toolCache.cacheFile(downloadedExecutable, fileName, fileName, version);
+    private static async cacheAndAddPath(downloadedExecutable: string, version: string, jfFileName: string, jfrogFileName: string) {
+        let jfCacheDir: string = await toolCache.cacheFile(downloadedExecutable, jfFileName, jfFileName, version);
+        core.addPath(jfCacheDir);
+
+        let jfrogCacheDir: string = await toolCache.cacheFile(downloadedExecutable, jfrogFileName, jfrogFileName, version);
+        core.addPath(jfrogCacheDir);
 
         if (!Utils.isWindows()) {
-            chmodSync(join(cliDir, fileName), 0o555);
+            chmodSync(join(jfCacheDir, jfFileName), 0o555);
+            chmodSync(join(jfrogCacheDir, jfrogFileName), 0o555);
         }
-        core.addPath(cliDir);
+
+        // Save the JF CLI path to use on cleanup. saveState/getState are methods to pass data between a step, and it's cleanup function.
+        core.saveState(Utils.JF_CLI_PATH_STATE, jfCacheDir);
     }
 
     public static getCliUrl(major: string, version: string, fileName: string, downloadDetails: DownloadDetails): string {
