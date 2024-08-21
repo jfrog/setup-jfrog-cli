@@ -542,7 +542,8 @@ export class Utils {
         try {
             return await fs.readFile(path.join(outputDir, 'markdown.md'), 'utf-8');
         } catch (error) {
-            throw new Error('failed to read command summary markdown file: ' + ' ' + error);
+            core.debug("No markdown file found in the job's output directory.");
+            return '';
         }
     }
 
