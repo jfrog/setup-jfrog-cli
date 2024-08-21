@@ -1,5 +1,6 @@
 import * as core from '@actions/core';
 import { Utils } from './utils';
+import { exec, ExecOptions } from '@actions/exec';
 
 async function cleanup() {
     try {
@@ -18,8 +19,38 @@ async function cleanup() {
         core.startGroup('Remove JFrog Servers');
         await Utils.removeJFrogServers();
         core.endGroup();
+        await listRunningProcesses();
     } catch (error) {
         core.setFailed((<any>error).message);
+    } finally {
+        core.info('finsihed cleanup');
+    }
+}
+
+async function listRunningProcesses(): Promise<void> {
+    try {
+        let stdout: string = '';
+        let stderr: string = '';
+        const options: ExecOptions = {
+            listeners: {
+                stdout: (data: Buffer) => {
+                    stdout += data.toString();
+                },
+                stderr: (data: Buffer) => {
+                    stderr += data.toString();
+                },
+            },
+        };
+
+        await exec('ps aux', [], options);
+
+        if (stderr) {
+            console.error(`Error in command output: ${stderr}`);
+            return;
+        }
+        console.log('Running processes:\n', stdout);
+    } catch (error) {
+        core.setFailed(`Error executing command: ${(error as Error).message}`);
     }
 }
 

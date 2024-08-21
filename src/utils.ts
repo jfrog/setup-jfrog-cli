@@ -2,7 +2,7 @@ import * as core from '@actions/core';
 import { exec } from '@actions/exec';
 import { HttpClient, HttpClientResponse } from '@actions/http-client';
 import * as toolCache from '@actions/tool-cache';
-import { chmodSync, existsSync, promises as fs } from 'fs';
+import { chmodSync, promises as fs } from 'fs';
 import { OutgoingHttpHeaders } from 'http';
 import { arch, platform } from 'os';
 import * as path from 'path';
@@ -530,8 +530,7 @@ export class Utils {
      * @returns <string> the content of the markdown file as string, warped in a collapsable section.
      */
     private static async readCommandSummaryMarkdown(): Promise<string> {
-        let markdownContent: string = '';
-        markdownContent = await Utils.readMarkdownContent();
+        let markdownContent: string = await Utils.readMarkdownContent();
         // Check if the header can be accessed via the internet to decide if to use the image or the text header
         this.isSummaryHeaderAccessible = await this.isHeaderPngAccessible();
         core.debug('Header image is accessible: ' + this.isSummaryHeaderAccessible);
