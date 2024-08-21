@@ -606,6 +606,8 @@ export class Utils {
         } catch (error) {
             core.warning('No internet access to the header image, using the text header instead.');
             return false;
+        } finally {
+            httpClient.dispose();
         }
     }
 }
