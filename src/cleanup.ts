@@ -71,17 +71,8 @@ async function collectAndPublishBuildInfoIfNeeded() {
         return;
     }
 
-    // The flow here is to collect the environment variables and Git information before publishing the build info.
-    // We allow these steps to fail, and we don't want to fail the entire build publish if they do.
-
-    try {
-        core.startGroup('Collect environment variables information');
-        await Utils.runCli(['rt', 'build-collect-env'], { cwd: workingDirectory });
-    } catch (error) {
-        core.warning('failed while attempting to collect environment variables information: ' + error);
-    } finally {
-        core.endGroup();
-    }
+    // The flow here is to collect Git information before publishing the build info.
+    // We allow this step to fail, and we don't want to fail the entire build publish if they do.
 
     try {
         core.startGroup('Collect the Git information');
