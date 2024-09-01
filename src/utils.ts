@@ -581,7 +581,7 @@ export class Utils {
     private static getMarkdownHeader(): string {
         let mainTitle: string;
         if (this.isSummaryHeaderAccessible) {
-            mainTitle = `<picture><img alt="Summary-Header" src="${this.MARKDOWN_HEADER_PNG_URL}"></picture>` + '\n\n';
+            mainTitle = `![JFrog Job Summary Header](${this.MARKDOWN_HEADER_PNG_URL})` + '\n\n';
         } else {
             mainTitle = `# 🐸 JFrog Job Summary` + '\n\n';
         }
