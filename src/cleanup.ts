@@ -16,7 +16,7 @@ async function cleanup() {
     } catch (error) {
         core.warning('failed while attempting to publish build info: ' + error);
     }
-
+    // Generate job summary
     try {
         if (!core.getBooleanInput(Utils.JOB_SUMMARY_DISABLE)) {
             core.startGroup('Generating Job Summary');
@@ -27,7 +27,7 @@ async function cleanup() {
     } catch (error) {
         core.warning('failed while attempting to generate job summary: ' + error);
     }
-
+    // Cleanup JFrog CLI servers configuration
     try {
         core.startGroup('Cleanup JFrog CLI servers configuration');
         await Utils.removeJFrogServers();
