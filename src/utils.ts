@@ -2,7 +2,7 @@ import * as core from '@actions/core';
 import { exec, ExecOptions, ExecOutput, getExecOutput } from '@actions/exec';
 import { HttpClient, HttpClientResponse } from '@actions/http-client';
 import * as toolCache from '@actions/tool-cache';
-import { chmodSync, promises as fs } from 'fs';
+import { chmodSync, existsSync, promises as fs } from 'fs';
 import { OutgoingHttpHeaders } from 'http';
 import { arch, platform } from 'os';
 import * as path from 'path';
@@ -539,7 +539,7 @@ export class Utils {
             // Read all sections and construct the final Markdown file
             const markdownContent: string = await this.readCommandSummaryMarkdown();
             if (markdownContent.length == 0) {
-                core.debug('No job summaries sections found. Workflow summary will not be generated.');
+                core.debug('No job summary file found. Workflow summary will not be generated.');
                 return;
             }
             // Write to GitHub's job summary
@@ -559,20 +559,21 @@ export class Utils {
      */
     private static async readCommandSummaryMarkdown(): Promise<string> {
         let markdownContent: string = await Utils.readMarkdownContent();
+        if (markdownContent === '') {
+            return '';
+        }
         // Check if the header can be accessed via the internet to decide if to use the image or the text header
         this.isSummaryHeaderAccessible = await this.isHeaderPngAccessible();
         core.debug('Header image is accessible: ' + this.isSummaryHeaderAccessible);
-        return markdownContent ? Utils.wrapContent(markdownContent) : '';
+        return Utils.wrapContent(markdownContent);
     }
 
     private static async readMarkdownContent() {
         const outputDir: string = Utils.getJobOutputDirectoryPath();
-        try {
+        if (existsSync(outputDir)) {
             return await fs.readFile(path.join(outputDir, 'markdown.md'), 'utf-8');
-        } catch (error) {
-            core.debug("No markdown file found in the job's output directory.");
-            return '';
         }
+        return '';
     }
 
     private static getMarkdownHeader(): string {
