@@ -278,33 +278,43 @@ Here's how you do this:
 
 ## JFrog Job Summary
 
-Jobs using this GitHub action will output a summary of some of the key commands that were performed using JFrog CLI.
+Workflows using this GitHub action will output a summary of some of the key commands that were performed using JFrog CLI.
 
 The summary can be viewed from the GitHub Actions run page and is enabled by default.
 
 ### Preconditions
 To fully leverage from the JFrog Job Summary, one should:
-1. Use JFrog CLI version 2.62.0 or above.
-2. Set `JF_URL` as a [GitHub Variable](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/variables) rather than a [GitHub secret](https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions#creating-secrets-for-a-repository) (see note below).
-3. [Collect build info](https://docs.jfrog-applications.jfrog.io/jfrog-applications/jfrog-cli/cli-for-jfrog-artifactory/build-integration) and [publish](https://docs.jfrog-applications.jfrog.io/jfrog-applications/jfrog-cli/cli-for-jfrog-artifactory/build-integration#publishing-build-info) it using JFrog CLI.
+1. Use JFrog CLI version 2.66.0 or above.
+2. Set `JF_URL` as a [GitHub Variable](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/variables) rather than a [GitHub Secret](https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions#creating-secrets-for-a-repository) (see note below).
 
-> **_NOTE:_** The Job Summary includes direct links to the JFrog Platform UI.
+> **_NOTE:_** The Job Summary includes direct links to the JFrog Platform UI, for applicable licenses. 
 For the links to function correctly,
 `JF_URL` should be set as a variable rather than a secret.
 This is to prevent GitHub from masking the URL.
 
-Example JFrog Job Summary:
+### Default Behavior:
 
-![JFrog-Job-Summary](images/job_summary.png)
+By default, the [build-info](https://jfrog.com/help/r/jfrog-pipelines-documentation/buildinfo) collected during the workflow will be automatically published to Artifactory when the workflow completes. 
 
+This behavior is disabled if the `jf rt build-publish` command was manually run during the workflow, or if requested explicitly by setting the `disable-auto-build-publish` input to `true`:
 
-Job summaries can be disabled by setting the `disable-job-summary` input to `true`.
+```yml
+- uses: jfrog/setup-jfrog-cli@v4
+  with:
+    disable-auto-build-publish: true
+```
+
+To disable the JFrog Job Summary altogether, set the `disable-job-summary` input to `true`:
 
 ```yml
 - uses: jfrog/setup-jfrog-cli@v4
   with:
     disable-job-summary: true
 ```
+
+### JFrog Job Summary Example:
+
+![JFrog-Job-Summary](images/job_summary.png)
 
 ### Behind the scenes
 The **setup-jfrog-cli GitHub Action** leverages the **Command Summaries** feature of the JFrog CLI
