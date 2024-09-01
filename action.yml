@@ -20,7 +20,7 @@ inputs:
         default: "false"
         required: false
     disable-auto-build-publish:
-        description: "By default, if the workflow doesn't include at least one 'jf rt build-publish' command, the build-info is published automatically to Artifactory at the end of the workflow. Set to true to disable the automatic build-info publish."
+        description: "By default, if the workflow completes with collected build-info that has not been published using the jf rt build-publish command, the build-info will be automatically published to Artifactory. Set this to true to disable the automatic publication of build-info at the end of the workflow."
         default: "false"
         required: false
 outputs:
