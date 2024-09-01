@@ -304,7 +304,7 @@ describe('Job Summaries', () => {
     describe('Command Summaries Disable Flag', () => {
         const myCore: jest.Mocked<typeof core> = core as any;
         beforeEach(() => {
-            delete process.env.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR;
+            delete process.env[Utils.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV];
             delete process.env.RUNNER_TEMP;
         });
 
@@ -313,7 +313,7 @@ describe('Job Summaries', () => {
                 return true;
             });
             Utils.setCliEnv();
-            expect(process.env.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR).toBeUndefined();
+            expect(process.env[Utils.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV]).toBeUndefined();
         });
 
         it('should set JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR if disable-job-summary is false', () => {
@@ -325,7 +325,7 @@ describe('Job Summaries', () => {
                 process.env[name] = val;
             });
             Utils.setCliEnv();
-            expect(process.env.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR).toBe('/tmp');
+            expect(process.env[Utils.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV]).toBe('/tmp');
         });
     });
 });

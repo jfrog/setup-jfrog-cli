@@ -1,5 +1,5 @@
 import * as core from '@actions/core';
-import { exec } from '@actions/exec';
+import { exec, ExecOptions, ExecOutput, getExecOutput } from '@actions/exec';
 import { HttpClient, HttpClientResponse } from '@actions/http-client';
 import * as toolCache from '@actions/tool-cache';
 import { chmodSync, promises as fs } from 'fs';
@@ -38,6 +38,9 @@ export class Utils {
     public static readonly SETUP_JFROG_CLI_SERVER_ID: string = 'setup-jfrog-cli-server';
     // Directory name which holds markdown files for the Workflow summary
     private static readonly JOB_SUMMARY_DIR_NAME: string = 'jfrog-command-summary';
+    // JFrog CLI command summary output directory environment variable
+    public static readonly JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV: string = 'JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR';
+
     // Workflow summary section files. Order of sections in this array impacts the order in the final markdown.
     public static JOB_SUMMARY_MARKDOWN_SECTIONS_NAMES: MarkdownSection[] = [
         MarkdownSection.Security,
@@ -54,8 +57,10 @@ export class Utils {
     private static readonly OIDC_AUDIENCE_ARG: string = 'oidc-audience';
     // OpenID Connect provider_name input
     private static readonly OIDC_INTEGRATION_PROVIDER_NAME: string = 'oidc-provider-name';
-    // Job Summaries feature disable flag
+    // Disable Job Summaries feature flag
     public static readonly JOB_SUMMARY_DISABLE: string = 'disable-job-summary';
+    // Disable auto build info publish feature flag
+    public static readonly AUTO_BUILD_PUBLISH_DISABLE: string = 'disable-auto-build-publish';
     // Source URL holding the markdown header image
     private static MARKDOWN_HEADER_PNG_URL: string =
         'https://raw.githubusercontent.com/EyalDelarea/setup-jfrog-cli/improve_summary_ui/images/summary_header.png';
@@ -382,7 +387,7 @@ export class Utils {
     private static enableJobSummaries() {
         let commandSummariesOutputDir: string | undefined = process.env.RUNNER_TEMP;
         if (commandSummariesOutputDir) {
-            Utils.exportVariableIfNotSet('JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR', commandSummariesOutputDir);
+            Utils.exportVariableIfNotSet(Utils.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV, commandSummariesOutputDir);
         }
     }
 
@@ -440,12 +445,35 @@ export class Utils {
      * This GitHub Action downloads the requested 'jfrog' executable and stores it as 'jfrog' and 'jf'.
      * Therefore, the 'jf' executable is expected to be in the path also for older CLI versions.
      * @param args - CLI arguments
+     * @param options - Execution options
      */
-    public static async runCli(args: string[]) {
-        let res: number = await exec('jf', args);
+    public static async runCli(args: string[], options?: ExecOptions) {
+        let res: number = await exec('jf', args, options);
         if (res !== core.ExitCode.Success) {
             throw new Error('JFrog CLI exited with exit code ' + res);
         }
+    }
+
+    /**
+     * Execute JFrog CLI command and capture its output.
+     * This GitHub Action downloads the requested 'jfrog' executable and stores it as 'jfrog' and 'jf'.
+     * Therefore, the 'jf' executable is expected to be in the path also for older CLI versions.
+     * The command's output is captured and returned as a string.
+     * The command is executed silently, meaning its output will not be printed to the console.
+     * If the command fails (i.e., exits with a non-success code), an error is thrown.
+     * @param args - CLI arguments
+     * @param options
+     * @returns The standard output of the CLI command as a string.
+     * @throws An error if the JFrog CLI command exits with a non-success code.
+     */
+    public static async runCliAndGetOutput(args: string[], options?: ExecOptions): Promise<string> {
+        let output: ExecOutput = await getExecOutput('jf', args, options);
+        if (output.exitCode !== core.ExitCode.Success) {
+            core.info(output.stdout);
+            core.info(output.stderr);
+            throw new Error('JFrog CLI exited with exit code ' + output.exitCode);
+        }
+        return output.stdout;
     }
 
     /**
@@ -576,9 +604,9 @@ export class Utils {
     }
 
     private static getJobOutputDirectoryPath(): string {
-        const outputDir: string | undefined = process.env.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR;
+        const outputDir: string | undefined = process.env[Utils.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV];
         if (!outputDir) {
-            throw new Error('Jobs home directory is undefined, JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR is not set.');
+            throw new Error('Jobs home directory is undefined, ' + Utils.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV + ' is not set.');
         }
         return path.join(outputDir, Utils.JOB_SUMMARY_DIR_NAME);
     }
