@@ -571,9 +571,9 @@ export class Utils {
     }
 
     private static async readMarkdownContent() {
-        const outputDir: string = Utils.getJobOutputDirectoryPath();
-        if (existsSync(outputDir)) {
-            return await fs.readFile(path.join(outputDir, 'markdown.md'), 'utf-8');
+        const markdownFilePath: string = path.join(Utils.getJobOutputDirectoryPath(), 'markdown.md');
+        if (existsSync(markdownFilePath)) {
+            return await fs.readFile(markdownFilePath, 'utf-8');
         }
         return '';
     }
