@@ -62,8 +62,7 @@ export class Utils {
     // Disable auto build info publish feature flag
     public static readonly AUTO_BUILD_PUBLISH_DISABLE: string = 'disable-auto-build-publish';
     // Source URL holding the markdown header image
-    private static MARKDOWN_HEADER_PNG_URL: string =
-        'https://raw.githubusercontent.com/EyalDelarea/setup-jfrog-cli/improve_summary_ui/images/summary_header.png';
+    private static MARKDOWN_HEADER_PNG_URL: string = 'https://media.jfrog.com/wp-content/uploads/2024/09/01120106/summary_header.png';
     private static isSummaryHeaderAccessible: boolean;
 
     /**
