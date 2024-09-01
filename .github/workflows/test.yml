@@ -22,7 +22,6 @@ jobs:
       # Checkout and install prerequisites
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup NodeJS
         uses: actions/setup-node@v4
         with:
