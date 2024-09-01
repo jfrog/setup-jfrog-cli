@@ -61,7 +61,10 @@ export class Utils {
     public static readonly JOB_SUMMARY_DISABLE: string = 'disable-job-summary';
     // Disable auto build info publish feature flag
     public static readonly AUTO_BUILD_PUBLISH_DISABLE: string = 'disable-auto-build-publish';
-    // Source URL holding the markdown header image
+    // URL for the markdown header image
+    // This is hosted statically because its usage is outside the context of the JFrog setup action.
+    // It cannot be linked to the repository, as GitHub serves the image from a CDN,
+    // which gets blocked by the browser, resulting in an empty image.
     private static MARKDOWN_HEADER_PNG_URL: string = 'https://media.jfrog.com/wp-content/uploads/2024/09/01120106/summary_header.png';
     private static isSummaryHeaderAccessible: boolean;
 
@@ -578,7 +581,7 @@ export class Utils {
     private static getMarkdownHeader(): string {
         let mainTitle: string;
         if (this.isSummaryHeaderAccessible) {
-            mainTitle = `<picture><img alt="Summary-Header" src=${this.MARKDOWN_HEADER_PNG_URL}></picture>` + '\n\n';
+            mainTitle = `<picture><img alt="Summary-Header" src="${this.MARKDOWN_HEADER_PNG_URL}"></picture>` + '\n\n';
         } else {
             mainTitle = `# 🐸 JFrog Job Summary` + '\n\n';
         }
