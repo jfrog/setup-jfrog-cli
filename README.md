@@ -294,9 +294,9 @@ This is to prevent GitHub from masking the URL.
 
 ### Default Behavior:
 
-By default, if the workflow completes with collected build-info that has not been published using the `jf rt build-publish` command, the build-info will be automatically published to Artifactory.
+By default, the [build-info](https://jfrog.com/help/r/jfrog-pipelines-documentation/buildinfo) collected during the workflow will be automatically published to Artifactory when the workflow completes. 
 
-To disable the automatic publication of build-info at the end of the workflow, set the `disable-auto-build-publish` input to `true`:
+This behavior is disabled if the `jf rt build-publish` command was manually run during the workflow, or if requested explicitly by setting the `disable-auto-build-publish` input to `true`:
 
 ```yml
 - uses: jfrog/setup-jfrog-cli@v4
@@ -304,7 +304,13 @@ To disable the automatic publication of build-info at the end of the workflow, s
     disable-auto-build-publish: true
 ```
 
-To disable the JFrog Job Summary altogether, set the `disable-job-summary` input to `true`, similar to the example above.
+To disable the JFrog Job Summary altogether, set the `disable-job-summary` input to `true`:
+
+```yml
+- uses: jfrog/setup-jfrog-cli@v4
+  with:
+    disable-job-summary: true
+```
 
 ### JFrog Job Summary Example:
 
