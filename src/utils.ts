@@ -2,7 +2,7 @@ import * as core from '@actions/core';
 import { exec, ExecOptions, ExecOutput, getExecOutput } from '@actions/exec';
 import { HttpClient, HttpClientResponse } from '@actions/http-client';
 import * as toolCache from '@actions/tool-cache';
-import { chmodSync, existsSync, mkdirSync, promises as fs } from 'fs';
+import { chmodSync, existsSync, promises as fs } from 'fs';
 import { OutgoingHttpHeaders } from 'http';
 import { arch, platform, tmpdir } from 'os';
 import * as path from 'path';
@@ -265,6 +265,8 @@ export class Utils {
         if (jfExecDir && jfrogExecDir) {
             core.addPath(jfExecDir);
             core.addPath(jfrogExecDir);
+            // Save the JF CLI path to use on cleanup. saveState/getState are methods to pass data between a step, and it's cleanup function.
+            core.saveState(Utils.JF_CLI_PATH_STATE, jfExecDir);
             return true;
         }
         return false;
