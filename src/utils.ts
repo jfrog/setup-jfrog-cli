@@ -2,18 +2,12 @@ import * as core from '@actions/core';
 import { exec, ExecOptions, ExecOutput, getExecOutput } from '@actions/exec';
 import { HttpClient, HttpClientResponse } from '@actions/http-client';
 import * as toolCache from '@actions/tool-cache';
-import { chmodSync, existsSync, promises as fs } from 'fs';
+import { chmodSync, existsSync, mkdirSync, promises as fs } from 'fs';
 import { OutgoingHttpHeaders } from 'http';
-import { arch, platform } from 'os';
+import { arch, platform, tmpdir } from 'os';
 import * as path from 'path';
 import { join } from 'path';
 import { lt } from 'semver';
-
-export enum MarkdownSection {
-    Upload = 'upload',
-    BuildInfo = 'build-info',
-    Security = 'security',
-}
 
 export class Utils {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -40,13 +34,6 @@ export class Utils {
     private static readonly JOB_SUMMARY_DIR_NAME: string = 'jfrog-command-summary';
     // JFrog CLI command summary output directory environment variable
     public static readonly JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV: string = 'JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR';
-
-    // Workflow summary section files. Order of sections in this array impacts the order in the final markdown.
-    public static JOB_SUMMARY_MARKDOWN_SECTIONS_NAMES: MarkdownSection[] = [
-        MarkdownSection.Security,
-        MarkdownSection.BuildInfo,
-        MarkdownSection.Upload,
-    ];
 
     // Inputs
     // Version input
@@ -204,9 +191,8 @@ export class Utils {
         // Main OIDC user parsing logic
         if (subject.startsWith('jfrt@') || subject.includes('/users/')) {
             let lastSlashIndex: number = subject.lastIndexOf('/');
-            let userSubstring: string = subject.substring(lastSlashIndex + 1);
             // Return the user extracted from the token
-            return userSubstring;
+            return subject.substring(lastSlashIndex + 1);
         }
         // No parsing was needed, returning original sub from the token as the user
         return subject;
@@ -384,13 +370,11 @@ export class Utils {
 
     /**
      * Enabling job summary is done by setting the output dir for the summaries.
-     * If the output dir is not set, the CLI won't generate the summary markdown files.
+     * If the output dir is not set, the CLI won't generate the summary Markdown files.
      */
     private static enableJobSummaries() {
-        let commandSummariesOutputDir: string | undefined = process.env.RUNNER_TEMP;
-        if (commandSummariesOutputDir) {
-            Utils.exportVariableIfNotSet(Utils.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV, commandSummariesOutputDir);
-        }
+        let tempDir: string = this.getTempDirectory();
+        Utils.exportVariableIfNotSet(Utils.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV, tempDir);
     }
 
     private static exportVariableIfNotSet(key: string, value: string) {
@@ -644,6 +628,16 @@ export class Utils {
         } finally {
             httpClient.dispose();
         }
+    }
+
+    private static getTempDirectory(): string {
+        // Determine the temporary directory path, prioritizing RUNNER_TEMP
+        // Runner_Temp is set on GitHub machines, but on self-hosted it could be unset.
+        const tempDir: string = process.env.RUNNER_TEMP || tmpdir();
+        if (!tempDir) {
+            throw new Error('Failed to determine the temporary directory');
+        }
+        return tempDir;
     }
 }
 
