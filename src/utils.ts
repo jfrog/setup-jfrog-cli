@@ -566,7 +566,8 @@ export class Utils {
     private static getMarkdownHeader(): string {
         let mainTitle: string;
         if (this.isSummaryHeaderAccessible) {
-            mainTitle = `![JFrog Job Summary Header](${this.MARKDOWN_HEADER_PNG_URL})` + '\n\n';
+            let platformUrl: string = Utils.getPlatformUrl();
+            mainTitle = `![JFrog Job Summary Header](${this.MARKDOWN_HEADER_PNG_URL})(${platformUrl})` + '\n\n';
         } else {
             mainTitle = `# 🐸 JFrog Job Summary` + '\n\n';
         }
@@ -579,12 +580,9 @@ export class Utils {
      * @return <string> https://platformUrl/ui/packages?projectKey=projectKey
      */
     private static getProjectPackagesLink(): string {
-        let platformUrl: string | undefined = process.env.JF_URL;
+        let platformUrl: string = this.getPlatformUrl();
         if (!platformUrl) {
             return '';
-        }
-        if (!platformUrl.endsWith('/')) {
-            platformUrl = platformUrl + '/';
         }
         let projectKey: string = process.env.JF_PROJECT ? process.env.JF_PROJECT : '';
         let projectPackagesUrl: string = platformUrl + 'ui/packages';
@@ -592,6 +590,17 @@ export class Utils {
             projectPackagesUrl += '?projectKey=' + projectKey;
         }
         return `<a href="${projectPackagesUrl}"> 🐸 View package details on the JFrog platform  </a>` + '\n\n';
+    }
+
+    private static getPlatformUrl(): string {
+        let platformUrl: string | undefined = process.env.JF_URL;
+        if (!platformUrl) {
+            return '';
+        }
+        if (!platformUrl.endsWith('/')) {
+            platformUrl = platformUrl + '/';
+        }
+        return platformUrl;
     }
 
     private static getJobOutputDirectoryPath(): string {
