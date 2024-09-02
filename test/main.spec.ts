@@ -331,7 +331,7 @@ describe('Job Summaries', () => {
 
         it('should handle self-hosted machines and set JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR based on OS temp dir', () => {
             // Mock os.tmpdir() to simulate different OS temp directories
-            const tempDir :string= '/mocked-temp-dir';
+            const tempDir: string = '/mocked-temp-dir';
             jest.spyOn(os, 'tmpdir').mockReturnValue(tempDir);
 
             myCore.getBooleanInput = jest.fn().mockImplementation(() => {
@@ -363,7 +363,5 @@ describe('Job Summaries', () => {
             // Restore the mock to avoid affecting other tests
             jest.restoreAllMocks();
         });
-
     });
-
 });
