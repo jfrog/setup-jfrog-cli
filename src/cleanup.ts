@@ -9,9 +9,7 @@ async function cleanup() {
     // Auto-publish build info if needed
     try {
         if (!core.getBooleanInput(Utils.AUTO_BUILD_PUBLISH_DISABLE)) {
-            core.startGroup('Build Info Auto-Publish');
             await collectAndPublishBuildInfoIfNeeded();
-            core.endGroup();
         }
     } catch (error) {
         core.warning('failed while attempting to publish build info: ' + error);
