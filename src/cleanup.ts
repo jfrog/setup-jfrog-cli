@@ -6,25 +6,9 @@ async function cleanup() {
         core.error('Could not find JFrog CLI path in the step state. Skipping cleanup.');
         return;
     }
-    // Auto-publish build info if needed
-    try {
-        if (!core.getBooleanInput(Utils.AUTO_BUILD_PUBLISH_DISABLE)) {
-            await collectAndPublishBuildInfoIfNeeded();
-        }
-    } catch (error) {
-        core.warning('failed while attempting to publish build info: ' + error);
-    }
-    // Generate job summary
-    try {
-        if (!core.getBooleanInput(Utils.JOB_SUMMARY_DISABLE)) {
-            core.startGroup('Generating Job Summary');
-            await Utils.runCli(['generate-summary-markdown']);
-            await Utils.setMarkdownAsJobSummary();
-            core.endGroup();
-        }
-    } catch (error) {
-        core.warning('failed while attempting to generate job summary: ' + error);
-    }
+    // Auto publish builds and generate job summary if CLI version is compatible
+    await autoPublishBuildsAndGenerateSummary();
+
     // Cleanup JFrog CLI servers configuration
     try {
         core.startGroup('Cleanup JFrog CLI servers configuration');
@@ -33,6 +17,32 @@ async function cleanup() {
         core.setFailed((<any>error).message);
     } finally {
         core.endGroup();
+    }
+}
+
+async function autoPublishBuildsAndGenerateSummary() {
+    // First we check for compatible CLI version
+    let supported: boolean = await supportedCliVersion();
+    if (supported) {
+        // Auto-publish build info if needed
+        try {
+            if (!core.getBooleanInput(Utils.AUTO_BUILD_PUBLISH_DISABLE)) {
+                await collectAndPublishBuildInfoIfNeeded();
+            }
+        } catch (error) {
+            core.warning('failed while attempting to publish build info: ' + error);
+        }
+        // Generate job summary
+        try {
+            if (!core.getBooleanInput(Utils.JOB_SUMMARY_DISABLE)) {
+                core.startGroup('Generating Job Summary');
+                await Utils.runCli(['generate-summary-markdown']);
+                await Utils.setMarkdownAsJobSummary();
+                core.endGroup();
+            }
+        } catch (error) {
+            core.warning('failed while attempting to generate job summary: ' + error);
+        }
     }
 }
 
@@ -103,6 +113,36 @@ function getWorkingDirectory(): string {
         throw new Error('GITHUB_WORKSPACE is not defined.');
     }
     return workingDirectory;
+}
+
+export async function supportedCliVersion(): Promise<boolean> {
+    let cliVersion: string | null = await getCliVersion();
+    if (!cliVersion) {
+        return false;
+    }
+    return isVersionGreaterThan(cliVersion, Utils.minJobSummaryCLIVersion);
+}
+
+async function getCliVersion(): Promise<string | null> {
+    try {
+        const versionOutput: string = await Utils.runCliAndGetOutput(['--version']);
+        const versionMatch: RegExpMatchArray | null = versionOutput.match(/jf version (\d+\.\d+\.\d+)/);
+        return versionMatch ? versionMatch[1] : null;
+    } catch (error) {
+        core.warning('Failed to get JFrog CLI version: ' + error);
+        return null;
+    }
+}
+
+function isVersionGreaterThan(currentVersion: string, targetVersion: string): boolean {
+    const currentParts: number[] = currentVersion.split('.').map(Number);
+    const targetParts: number[] = targetVersion.split('.').map(Number);
+
+    for (let i: number = 0; i < targetParts.length; i++) {
+        if (currentParts[i] > targetParts[i]) return true;
+        if (currentParts[i] < targetParts[i]) return false;
+    }
+    return false;
 }
 
 cleanup();

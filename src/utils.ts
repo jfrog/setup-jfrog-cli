@@ -54,6 +54,8 @@ export class Utils {
     // which gets blocked by the browser, resulting in an empty image.
     private static MARKDOWN_HEADER_PNG_URL: string = 'https://media.jfrog.com/wp-content/uploads/2024/09/02161430/jfrog-job-summary.svg';
     private static isSummaryHeaderAccessible: boolean;
+    // Sets the minimum version of the Job Summaries which includes auto build publishing.
+    public static minJobSummaryCLIVersion: string = '2.66.0';
 
     /**
      * Retrieves server credentials for accessing JFrog's server
