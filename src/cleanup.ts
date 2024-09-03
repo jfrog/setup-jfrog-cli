@@ -51,7 +51,7 @@ function addCachedJfToPath(): boolean {
 
     // This function checks if the executable is in the PATH.
     // The nothrow: true option makes it return null instead of throwing an error if the executable is not found.
-    const jfExec: string = sync('jf', { nothrow: true });
+    const jfExec: string | null = sync('jf', { nothrow: true });
     if (!jfExec) {
         return false;
     }
