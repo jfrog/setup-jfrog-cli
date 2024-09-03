@@ -6,7 +6,6 @@ async function cleanup() {
         core.warning('Could not find JFrog CLI executable. Skipping cleanup.');
         return;
     }
-    //
     await buildInfoPostTasks();
 
     // Cleanup JFrog CLI servers configuration
@@ -21,14 +20,22 @@ async function cleanup() {
 }
 
 async function buildInfoPostTasks() {
+    const disableAutoBuildPublish: boolean = core.getBooleanInput(Utils.AUTO_BUILD_PUBLISH_DISABLE);
+    const disableJobSummary: boolean = core.getBooleanInput(Utils.JOB_SUMMARY_DISABLE);
+    if (disableAutoBuildPublish && disableJobSummary) {
+        core.info(`Both ${Utils.AUTO_BUILD_PUBLISH_DISABLE} and ${Utils.JOB_SUMMARY_DISABLE} are set to true. Skipping Build Info post tasks.`);
+        return;
+    }
+
+    // Check connection to Artifactory before proceeding with build info post tasks
     try {
-        core.startGroup('Checking connection to Artifactory');
+        core.startGroup('Checking connection to JFrog Artifactory');
         const pingResult: string = await Utils.runCliAndGetOutput(['rt', 'ping']);
         if (pingResult !== 'OK') {
-            core.warning('Could not connect to Artifactory. Skipping Build Info commands.');
+            core.warning('Could not connect to Artifactory. Skipping Build Info post tasks.');
         }
     } catch (error) {
-        core.warning(`An error occurred while trying to connect to Artifactory: ${error}. Skipping Build Info commands.`);
+        core.warning(`An error occurred while trying to connect to Artifactory: ${error}. Skipping Build Info post tasks.`);
         return;
     } finally {
         core.endGroup();
@@ -36,8 +43,10 @@ async function buildInfoPostTasks() {
 
     // Auto-publish build info if needed
     try {
-        if (!core.getBooleanInput(Utils.AUTO_BUILD_PUBLISH_DISABLE)) {
+        if (!disableAutoBuildPublish) {
             await collectAndPublishBuildInfoIfNeeded();
+        } else {
+            core.info('Auto build info publish is disabled. Skipping auto build info collection and publishing');
         }
     } catch (error) {
         core.warning('failed while attempting to collect and publish build info: ' + error);
@@ -45,11 +54,13 @@ async function buildInfoPostTasks() {
 
     // Generate job summary
     try {
-        if (!core.getBooleanInput(Utils.JOB_SUMMARY_DISABLE)) {
+        if (!disableJobSummary) {
             core.startGroup('Generating Job Summary');
             await Utils.runCli(['generate-summary-markdown']);
             await Utils.setMarkdownAsJobSummary();
             core.endGroup();
+        } else {
+            core.info('Job summary is disabled. Skipping job summary generation');
         }
     } catch (error) {
         core.warning('failed while attempting to generate job summary: ' + error);

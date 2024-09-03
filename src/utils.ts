@@ -457,12 +457,7 @@ export class Utils {
      */
     public static async runCliAndGetOutput(args: string[], options?: ExecOptions): Promise<string> {
         let output: ExecOutput;
-        try {
-            output = await getExecOutput('jf', args, options);
-        } catch (error: any) {
-            throw new Error(`An error occurred while running 'jf ${args.join(' ')}': ${error}`);
-        }
-
+        output = await getExecOutput('jf', args, { ...options, ignoreReturnCode: true });
         if (output.exitCode !== core.ExitCode.Success) {
             core.info(output.stdout);
             core.info(output.stderr);
