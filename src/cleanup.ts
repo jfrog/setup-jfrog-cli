@@ -23,7 +23,7 @@ async function cleanup() {
 async function buildInfoPostTasks() {
     try {
         core.startGroup('Checking connection to Artifactory');
-        const pingResult = await Utils.runCliAndGetOutput(['rt', 'ping']);
+        const pingResult: string = await Utils.runCliAndGetOutput(['rt', 'ping']);
         if (pingResult !== 'OK') {
             core.warning('Could not connect to Artifactory. Skipping Build Info commands.');
         }
@@ -54,7 +54,6 @@ async function buildInfoPostTasks() {
     } catch (error) {
         core.warning('failed while attempting to generate job summary: ' + error);
     }
-
 }
 
 function addCachedJfToPath(): boolean {
@@ -76,6 +75,7 @@ async function hasUnpublishedModules(workingDirectory: string): Promise<boolean>
     // Save the old value of the environment variable to revert it later
     const origValue: string | undefined = process.env[Utils.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV];
     try {
+        core.startGroup('Check for unpublished modules');
         // Avoid saving a command summary for this dry-run command
         core.exportVariable(Utils.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV, '');
 
@@ -90,6 +90,7 @@ async function hasUnpublishedModules(workingDirectory: string): Promise<boolean>
         throw new Error('Failed to check if there are any unpublished modules: ' + error);
     } finally {
         core.exportVariable(Utils.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV, origValue);
+        core.endGroup();
     }
 }
 
