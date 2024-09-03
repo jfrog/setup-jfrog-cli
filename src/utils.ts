@@ -460,6 +460,8 @@ export class Utils {
         try {
             output = await getExecOutput('jf', args, options);
         } catch (error) {
+            core.info('TEST:');
+            await this.runCli(args, options);
             throw new Error(`An error occurred while running 'jf ${args.join(' ')}': ${error}`);
         }
 
