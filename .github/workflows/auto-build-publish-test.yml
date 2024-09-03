@@ -13,6 +13,7 @@ concurrency:
 
 jobs:
   Auto-Build-Publish-Test:
+    name: Auto-Build-Publish-Test (${{ matrix.os }}) - (CLI ${{ matrix.cli-version }})
     if: contains(github.event.pull_request.labels.*.name, 'safe to test') || github.event_name == 'push'
     strategy:
       fail-fast: false
