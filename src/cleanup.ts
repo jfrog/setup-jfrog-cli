@@ -23,11 +23,14 @@ async function cleanup() {
 async function autoPublishBuildsAndGenerateSummary() {
     // First we check for compatible CLI version
     let supported: boolean = await supportedCliVersion();
+    core.info('JFrog CLI version is compatible: ' + supported);
     if (supported) {
         // Auto-publish build info if needed
         try {
             if (!core.getBooleanInput(Utils.AUTO_BUILD_PUBLISH_DISABLE)) {
+                core.startGroup('Auto-publishing build info to JFrog Artifactory');
                 await collectAndPublishBuildInfoIfNeeded();
+                core.endGroup();
             }
         } catch (error) {
             core.warning('failed while attempting to publish build info: ' + error);
