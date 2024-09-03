@@ -460,7 +460,7 @@ export class Utils {
         try {
             output = await getExecOutput('jf', args, options);
         } catch (error) {
-            throw new Error(`An error occurred while running 'jf ${args}': ${error}`);
+            throw new Error(`An error occurred while running 'jf ${args.join(' ')}': ${error}`);
         }
 
         if (output.exitCode !== core.ExitCode.Success) {
