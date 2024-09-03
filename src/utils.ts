@@ -265,7 +265,7 @@ export class Utils {
         if (jfExecDir && jfrogExecDir) {
             core.addPath(jfExecDir);
             core.addPath(jfrogExecDir);
-            // Save the JF CLI path to use on cleanup. saveState/getState are methods to pass data between a step, and it's cleanup function.
+            // Save the JF CLI path to use on cleanup. saveState/getState are methods to pass data between a step, and its cleanup function.
             core.saveState(Utils.JF_CLI_PATH_STATE, jfExecDir);
             return true;
         }
@@ -569,7 +569,7 @@ export class Utils {
         let mainTitle: string;
         if (this.isSummaryHeaderAccessible) {
             let platformUrl: string = Utils.getPlatformUrl();
-            mainTitle = `![JFrog Job Summary Header](${this.MARKDOWN_HEADER_PNG_URL})(${platformUrl})` + '\n\n';
+            mainTitle = `[![JFrog Job Summary Header](${this.MARKDOWN_HEADER_PNG_URL})](${platformUrl})` + '\n\n';
         } else {
             mainTitle = `# 🐸 JFrog Job Summary` + '\n\n';
         }
