@@ -3,17 +3,19 @@ import { Utils } from './utils';
 
 async function cleanup() {
     if (!addCachedJfToPath()) {
-        core.error('Could not find JFrog CLI path in the step state. Skipping cleanup.');
+        core.warning('Could not find JFrog CLI path in the step state. Skipping cleanup.');
         return;
     }
+
     // Auto-publish build info if needed
     try {
         if (!core.getBooleanInput(Utils.AUTO_BUILD_PUBLISH_DISABLE)) {
             await collectAndPublishBuildInfoIfNeeded();
         }
     } catch (error) {
-        core.warning('failed while attempting to publish build info: ' + error);
+        core.warning('failed while attempting to collect and publish build info: ' + error);
     }
+
     // Generate job summary
     try {
         if (!core.getBooleanInput(Utils.JOB_SUMMARY_DISABLE)) {
@@ -25,6 +27,7 @@ async function cleanup() {
     } catch (error) {
         core.warning('failed while attempting to generate job summary: ' + error);
     }
+
     // Cleanup JFrog CLI servers configuration
     try {
         core.startGroup('Cleanup JFrog CLI servers configuration');
@@ -39,10 +42,11 @@ async function cleanup() {
 function addCachedJfToPath(): boolean {
     // Get the JFrog CLI path from step state. saveState/getState are methods to pass data between a step, and it's cleanup function.
     const jfCliPath: string = core.getState(Utils.JF_CLI_PATH_STATE);
-    if (!jfCliPath) {
+    if (jfCliPath === null || jfCliPath === undefined || jfCliPath === '') {
         // This means that the JFrog CLI was not installed in the first place, because there was a failure in the installation step.
         return false;
     }
+    core.info('Using JFrog CLI path from step state path: ' + jfCliPath);
     core.addPath(jfCliPath);
     return true;
 }
@@ -66,8 +70,7 @@ async function hasUnpublishedModules(workingDirectory: string): Promise<boolean>
         // Check if the "modules" key exists and if it's an array with more than one item
         return response.modules != undefined && Array.isArray(response.modules) && response.modules.length > 0;
     } catch (error) {
-        core.error('Failed to parse JSON: ' + error);
-        return false; // Return false if parsing fails
+        throw new Error('Failed to check if there are any unpublished modules: ' + error);
     } finally {
         core.exportVariable(Utils.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV, origValue);
     }
