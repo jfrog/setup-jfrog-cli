@@ -456,11 +456,17 @@ export class Utils {
      * @throws An error if the JFrog CLI command exits with a non-success code.
      */
     public static async runCliAndGetOutput(args: string[], options?: ExecOptions): Promise<string> {
-        let output: ExecOutput = await getExecOutput('jf', args, options);
+        let output: ExecOutput;
+        try {
+            output = await getExecOutput('jf', args, options);
+        } catch (error) {
+            throw new Error(`An error occurred while running 'jf ${args}': ${error}`);
+        }
+
         if (output.exitCode !== core.ExitCode.Success) {
             core.info(output.stdout);
             core.info(output.stderr);
-            throw new Error('JFrog CLI exited with exit code ' + output.exitCode);
+            throw new Error(`JFrog CLI exited with exit code ${output.exitCode}`);
         }
         return output.stdout;
     }
