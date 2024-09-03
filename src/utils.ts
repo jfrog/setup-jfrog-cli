@@ -458,10 +458,9 @@ export class Utils {
     public static async runCliAndGetOutput(args: string[], options?: ExecOptions): Promise<string> {
         let output: ExecOutput;
         try {
+            await this.runCli(['rt', 'ping']);
             output = await getExecOutput('jf', args, options);
         } catch (error: any) {
-            core.info(error.stdout);
-            core.info(error.stdout);
             throw new Error(`An error occurred while running 'jf ${args.join(' ')}': ${error}`);
         }
 
