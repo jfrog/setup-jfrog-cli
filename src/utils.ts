@@ -459,9 +459,9 @@ export class Utils {
         let output: ExecOutput;
         try {
             output = await getExecOutput('jf', args, options);
-        } catch (error) {
-            core.info('TEST:');
-            await this.runCli(args, options);
+        } catch (error: any) {
+            core.info(error.stdout);
+            core.info(error.stdout);
             throw new Error(`An error occurred while running 'jf ${args.join(' ')}': ${error}`);
         }
 
