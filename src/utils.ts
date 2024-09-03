@@ -281,6 +281,7 @@ export class Utils {
      */
     private static async cacheAndAddPath(downloadedExecutable: string, version: string, jfFileName: string, jfrogFileName: string) {
         if (version === Utils.LATEST_RELEASE_VERSION) {
+            // If the version is 'latest', we keep it on cache as 0.0.0 as GitHub actions cache supports only semver versions
             version = Utils.LATEST_SEMVER;
         }
         let jfCacheDir: string = await toolCache.cacheFile(downloadedExecutable, jfFileName, jfFileName, version);
