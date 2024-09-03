@@ -234,7 +234,7 @@ export class Utils {
         let jfFileName: string = Utils.getJfExecutableName();
         let jfrogFileName: string = Utils.getJFrogExecutableName();
         if (version !== Utils.LATEST_RELEASE_VERSION && this.loadFromCache(jfFileName, jfrogFileName, version)) {
-            // Download is not needed
+            core.info('Found JFrog CLI in cache. No need to download');
             return;
         }
 

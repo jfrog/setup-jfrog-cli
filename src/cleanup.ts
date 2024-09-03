@@ -3,7 +3,7 @@ import { Utils } from './utils';
 
 async function cleanup() {
     if (!addCachedJfToPath()) {
-        core.warning('Could not find JFrog CLI path in the step state. Skipping cleanup.');
+        core.warning('Could not find JFrog CLI executable. Skipping cleanup.');
         return;
     }
 
