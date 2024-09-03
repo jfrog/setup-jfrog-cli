@@ -23,11 +23,11 @@ export class Utils {
     // Minimum JFrog CLI version supported
     private static readonly MIN_CLI_VERSION: string = '1.46.4';
     // The value in "version" argument to set to get the latest JFrog CLI version
-    private static readonly LATEST_CLI_VERSION: string = 'latest';
+    public static readonly LATEST_CLI_VERSION: string = 'latest';
     // The value in the download URL to set to get the latest version
     private static readonly LATEST_RELEASE_VERSION: string = '[RELEASE]';
     // State name for saving JF CLI path to use on cleanup
-    public static readonly JF_CLI_PATH_STATE: string = 'JF_CLI_PATH_STATE';
+    public static readonly LATEST_SEMVER: string = '0.0.0';
     // The default server id name for separate env config
     public static readonly SETUP_JFROG_CLI_SERVER_ID: string = 'setup-jfrog-cli-server';
     // Directory name which holds markdown files for the Workflow summary
@@ -37,7 +37,7 @@ export class Utils {
 
     // Inputs
     // Version input
-    private static readonly CLI_VERSION_ARG: string = 'version';
+    public static readonly CLI_VERSION_ARG: string = 'version';
     // Download repository input
     private static readonly CLI_REMOTE_ARG: string = 'download-repository';
     // OpenID Connect audience input
@@ -233,7 +233,7 @@ export class Utils {
 
         let jfFileName: string = Utils.getJfExecutableName();
         let jfrogFileName: string = Utils.getJFrogExecutableName();
-        if (this.loadFromCache(jfFileName, jfrogFileName, version)) {
+        if (version !== Utils.LATEST_RELEASE_VERSION && this.loadFromCache(jfFileName, jfrogFileName, version)) {
             // Download is not needed
             return;
         }
@@ -256,17 +256,17 @@ export class Utils {
      * @param version       - JFrog CLI version
      * @returns true if the CLI executable was loaded from cache and added to path
      */
-    private static loadFromCache(jfFileName: string, jfrogFileName: string, version: string): boolean {
-        if (version === Utils.LATEST_RELEASE_VERSION) {
-            return false;
-        }
+    public static loadFromCache(jfFileName: string, jfrogFileName: string, version: string): boolean {
         let jfExecDir: string = toolCache.find(jfFileName, version);
         let jfrogExecDir: string = toolCache.find(jfrogFileName, version);
         if (jfExecDir && jfrogExecDir) {
             core.addPath(jfExecDir);
             core.addPath(jfrogExecDir);
-            // Save the JF CLI path to use on cleanup. saveState/getState are methods to pass data between a step, and it's cleanup function.
-            core.saveState(Utils.JF_CLI_PATH_STATE, jfExecDir);
+
+            if (!Utils.isWindows()) {
+                chmodSync(join(jfExecDir, jfFileName), 0o555);
+                chmodSync(join(jfrogExecDir, jfrogFileName), 0o555);
+            }
             return true;
         }
         return false;
@@ -280,6 +280,9 @@ export class Utils {
      * @param jfrogFileName        - 'jfrog' or 'jfrog.exe'
      */
     private static async cacheAndAddPath(downloadedExecutable: string, version: string, jfFileName: string, jfrogFileName: string) {
+        if (version === Utils.LATEST_RELEASE_VERSION) {
+            version = Utils.LATEST_SEMVER;
+        }
         let jfCacheDir: string = await toolCache.cacheFile(downloadedExecutable, jfFileName, jfFileName, version);
         core.addPath(jfCacheDir);
 
@@ -290,9 +293,6 @@ export class Utils {
             chmodSync(join(jfCacheDir, jfFileName), 0o555);
             chmodSync(join(jfrogCacheDir, jfrogFileName), 0o555);
         }
-
-        // Save the JF CLI path to use on cleanup. saveState/getState are methods to pass data between a step, and it's cleanup function.
-        core.saveState(Utils.JF_CLI_PATH_STATE, jfCacheDir);
     }
 
     public static getCliUrl(major: string, version: string, fileName: string, downloadDetails: DownloadDetails): string {

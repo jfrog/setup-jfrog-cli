@@ -1,6 +1,5 @@
 import * as core from '@actions/core';
 import { Utils } from './utils';
-import { sync } from 'which';
 
 async function cleanup() {
     if (!addCachedJfToPath()) {
@@ -41,22 +40,14 @@ async function cleanup() {
 }
 
 function addCachedJfToPath(): boolean {
-    // Get the JFrog CLI path from step state. saveState/getState are methods to pass data between a step, and it's cleanup function.
-    const jfCliPathDir: string = core.getState(Utils.JF_CLI_PATH_STATE);
-    if (jfCliPathDir === null || jfCliPathDir === undefined || jfCliPathDir === '') {
-        // This means that the JFrog CLI was not installed in the first place, because there was a failure in the installation step.
-        return false;
+    let version: string = core.getInput(Utils.CLI_VERSION_ARG);
+    if (version == Utils.LATEST_CLI_VERSION) {
+        // If the version is 'latest', we keep it on cache as 0.0.0
+        version = Utils.LATEST_SEMVER;
     }
-    core.addPath(jfCliPathDir);
-
-    // This function checks if the executable is in the PATH.
-    // The nothrow: true option makes it return null instead of throwing an error if the executable is not found.
-    const jfExec: string | null = sync('jf', { nothrow: true });
-    if (!jfExec) {
-        return false;
-    }
-    core.info('jf executable found at: ' + jfExec);
-    return true;
+    let jfFileName: string = Utils.getJfExecutableName();
+    let jfrogFileName: string = Utils.getJFrogExecutableName();
+    return Utils.loadFromCache(jfFileName, jfrogFileName, version);
 }
 
 interface BuildPublishResponse {
