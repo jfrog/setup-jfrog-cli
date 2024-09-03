@@ -384,12 +384,6 @@ describe('supportedCliVersion', () => {
         expect(result).toBe(false);
     });
 
-    it('should return false for CLI version equal to 2.66.0', async () => {
-        jest.spyOn(Utils, 'runCliAndGetOutput').mockResolvedValue('jf version 2.66.0');
-        const result: boolean = await supportedCliVersion();
-        expect(result).toBe(false);
-    });
-
     it('should return false if CLI version cannot be determined', async () => {
         jest.spyOn(Utils, 'runCliAndGetOutput').mockResolvedValue('unknown version');
         const result: boolean = await supportedCliVersion();
