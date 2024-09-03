@@ -459,8 +459,10 @@ export class Utils {
         let output: ExecOutput;
         output = await getExecOutput('jf', args, { ...options, ignoreReturnCode: true });
         if (output.exitCode !== core.ExitCode.Success) {
-            core.info(output.stdout);
-            core.info(output.stderr);
+            if (options?.silent) {
+                core.info(output.stdout);
+                core.info(output.stderr);
+            }
             throw new Error(`JFrog CLI exited with exit code ${output.exitCode}`);
         }
         return output.stdout;
