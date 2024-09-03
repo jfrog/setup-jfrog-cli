@@ -42,7 +42,7 @@ async function cleanup() {
 function addCachedJfToPath(): boolean {
     let version: string = core.getInput(Utils.CLI_VERSION_ARG);
     if (version == Utils.LATEST_CLI_VERSION) {
-        // If the version is 'latest', we keep it on cache as 0.0.0
+        // If the version is 'latest', we keep it on cache as 100.100.100
         version = Utils.LATEST_SEMVER;
     }
     let jfFileName: string = Utils.getJfExecutableName();

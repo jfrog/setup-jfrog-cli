@@ -27,7 +27,7 @@ export class Utils {
     // The value in the download URL to set to get the latest version
     private static readonly LATEST_RELEASE_VERSION: string = '[RELEASE]';
     // State name for saving JF CLI path to use on cleanup
-    public static readonly LATEST_SEMVER: string = '0.0.0';
+    public static readonly LATEST_SEMVER: string = '100.100.100';
     // The default server id name for separate env config
     public static readonly SETUP_JFROG_CLI_SERVER_ID: string = 'setup-jfrog-cli-server';
     // Directory name which holds markdown files for the Workflow summary
@@ -281,7 +281,7 @@ export class Utils {
      */
     private static async cacheAndAddPath(downloadedExecutable: string, version: string, jfFileName: string, jfrogFileName: string) {
         if (version === Utils.LATEST_RELEASE_VERSION) {
-            // If the version is 'latest', we keep it on cache as 0.0.0 as GitHub actions cache supports only semver versions
+            // If the version is 'latest', we keep it on cache as 100.100.100 as GitHub actions cache supports only semver versions
             version = Utils.LATEST_SEMVER;
         }
         let jfCacheDir: string = await toolCache.cacheFile(downloadedExecutable, jfFileName, jfFileName, version);
