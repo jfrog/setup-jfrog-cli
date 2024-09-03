@@ -62,7 +62,7 @@ async function hasUnpublishedModules(workingDirectory: string): Promise<boolean>
         core.exportVariable(Utils.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV, '');
 
         // Running build-publish command with a dry-run flag to check if there are any unpublished modules, 'silent' to avoid polluting the logs
-        const responseStr: string = await Utils.runCliAndGetOutput(['rt', 'build-publish', '--dry-run'], { silent: true, cwd: workingDirectory });
+        const responseStr: string = await Utils.runCliAndGetOutput(['rt', 'build-publish', '--dry-run'], { cwd: workingDirectory });
 
         // Parse the JSON string to an object
         const response: BuildPublishResponse = JSON.parse(responseStr);
