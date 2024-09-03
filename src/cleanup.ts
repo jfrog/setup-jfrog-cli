@@ -1,5 +1,6 @@
 import * as core from '@actions/core';
 import { Utils } from './utils';
+import { sync } from 'which';
 
 async function cleanup() {
     if (!addCachedJfToPath()) {
@@ -41,13 +42,18 @@ async function cleanup() {
 
 function addCachedJfToPath(): boolean {
     // Get the JFrog CLI path from step state. saveState/getState are methods to pass data between a step, and it's cleanup function.
-    const jfCliPath: string = core.getState(Utils.JF_CLI_PATH_STATE);
-    if (jfCliPath === null || jfCliPath === undefined || jfCliPath === '') {
+    const jfCliPathDir: string = core.getState(Utils.JF_CLI_PATH_STATE);
+    if (jfCliPathDir === null || jfCliPathDir === undefined || jfCliPathDir === '') {
         // This means that the JFrog CLI was not installed in the first place, because there was a failure in the installation step.
         return false;
     }
-    core.info('Using JFrog CLI path from step state path: ' + jfCliPath);
-    core.addPath(jfCliPath);
+    core.addPath(jfCliPathDir);
+
+    const jfExec: string = sync('jf', { nothrow: true });
+    if (!jfExec) {
+        return false;
+    }
+    core.info('jf executable found at: ' + jfExec);
     return true;
 }
 
