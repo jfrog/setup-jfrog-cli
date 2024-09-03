@@ -22,14 +22,16 @@ async function cleanup() {
 
 async function buildInfoPostTasks() {
     try {
+        core.startGroup('Checking connection to Artifactory');
         const pingResult = await Utils.runCliAndGetOutput(['rt', 'ping']);
         if (pingResult !== 'OK') {
             core.warning('Could not connect to Artifactory. Skipping Build Info commands.');
         }
     } catch (error) {
-        core.warning(`An error occurred while trying to connect to Artifactory: ${error}`);
-        core.warning('Skipping Build Info commands.');
+        core.warning(`An error occurred while trying to connect to Artifactory: ${error}. Skipping Build Info commands.`);
         return;
+    } finally {
+        core.endGroup();
     }
 
     // Auto-publish build info if needed
