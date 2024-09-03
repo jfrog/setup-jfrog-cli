@@ -52,7 +52,7 @@ export class Utils {
     // This is hosted statically because its usage is outside the context of the JFrog setup action.
     // It cannot be linked to the repository, as GitHub serves the image from a CDN,
     // which gets blocked by the browser, resulting in an empty image.
-    private static MARKDOWN_HEADER_PNG_URL: string = 'https://media.jfrog.com/wp-content/uploads/2024/09/01120106/summary_header.png';
+    private static MARKDOWN_HEADER_PNG_URL: string = 'https://media.jfrog.com/wp-content/uploads/2024/09/02161430/jfrog-job-summary.svg';
     private static isSummaryHeaderAccessible: boolean;
 
     /**
@@ -569,7 +569,8 @@ export class Utils {
     private static getMarkdownHeader(): string {
         let mainTitle: string;
         if (this.isSummaryHeaderAccessible) {
-            mainTitle = `![JFrog Job Summary Header](${this.MARKDOWN_HEADER_PNG_URL})` + '\n\n';
+            let platformUrl: string = Utils.getPlatformUrl();
+            mainTitle = `[![JFrog Job Summary Header](${this.MARKDOWN_HEADER_PNG_URL})](${platformUrl})` + '\n\n';
         } else {
             mainTitle = `# 🐸 JFrog Job Summary` + '\n\n';
         }
@@ -582,12 +583,9 @@ export class Utils {
      * @return <string> https://platformUrl/ui/packages?projectKey=projectKey
      */
     private static getProjectPackagesLink(): string {
-        let platformUrl: string | undefined = process.env.JF_URL;
+        let platformUrl: string = this.getPlatformUrl();
         if (!platformUrl) {
             return '';
-        }
-        if (!platformUrl.endsWith('/')) {
-            platformUrl = platformUrl + '/';
         }
         let projectKey: string = process.env.JF_PROJECT ? process.env.JF_PROJECT : '';
         let projectPackagesUrl: string = platformUrl + 'ui/packages';
@@ -595,6 +593,17 @@ export class Utils {
             projectPackagesUrl += '?projectKey=' + projectKey;
         }
         return `<a href="${projectPackagesUrl}"> 🐸 View package details on the JFrog platform  </a>` + '\n\n';
+    }
+
+    private static getPlatformUrl(): string {
+        let platformUrl: string | undefined = process.env.JF_URL;
+        if (!platformUrl) {
+            return '';
+        }
+        if (!platformUrl.endsWith('/')) {
+            platformUrl = platformUrl + '/';
+        }
+        return platformUrl;
     }
 
     private static getJobOutputDirectoryPath(): string {
