@@ -6,6 +6,31 @@ async function cleanup() {
         core.warning('Could not find JFrog CLI executable. Skipping cleanup.');
         return;
     }
+    //
+    await buildInfoPostTasks();
+
+    // Cleanup JFrog CLI servers configuration
+    try {
+        core.startGroup('Cleanup JFrog CLI servers configuration');
+        await Utils.removeJFrogServers();
+    } catch (error) {
+        core.setFailed((<any>error).message);
+    } finally {
+        core.endGroup();
+    }
+}
+
+async function buildInfoPostTasks() {
+    try {
+        const pingResult = await Utils.runCliAndGetOutput(['rt', 'ping']);
+        if (pingResult !== 'OK') {
+            core.warning('Could not connect to Artifactory. Skipping Build Info commands.');
+        }
+    } catch (error) {
+        core.warning(`An error occurred while trying to connect to Artifactory: ${error}`);
+        core.warning('Skipping Build Info commands.');
+        return;
+    }
 
     // Auto-publish build info if needed
     try {
@@ -28,15 +53,6 @@ async function cleanup() {
         core.warning('failed while attempting to generate job summary: ' + error);
     }
 
-    // Cleanup JFrog CLI servers configuration
-    try {
-        core.startGroup('Cleanup JFrog CLI servers configuration');
-        await Utils.removeJFrogServers();
-    } catch (error) {
-        core.setFailed((<any>error).message);
-    } finally {
-        core.endGroup();
-    }
 }
 
 function addCachedJfToPath(): boolean {
