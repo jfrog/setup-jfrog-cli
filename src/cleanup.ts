@@ -142,8 +142,8 @@ function isVersionGreaterThan(currentVersion: string, targetVersion: string): bo
     const targetParts: number[] = targetVersion.split('.').map(Number);
 
     for (let i: number = 0; i < targetParts.length; i++) {
-        if (currentParts[i] > targetParts[i]) return true;
-        if (currentParts[i] < targetParts[i]) return false;
+        if (currentParts[i] >= targetParts[i]) return true;
+        if (currentParts[i] <= targetParts[i]) return false;
     }
     return false;
 }
