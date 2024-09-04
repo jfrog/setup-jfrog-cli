@@ -54,7 +54,7 @@ jobs:
         id: setup-jfrog-cli
         uses: ./
         with:
-          version: { { matrix.cli-version } }
+          version: ${{ matrix.cli-version }}
         env:
           JF_URL: http://localhost:8081/
           JF_USER: admin
