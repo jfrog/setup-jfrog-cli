@@ -127,22 +127,19 @@ function getWorkingDirectory(): string {
  * Check if the installed JFrog CLI version equal or greater than the minimum supplied
  */
 export async function supportedCliVersion(minimumVersion: string): Promise<boolean> {
-    let cliVersion: string | null = await getCliVersion();
-    if (!cliVersion) {
+    let cliVersionOutput: string | null = await Utils.runCliAndGetOutput(['--version']);
+    if (!cliVersionOutput) {
         return false;
     }
-    return semver.gte(cliVersion, minimumVersion);
-}
 
-async function getCliVersion(): Promise<string | null> {
-    try {
-        const versionOutput: string = await Utils.runCliAndGetOutput(['--version']);
-        const versionMatch: RegExpMatchArray | null = versionOutput.match(/jf version (\d+\.\d+\.\d+)/);
-        return versionMatch ? versionMatch[1] : null;
-    } catch (error) {
-        core.warning('Failed to get JFrog CLI version: ' + error);
-        return null;
+    // Extract the version number using a regular expression
+    const versionMatch: RegExpMatchArray | null = cliVersionOutput.match(/jf version (\d+\.\d+\.\d+)/);
+    if (!versionMatch) {
+        return false;
     }
+
+    const cliVersion: string = versionMatch[1];
+    return semver.gte(cliVersion, minimumVersion);
 }
 
 cleanup();

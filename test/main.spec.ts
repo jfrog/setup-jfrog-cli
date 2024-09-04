@@ -365,36 +365,32 @@ describe('Job Summaries', () => {
     });
 });
 
-// Verify the Auto Build Publish feature, and the Job summaries
-// are using CLI version 2.66.0 and above.
 describe('AutoPublishSupportedCliVersion', () => {
     it('should return true for CLI version greater than 2.66.0', async () => {
-        jest.spyOn(Utils, 'runCliAndGetOutput').mockResolvedValue('jf version 2.67.0');
-        const result: boolean = await supportedCliVersion();
+        let testCliVersion: string = '2.67.0';
+        jest.spyOn(Utils, 'runCliAndGetOutput').mockResolvedValue(`jf version ${testCliVersion}`);
+        const result: boolean = await supportedCliVersion(Utils.minJobSummaryCLIVersion);
         expect(result).toBe(true);
     });
 
     it('should return true for CLI version greater or equal to 2.66.0', async () => {
-        jest.spyOn(Utils, 'runCliAndGetOutput').mockResolvedValue('jf version 2.66.0');
-        const result: boolean = await supportedCliVersion();
+        let testCliVersion: string = '2.66.0';
+        jest.spyOn(Utils, 'runCliAndGetOutput').mockResolvedValue(`jf version ${testCliVersion}`);
+        const result: boolean = await supportedCliVersion(Utils.minJobSummaryCLIVersion);
         expect(result).toBe(true);
     });
 
     it('should return false for CLI version less than 2.66.0', async () => {
-        jest.spyOn(Utils, 'runCliAndGetOutput').mockResolvedValue('jf version 2.65.0');
-        const result: boolean = await supportedCliVersion();
+        let testCliVersion: string = '2.65.0';
+        jest.spyOn(Utils, 'runCliAndGetOutput').mockResolvedValue(`jf version ${testCliVersion}`);
+        const result: boolean = await supportedCliVersion(Utils.minJobSummaryCLIVersion);
         expect(result).toBe(false);
     });
 
     it('should return false if CLI version cannot be determined', async () => {
-        jest.spyOn(Utils, 'runCliAndGetOutput').mockResolvedValue('unknown version');
-        const result: boolean = await supportedCliVersion();
-        expect(result).toBe(false);
-    });
-
-    it('should return false if an error occurs while getting CLI version', async () => {
-        jest.spyOn(Utils, 'runCliAndGetOutput').mockRejectedValue(new Error('Failed to get version'));
-        const result: boolean = await supportedCliVersion();
+        let testCliVersion: string = 'unknown version';
+        jest.spyOn(Utils, 'runCliAndGetOutput').mockResolvedValue(`jf version ${testCliVersion}`);
+        const result: boolean = await supportedCliVersion(Utils.minJobSummaryCLIVersion);
         expect(result).toBe(false);
     });
 });
