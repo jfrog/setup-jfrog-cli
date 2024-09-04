@@ -37,8 +37,10 @@
     "dependencies": {
         "@actions/core": "~1.10.1",
         "@actions/exec": "~1.1.1",
+        "@actions/github": "^6.0.0",
         "@actions/http-client": "~2.2.1",
         "@actions/tool-cache": "~2.0.1",
+        "@octokit/core": "^5.2.0",
         "semver": "~7.6.3"
     },
     "devDependencies": {

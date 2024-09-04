@@ -20,6 +20,7 @@
     -   [Setting the JFrog Project Key](#setting-the-jfrog-project-key)
     -   [Downloading JFrog CLI from Artifactory](#downloading-jfrog-cli-from-artifactory)
 -   [JFrog Job Summary](#jfrog-job-summary)
+-   [Code Scanning Alerts](#code-scanning-alerts)
 -   [Example Projects](#example-projects)
 -   [Contributions](#contributions)
 -   [References](#references)
@@ -348,7 +349,38 @@ The final summary will include the summary of each CLI command that supports thi
 To read more about the JFrog CLI supported commands, visit the following link:
 [JFrog CLI Command Summaries Documentation](https://docs.jfrog-applications.jfrog.io/jfrog-applications/jfrog-cli/cli-command-summaries).
 
-## Example projects
+## Code Scanning Alerts
+The action also supports the display of code scanning alerts in the GitHub Actions UI.
+
+Code scanning alerts are generated following the execution of the `jf docker scan` and `jf scan` commands.
+
+This feature is available for customers with an Artifactory Enterprise license or above.
+
+### Preconditions
+`JF_GIT_TOKEN` - GitHub token with `security-events: write` permission.
+
+You can utilize [$\{{secrets.GITHUB\_TOKEN\}}](https://docs.github.com/en/actions/security-guides/automatic-token-authentication) for `JF_GIT_TOKEN`, which is an automatically generated token by GitHub.
+
+```yaml
+permissions:
+  id-token: write
+  contents: read
+  # Required for uploading code scanning.
+  security-events: write
+```
+
+``` yaml
+- uses: jfrog/setup-jfrog-cli@v4
+  env:
+    # The GitHub token is automatically generated for the job
+    JF_GIT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+```
+
+### Code Scanning Alerts Example:
+
+![Code-Scanning-Alerts](images/code-scanning.png)
+
+## Example Projects
 
 To help you get started, you can use [these](https://github.com/jfrog/project-examples/tree/master/github-action-examples) sample projects on GitHub.
 
