@@ -365,7 +365,9 @@ describe('Job Summaries', () => {
     });
 });
 
-describe('supportedCliVersion', () => {
+// Verify the Auto Build Publish feature, and the Job summaries
+// are using CLI version 2.66.0 and above.
+describe('AutoPublishSupportedCliVersion', () => {
     it('should return true for CLI version greater than 2.66.0', async () => {
         jest.spyOn(Utils, 'runCliAndGetOutput').mockResolvedValue('jf version 2.67.0');
         const result: boolean = await supportedCliVersion();

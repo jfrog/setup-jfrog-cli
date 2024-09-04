@@ -1,5 +1,6 @@
 import * as core from '@actions/core';
 import { Utils } from './utils';
+import semver from 'semver/preload';
 
 async function cleanup() {
     if (!addCachedJfToPath()) {
@@ -23,7 +24,6 @@ async function cleanup() {
 async function autoPublishBuildsAndGenerateSummary() {
     // First we check for compatible CLI version
     let supported: boolean = await supportedCliVersion();
-    core.info('JFrog CLI version is compatible: ' + supported);
     if (supported) {
         // Auto-publish build info if needed
         try {
@@ -123,7 +123,7 @@ export async function supportedCliVersion(): Promise<boolean> {
     if (!cliVersion) {
         return false;
     }
-    return isVersionGreaterThan(cliVersion, Utils.minJobSummaryCLIVersion);
+    return semver.gte(cliVersion, Utils.minJobSummaryCLIVersion);
 }
 
 async function getCliVersion(): Promise<string | null> {
@@ -135,17 +135,6 @@ async function getCliVersion(): Promise<string | null> {
         core.warning('Failed to get JFrog CLI version: ' + error);
         return null;
     }
-}
-
-function isVersionGreaterThan(currentVersion: string, targetVersion: string): boolean {
-    const currentParts: number[] = currentVersion.split('.').map(Number);
-    const targetParts: number[] = targetVersion.split('.').map(Number);
-
-    for (let i: number = 0; i < targetParts.length; i++) {
-        if (currentParts[i] > targetParts[i]) return true;
-        if (currentParts[i] < targetParts[i]) return false;
-    }
-    return true; // Return true if all parts are equal
 }
 
 cleanup();
