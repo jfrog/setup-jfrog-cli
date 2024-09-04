@@ -193,7 +193,7 @@ describe('JFrog CLI V2 URL Tests', () => {
         myOs.platform.mockImplementation(() => <NodeJS.Platform>platform);
         myOs.arch.mockImplementation(() => arch);
 
-        let cliUrl: string = Utils.getCliUrl('2.3.4', fileName, Utils.extractDownloadDetails(';', {} as JfrogCredentials));
+        let cliUrl: string = Utils.getCliUrl('2.3.4', fileName, Utils.extractDownloadDetails('', {} as JfrogCredentials));
         expect(cliUrl).toBe(DEFAULT_CLI_URL + expectedUrl);
 
         process.env.JF_ENV_LOCAL = V2_CONFIG;
