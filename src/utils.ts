@@ -252,7 +252,7 @@ export class Utils {
     public static loadFromCache(version: string): boolean {
         const jfFileName: string = Utils.getJfExecutableName();
         const jfrogFileName: string = Utils.getJFrogExecutableName();
-        if (version == Utils.LATEST_CLI_VERSION) {
+        if (version === Utils.LATEST_CLI_VERSION) {
             // If the version is 'latest', we keep it on cache as 100.100.100
             version = Utils.LATEST_SEMVER;
         }
@@ -298,10 +298,12 @@ export class Utils {
     public static getCliUrl(version: string, fileName: string, downloadDetails: DownloadDetails): string {
         const architecture: string = 'jfrog-cli-' + Utils.getArchitecture();
         const artifactoryUrl: string = downloadDetails.artifactoryUrl.replace(/\/$/, '');
-        let major: string = version.split('.')[0];
+        let major: string;
         if (version === Utils.LATEST_CLI_VERSION) {
             version = Utils.LATEST_RELEASE_VERSION;
             major = '2';
+        } else {
+            major = version.split('.')[0];
         }
         return `${artifactoryUrl}/${downloadDetails.repository}/v${major}/${version}/${architecture}/${fileName}`;
     }
