@@ -37,41 +37,20 @@ async function buildInfoPostTasks() {
     }
 
     // Check connection to Artifactory before proceeding with build info post tasks
-    try {
-        core.startGroup('Checking connection to JFrog Artifactory');
-        const pingResult: string = await Utils.runCliAndGetOutput(['rt', 'ping']);
-        if (pingResult !== 'OK') {
-            core.warning('Could not connect to Artifactory. Skipping Build Info post tasks.');
-        }
-    } catch (error) {
-        core.warning(`An error occurred while trying to connect to Artifactory: ${error}. Skipping Build Info post tasks.`);
+    if (!(await checkConnectionToArtifactory())) {
         return;
-    } finally {
-        core.endGroup();
     }
 
     // Auto-publish build info if needed
-    try {
-        if (!disableAutoBuildPublish) {
-            await collectAndPublishBuildInfoIfNeeded();
-        } else {
-            core.info('Auto build info publish is disabled. Skipping auto build info collection and publishing');
-        }
-    } catch (error) {
-        core.warning('Failed while attempting to collect and publish build info: ' + error);
+    if (!disableAutoBuildPublish) {
+        await collectAndPublishBuildInfoIfNeeded();
+    } else {
+        core.info('Auto build info publish is disabled. Skipping auto build info collection and publishing');
     }
 
     // Generate job summary
     if (!disableJobSummary) {
-        try {
-            core.startGroup('Generating Job Summary');
-            await Utils.runCli(['generate-summary-markdown']);
-            await Utils.setMarkdownAsJobSummary();
-        } catch (error) {
-            core.warning('Failed while attempting to generate job summary: ' + error);
-        } finally {
-            core.endGroup();
-        }
+        await generateJobSummary();
     } else {
         core.info('Job summary is disabled. Skipping job summary generation');
     }
@@ -97,7 +76,8 @@ async function hasUnpublishedModules(workingDirectory: string): Promise<boolean>
         // Check if the "modules" key exists and if it's an array with more than one item
         return response.modules != undefined && Array.isArray(response.modules) && response.modules.length > 0;
     } catch (error) {
-        throw new Error('Failed to check if there are any unpublished modules: ' + error);
+        core.warning('Failed to check if there are any unpublished modules: ' + error);
+        return false;
     } finally {
         core.exportVariable(Utils.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV, origValue);
         core.endGroup();
@@ -113,7 +93,6 @@ async function collectAndPublishBuildInfoIfNeeded() {
 
     // The flow here is to collect Git information before publishing the build info.
     // We allow this step to fail, and we don't want to fail the entire build publish if they do.
-
     try {
         core.startGroup('Collect the Git information');
         await Utils.runCli(['rt', 'build-add-git'], { cwd: workingDirectory });
@@ -134,6 +113,35 @@ function getWorkingDirectory(): string {
         throw new Error('GITHUB_WORKSPACE is not defined.');
     }
     return workingDirectory;
+}
+
+async function checkConnectionToArtifactory(): Promise<boolean> {
+    try {
+        core.startGroup('Checking connection to JFrog Artifactory');
+        const pingResult: string = await Utils.runCliAndGetOutput(['rt', 'ping']);
+        if (pingResult !== 'OK') {
+            core.warning('Could not connect to Artifactory. Skipping Build Info post tasks.');
+            return false;
+        }
+        return true;
+    } catch (error) {
+        core.warning(`An error occurred while trying to connect to Artifactory: ${error}. Skipping Build Info post tasks.`);
+        return false;
+    } finally {
+        core.endGroup();
+    }
+}
+
+async function generateJobSummary() {
+    try {
+        core.startGroup('Generating Job Summary');
+        await Utils.runCli(['generate-summary-markdown']);
+        await Utils.setMarkdownAsJobSummary();
+    } catch (error) {
+        core.warning('Failed while attempting to generate job summary: ' + error);
+    } finally {
+        core.endGroup();
+    }
 }
 
 cleanup();
