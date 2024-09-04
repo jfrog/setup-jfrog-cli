@@ -21,31 +21,33 @@ async function cleanup() {
     }
 }
 
+/**
+ * Auto-publish unpublished builds and generate job summary if CLI version is compatible
+ */
 async function autoPublishBuildsAndGenerateSummary() {
-    // First we check for compatible CLI version
-    let supported: boolean = await supportedCliVersion();
-    if (supported) {
-        // Auto-publish build info if needed
-        try {
-            if (!core.getBooleanInput(Utils.AUTO_BUILD_PUBLISH_DISABLE)) {
-                core.startGroup('Auto-publishing build info to JFrog Artifactory');
-                await collectAndPublishBuildInfoIfNeeded();
-                core.endGroup();
-            }
-        } catch (error) {
-            core.warning('failed while attempting to publish build info: ' + error);
+    if (!(await supportedCliVersion(Utils.minJobSummaryCLIVersion))) {
+        return;
+    }
+    // Auto-publish build info and collect git information
+    try {
+        if (!core.getBooleanInput(Utils.AUTO_BUILD_PUBLISH_DISABLE)) {
+            core.startGroup('Auto-publishing build info to JFrog Artifactory');
+            await collectAndPublishBuildInfoIfNeeded();
+            core.endGroup();
         }
-        // Generate job summary
-        try {
-            if (!core.getBooleanInput(Utils.JOB_SUMMARY_DISABLE)) {
-                core.startGroup('Generating Job Summary');
-                await Utils.runCli(['generate-summary-markdown']);
-                await Utils.setMarkdownAsJobSummary();
-                core.endGroup();
-            }
-        } catch (error) {
-            core.warning('failed while attempting to generate job summary: ' + error);
+    } catch (error) {
+        core.warning('failed while attempting to publish build info: ' + error);
+    }
+    // Generate job summary
+    try {
+        if (!core.getBooleanInput(Utils.JOB_SUMMARY_DISABLE)) {
+            core.startGroup('Generating Job Summary');
+            await Utils.runCli(['generate-summary-markdown']);
+            await Utils.setMarkdownAsJobSummary();
+            core.endGroup();
         }
+    } catch (error) {
+        core.warning('failed while attempting to generate job summary: ' + error);
     }
 }
 
@@ -72,7 +74,10 @@ async function hasUnpublishedModules(workingDirectory: string): Promise<boolean>
         core.exportVariable(Utils.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV, '');
 
         // Running build-publish command with a dry-run flag to check if there are any unpublished modules, 'silent' to avoid polluting the logs
-        const responseStr: string = await Utils.runCliAndGetOutput(['rt', 'build-publish', '--dry-run'], { silent: true, cwd: workingDirectory });
+        const responseStr: string = await Utils.runCliAndGetOutput(['rt', 'build-publish', '--dry-run'], {
+            silent: true,
+            cwd: workingDirectory,
+        });
 
         // Parse the JSON string to an object
         const response: BuildPublishResponse = JSON.parse(responseStr);
@@ -118,12 +123,15 @@ function getWorkingDirectory(): string {
     return workingDirectory;
 }
 
-export async function supportedCliVersion(): Promise<boolean> {
+/**
+ * Check if the installed JFrog CLI version equal or greater than the minimum supplied
+ */
+export async function supportedCliVersion(minimumVersion: string): Promise<boolean> {
     let cliVersion: string | null = await getCliVersion();
     if (!cliVersion) {
         return false;
     }
-    return semver.gte(cliVersion, Utils.minJobSummaryCLIVersion);
+    return semver.gte(cliVersion, minimumVersion);
 }
 
 async function getCliVersion(): Promise<string | null> {
