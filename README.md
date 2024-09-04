@@ -14,12 +14,13 @@
 -   [Overview](#overview)
 -   [Usage](#usage)
 -   [Authentication Methods](#Authentication-Methods)
--   [Setting the build name and build number when publishing build-info to Artifactory](#setting-the-build-name-and-build-number-when-publishing-build-info-to-artifactory)
--   [Setting JFrog CLI version](#setting-jfrog-cli-version)
--   [Setting the JFrog project key](#setting-the-jfrog-project-key)
--   [Downloading JFrog CLI from Artifactory](#downloading-jfrog-cli-from-artifactory)
+-   [General Configuration](#general-configuration)
+    -   [Setting Build Name and Number for Build Info Publication](#setting-build-name-and-number-for-build-info-publication)
+    -   [Setting JFrog CLI Version](#setting-jfrog-cli-version)
+    -   [Setting the JFrog Project Key](#setting-the-jfrog-project-key)
+    -   [Downloading JFrog CLI from Artifactory](#downloading-jfrog-cli-from-artifactory)
 -   [JFrog Job Summary](#jfrog-job-summary)
--   [Example projects](#example-projects)
+-   [Example Projects](#example-projects)
 -   [Contributions](#contributions)
 -   [References](#references)
 
@@ -29,54 +30,22 @@ This GitHub Action downloads, installs and configures [JFrog CLI](https://docs.j
 
 Additionally, the Action incorporates the following features when utilizing JFrog CLI to interact with the JFrog Platform:
 
--   Three distinct methods are available for authenticating with the JFrog Platform. Explore more details [here](#Authentication-Methods)
--   There's no need to add the _build name_ and _build number_ options and arguments to commands which accept them.
-    All build related operations will be automatically recorded with the _Workflow Name_ as build name and _Run Number_ as build number.
+-   **Versatile authentication methods** - Three distinct methods are available for [authenticating](#Authentication-Methods) with the JFrog Platform.
+-   **Seamless build info generation** - All build related operations will be automatically recorded, and the collected build info will be published at the end of the workflow. There's no need to add the _build name_ and _build number_ options and arguments to commands which accept them, and no need to run `jf rt build-publish` for the build to be published.
+-   **Extensive Job Summary** - A detailed summary of key JFrog CLI commands executed during the workflow will be generated and displayed in the GitHub Actions run page. 
 
 ## Usage
 
 ```yml
 - uses: jfrog/setup-jfrog-cli@v4
-- run: jf --version
 # + Authentication method
+- run: jf --version
 ```
 
 ## Authentication Methods
 
 JFrog CLI integrates with the JFrog Platform. In order to facilitate this connection, certain connection details of the JFrog Platform must be provided.
-There exist three methods to provide these details, and you only need to choose **one** method:
-
-<details>
-    <summary>🔐 Storing the connection details using environment variables</summary>
-
-### 
-The connection details of the JFrog platform used by this action can be stored as [GitHub secrets](https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions#creating-secrets-for-a-repository) (or [GitHub Variables](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/variables) for non-secret values)
-
-You can set the connection details to your JFrog Platform by using one of the following combinations:
-
-1. JF_URL (no authentication)
-2. JF_URL + JF_USER + JF_PASSWORD (basic authentication)
-3. JF_URL + JF_ACCESS_TOKEN (authentication using a JFrog Access Token)
-
-You can use these environment variables in your workflow as follows:
-
-```yml
-- uses: jfrog/setup-jfrog-cli@v4
-  env:
-    # JFrog Platform url
-    JF_URL: ${{ vars.JF_URL }} # or 'https://acme.jfrog.io'
-
-    # Basic authentication credentials
-    JF_USER: ${{ secrets.JF_USER }}
-    JF_PASSWORD: ${{ secrets.JF_PASSWORD }}
-    # or
-    # JFrog Platform access token
-    JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
-- run: |
-    jf rt ping
-```
-
-</details>
+There are three methods to provide these details, and you only need to choose **one** method:
 
 <details>
     <summary>👤 Connecting to JFrog using OIDC (OpenID Connect)</summary>
@@ -152,6 +121,38 @@ Example step utilizing OpenID Connect:
 </details>
 
 <details>
+    <summary>🔐 Storing the connection details using environment variables</summary>
+
+### 
+The connection details of the JFrog platform used by this action can be stored as [GitHub secrets](https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions#creating-secrets-for-a-repository) (or [GitHub Variables](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/variables) for non-secret values)
+
+You can set the connection details to your JFrog Platform by using one of the following combinations:
+
+1. JF_URL (no authentication)
+2. JF_URL + JF_USER + JF_PASSWORD (basic authentication)
+3. JF_URL + JF_ACCESS_TOKEN (authentication using a JFrog Access Token)
+
+You can use these environment variables in your workflow as follows:
+
+```yml
+- uses: jfrog/setup-jfrog-cli@v4
+  env:
+    # JFrog Platform url
+    JF_URL: ${{ vars.JF_URL }} # or 'https://acme.jfrog.io'
+
+    # Basic authentication credentials
+    JF_USER: ${{ secrets.JF_USER }}
+    JF_PASSWORD: ${{ secrets.JF_PASSWORD }}
+    # or
+    # JFrog Platform access token
+    JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
+- run: |
+    jf rt ping
+```
+
+</details>
+
+<details>
     <summary>⚙️ Storing the connection details using single Config Token</summary>
 
 ### 
@@ -203,8 +204,12 @@ If you have multiple Config Tokens as secrets, you can use all of them in the wo
 
 </details>
 
-## Setting the build name and build number when publishing build-info to Artifactory
+## General Configuration
+<details>
+    <summary>Setting build name and number for build info publication to Artifactory</summary>
 
+### Setting Build Name and Number for Build Info Publication
+Build info collection and publication to Artifactory happens seamlessly when using the action in your workflow.\
 The Action automatically sets the following environment variables:
 _JFROG_CLI_BUILD_NAME_ and _JFROG_CLI_BUILD_NUMBER_ with the workflow name and run number respectively.
 You therefore don't need to specify the build name and build number on any of the build related JFrog CLI commands.
@@ -219,9 +224,18 @@ are registered as the build artifacts.
       jf rt build-publish
 ```
 
-You may override the default build name and number by setting the above variables in your workflow.
+You may override the default build name and number by setting the following environment variables in your workflow:
+```yml
+env:
+  JFROG_CLI_BUILD_NAME: "Custom build name"
+  JFROG_CLI_BUILD_NUMBER: "123"
+```
+</details>
 
-## Setting JFrog CLI version
+<details>
+    <summary>Setting JFrog CLI version</summary>
+
+### Setting JFrog CLI Version
 
 By default, the JFrog CLI version set in [action.yml](https://github.com/jfrog/setup-jfrog-cli/blob/master/action.yml) is used. To set a specific version, add the _version_ input as follows:
 
@@ -242,7 +256,12 @@ It is also possible to set the latest JFrog CLI version by adding the _version_ 
 | Important: Only JFrog CLI versions 1.46.4 or above are supported. |
 |-------------------------------------------------------------------|
 
-## Setting the JFrog project key
+</details>
+
+<details>
+    <summary>Setting the JFrog project key</summary>
+
+### Setting the JFrog Project Key
 
 [JFrog Projects](https://jfrog.com/help/r/jfrog-platform-administration-documentation/projects) are a management entity that hosts all your resources related to a specific project,
 such as repositories, builds and Release Bundles.
@@ -255,8 +274,12 @@ You can set the project key in the environment variable ```JF_PROJECT``` to avoi
   env:
       JF_PROJECT: "project-key"
 ```
+</details>
 
-## Downloading JFrog CLI from Artifactory
+<details>
+    <summary>Downloading JFrog CLI from Artifactory</summary>
+
+### Downloading JFrog CLI from Artifactory
 
 If your agent has no Internet access, you can configure the workflow to download JFrog CLI from a [remote repository](https://www.jfrog.com/confluence/display/JFROG/Remote+Repositories) in your JFrog Artifactory, which is configured to proxy the official download URL.
 
@@ -275,6 +298,7 @@ Here's how you do this:
       with:
           download-repository: jfrog-cli-remote
     ```
+</details>
 
 ## JFrog Job Summary
 
