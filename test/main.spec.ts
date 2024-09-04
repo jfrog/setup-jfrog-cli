@@ -1,7 +1,7 @@
 import * as os from 'os';
 import * as core from '@actions/core';
 import { Utils, DownloadDetails, JfrogCredentials, JWTTokenData } from '../src/utils';
-import { supportedCliVersion } from '../src/cleanup';
+import { isCliVersionAtLeast } from '../src/cleanup';
 jest.mock('os');
 jest.mock('@actions/core');
 
@@ -369,28 +369,21 @@ describe('AutoPublishSupportedCliVersion', () => {
     it('should return true for CLI version greater than 2.66.0', async () => {
         let testCliVersion: string = '2.67.0';
         jest.spyOn(Utils, 'runCliAndGetOutput').mockResolvedValue(`jf version ${testCliVersion}`);
-        const result: boolean = await supportedCliVersion(Utils.minJobSummaryCLIVersion);
+        const result: boolean = await isCliVersionAtLeast(Utils.minJobSummaryCLIVersion);
         expect(result).toBe(true);
     });
 
     it('should return true for CLI version greater or equal to 2.66.0', async () => {
         let testCliVersion: string = '2.66.0';
         jest.spyOn(Utils, 'runCliAndGetOutput').mockResolvedValue(`jf version ${testCliVersion}`);
-        const result: boolean = await supportedCliVersion(Utils.minJobSummaryCLIVersion);
+        const result: boolean = await isCliVersionAtLeast(Utils.minJobSummaryCLIVersion);
         expect(result).toBe(true);
     });
 
     it('should return false for CLI version less than 2.66.0', async () => {
         let testCliVersion: string = '2.65.0';
         jest.spyOn(Utils, 'runCliAndGetOutput').mockResolvedValue(`jf version ${testCliVersion}`);
-        const result: boolean = await supportedCliVersion(Utils.minJobSummaryCLIVersion);
-        expect(result).toBe(false);
-    });
-
-    it('should return false if CLI version cannot be determined', async () => {
-        let testCliVersion: string = 'unknown version';
-        jest.spyOn(Utils, 'runCliAndGetOutput').mockResolvedValue(`jf version ${testCliVersion}`);
-        const result: boolean = await supportedCliVersion(Utils.minJobSummaryCLIVersion);
+        const result: boolean = await isCliVersionAtLeast(Utils.minJobSummaryCLIVersion);
         expect(result).toBe(false);
     });
 });

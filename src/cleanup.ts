@@ -25,7 +25,7 @@ async function cleanup() {
  * Auto-publish unpublished builds and generate job summary if CLI version is compatible
  */
 async function autoPublishBuildsAndGenerateSummary() {
-    if (!(await supportedCliVersion(Utils.minJobSummaryCLIVersion))) {
+    if (!(await isCliVersionAtLeast(Utils.minJobSummaryCLIVersion))) {
         return;
     }
     // Auto-publish build info and collect git information
@@ -124,21 +124,21 @@ function getWorkingDirectory(): string {
 }
 
 /**
- * Check if the installed JFrog CLI version equal or greater than the minimum supplied
+ * Check if the installed JFrog CLI version is equal to or greater than the minimum supplied
  */
-export async function supportedCliVersion(minimumVersion: string): Promise<boolean> {
+export async function isCliVersionAtLeast(minimumVersion: string): Promise<boolean> {
     let cliVersionOutput: string | null = await Utils.runCliAndGetOutput(['--version']);
     if (!cliVersionOutput) {
         return false;
     }
 
-    // Extract the version number using a regular expression
-    const versionMatch: RegExpMatchArray | null = cliVersionOutput.match(/jf version (\d+\.\d+\.\d+)/);
-    if (!versionMatch) {
+    // Extract the version number assuming the format is always "jf version x.y.z"
+    const cliVersionParts: string[] = cliVersionOutput.split(' ');
+    if (cliVersionParts.length < 3) {
         return false;
     }
 
-    const cliVersion: string = versionMatch[1];
+    const cliVersion: string = cliVersionParts[2];
     return semver.gte(cliVersion, minimumVersion);
 }
 
