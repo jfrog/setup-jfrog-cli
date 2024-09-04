@@ -308,6 +308,7 @@ export class Utils {
         }
         return `${artifactoryUrl}/${downloadDetails.repository}/v${major}/${version}/${architecture}/${fileName}`;
     }
+
     // Get Config Tokens created on your local machine using JFrog CLI.
     // The Tokens configured with JF_ENV_ environment variables.
     public static getConfigTokens(): Set<string> {
