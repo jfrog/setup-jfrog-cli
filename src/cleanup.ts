@@ -143,6 +143,9 @@ async function generateJobSummary() {
         core.startGroup('Generating Job Summary');
         await Utils.runCli(['generate-summary-markdown']);
         await Utils.setMarkdownAsJobSummary();
+        await Utils.populateCodeScanningTab();
+        // Clear files
+        await Utils.clearCommandSummaryDir();
     } catch (error) {
         core.warning('Failed while attempting to generate job summary: ' + error);
     } finally {
