@@ -62,17 +62,18 @@ async function buildInfoPostTasks() {
     }
 
     // Generate job summary
-    try {
-        if (!disableJobSummary) {
+    if (!disableJobSummary) {
+        try {
             core.startGroup('Generating Job Summary');
             await Utils.runCli(['generate-summary-markdown']);
             await Utils.setMarkdownAsJobSummary();
+        } catch (error) {
+            core.warning('Failed while attempting to generate job summary: ' + error);
+        } finally {
             core.endGroup();
-        } else {
-            core.info('Job summary is disabled. Skipping job summary generation');
         }
-    } catch (error) {
-        core.warning('Failed while attempting to generate job summary: ' + error);
+    } else {
+        core.info('Job summary is disabled. Skipping job summary generation');
     }
 }
 
