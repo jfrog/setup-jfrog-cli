@@ -121,6 +121,7 @@ async function checkConnectionToArtifactory(): Promise<boolean> {
         core.startGroup('Checking connection to JFrog Artifactory');
         const pingResult: string = await Utils.runCliAndGetOutput(['rt', 'ping']);
         if (pingResult !== 'OK') {
+            core.debug(`Ping result: ${pingResult}`);
             core.warning('Could not connect to Artifactory. Skipping Build Info post tasks.');
             return false;
         }
