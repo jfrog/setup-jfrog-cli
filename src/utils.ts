@@ -277,7 +277,7 @@ export class Utils {
      * @param version              - JFrog CLI version
      */
     private static async cacheAndAddPath(downloadedExecutable: string, version: string) {
-        if (version === Utils.LATEST_RELEASE_VERSION) {
+        if (version === Utils.LATEST_CLI_VERSION) {
             // If the version is 'latest', we keep it on cache as 100.100.100 as GitHub actions cache supports only semver versions
             version = Utils.LATEST_SEMVER;
         }
