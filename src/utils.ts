@@ -23,7 +23,7 @@ export class Utils {
     // Minimum JFrog CLI version supported
     private static readonly MIN_CLI_VERSION: string = '1.46.4';
     // The value in "version" argument to set to get the latest JFrog CLI version
-    public static readonly LATEST_CLI_VERSION: string = 'latest';
+    private static readonly LATEST_CLI_VERSION: string = 'latest';
     // The value in the download URL to set to get the latest version
     private static readonly LATEST_RELEASE_VERSION: string = '[RELEASE]';
     // State name for saving JF CLI path to use on cleanup
