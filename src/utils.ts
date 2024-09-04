@@ -26,7 +26,7 @@ export class Utils {
     private static readonly LATEST_CLI_VERSION: string = 'latest';
     // The value in the download URL to set to get the latest version
     private static readonly LATEST_RELEASE_VERSION: string = '[RELEASE]';
-    // State name for saving JF CLI path to use on cleanup
+    // Placeholder CLI version to use to keep 'latest' in cache.
     public static readonly LATEST_SEMVER: string = '100.100.100';
     // The default server id name for separate env config
     public static readonly SETUP_JFROG_CLI_SERVER_ID: string = 'setup-jfrog-cli-server';
@@ -296,6 +296,12 @@ export class Utils {
         }
     }
 
+    /**
+     * Get the JFrog CLI download URL.
+     * @param version - Requested version
+     * @param fileName - Executable file name
+     * @param downloadDetails - Source Artifactory details
+     */
     public static getCliUrl(version: string, fileName: string, downloadDetails: DownloadDetails): string {
         const architecture: string = 'jfrog-cli-' + Utils.getArchitecture();
         const artifactoryUrl: string = downloadDetails.artifactoryUrl.replace(/\/$/, '');

@@ -31,9 +31,9 @@ async function cleanup() {
  */
 async function buildInfoPostTasks() {
     const disableAutoBuildPublish: boolean = core.getBooleanInput(Utils.AUTO_BUILD_PUBLISH_DISABLE);
-    const disableJobSummary: boolean = core.getBooleanInput(Utils.JOB_SUMMARY_DISABLE);
+    const disableJobSummary: boolean = core.getBooleanInput(Utils.JOB_SUMMARY_DISABLE) || !Utils.isJobSummarySupported();
     if (disableAutoBuildPublish && disableJobSummary) {
-        core.info(`Both ${Utils.AUTO_BUILD_PUBLISH_DISABLE} and ${Utils.JOB_SUMMARY_DISABLE} are set to true. Skipping Build Info post tasks.`);
+        core.info(`Both auto-build-publish and job-summary are disabled. Skipping Build Info post tasks.`);
         return;
     }
 
@@ -50,7 +50,7 @@ async function buildInfoPostTasks() {
     }
 
     // Generate job summary if not disabled and the JFrog CLI version supports it
-    if (!disableJobSummary && Utils.isJobSummarySupported()) {
+    if (!disableJobSummary) {
         await generateJobSummary();
     } else {
         core.info('Job summary is disabled. Skipping job summary generation');
@@ -103,9 +103,13 @@ async function collectAndPublishBuildInfoIfNeeded() {
         core.endGroup();
     }
 
-    core.startGroup('Publish the build info to JFrog Artifactory');
-    await Utils.runCli(['rt', 'build-publish'], { cwd: workingDirectory });
-    core.endGroup();
+    // Publish the build info to Artifactory
+    try {
+        core.startGroup('Publish the build info to JFrog Artifactory');
+        await Utils.runCli(['rt', 'build-publish'], { cwd: workingDirectory });
+    } finally {
+        core.endGroup();
+    }
 }
 
 function getWorkingDirectory(): string {
