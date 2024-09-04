@@ -221,24 +221,19 @@ export class Utils {
     }
 
     public static async getAndAddCliToPath(jfrogCredentials: JfrogCredentials) {
-        core.info('test');
         let version: string = core.getInput(Utils.CLI_VERSION_ARG);
         let cliRemote: string = core.getInput(Utils.CLI_REMOTE_ARG);
-        const isLatestVer: boolean = version !== Utils.LATEST_CLI_VERSION;
-        core.info('test2');
+        const isLatestVer: boolean = version === Utils.LATEST_CLI_VERSION;
 
         if (!isLatestVer && lt(version, this.MIN_CLI_VERSION)) {
             throw new Error('Requested to download JFrog CLI version ' + version + ' but must be at least ' + this.MIN_CLI_VERSION);
         }
-        core.info('test3');
         if (!isLatestVer && this.loadFromCache(version)) {
             core.info('Found JFrog CLI in cache. No need to download');
             return;
         }
-        core.info('test4');
         // Download JFrog CLI
         let downloadDetails: DownloadDetails = Utils.extractDownloadDetails(cliRemote, jfrogCredentials);
-        core.info('test5');
         let url: string = Utils.getCliUrl(version, Utils.getJFrogExecutableName(), downloadDetails);
         core.info('Downloading JFrog CLI from ' + url);
         let downloadedExecutable: string = await toolCache.downloadTool(url, undefined, downloadDetails.auth);
