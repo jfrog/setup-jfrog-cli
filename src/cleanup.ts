@@ -23,6 +23,7 @@ async function cleanup() {
 
 /**
  * Auto-publish unpublished builds and generate job summary if CLI version is compatible
+ * The logs are debug logs to avoid alarming users who cannot use this features
  */
 async function autoPublishBuildsAndGenerateSummary() {
     if (!(await isCliVersionAtLeast(Utils.minJobSummaryCLIVersion))) {
@@ -36,7 +37,7 @@ async function autoPublishBuildsAndGenerateSummary() {
             core.endGroup();
         }
     } catch (error) {
-        core.warning('failed while attempting to publish build info: ' + error);
+        core.debug('failed while attempting to publish build info: ' + error);
     }
     // Generate job summary
     try {
@@ -47,7 +48,7 @@ async function autoPublishBuildsAndGenerateSummary() {
             core.endGroup();
         }
     } catch (error) {
-        core.warning('failed while attempting to generate job summary: ' + error);
+        core.debug('failed while attempting to generate job summary: ' + error);
     }
 }
 
