@@ -13,11 +13,13 @@ concurrency:
 
 jobs:
   Auto-Build-Publish-Test:
+    name: Auto-Build-Publish-Test (${{ matrix.os }}) - (CLI ${{ matrix.cli-version }})
     if: contains(github.event.pull_request.labels.*.name, 'safe to test') || github.event_name == 'push'
     strategy:
       fail-fast: false
       matrix:
         os: [ ubuntu, windows, macos ]
+        cli-version: [ "latest", "2.66.0" ]
     runs-on: ${{ matrix.os }}-latest
     steps:
       - name: Checkout Repository
@@ -51,6 +53,8 @@ jobs:
       - name: Setup JFrog CLI
         id: setup-jfrog-cli
         uses: ./
+        with:
+          version: ${{ matrix.cli-version }}
         env:
           JF_URL: http://localhost:8081/
           JF_USER: admin

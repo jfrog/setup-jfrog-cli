@@ -168,11 +168,11 @@ describe('JFrog CLI V1 URL Tests', () => {
     test.each(cases)('CLI Url for %s-%s', (platform, arch, fileName, expectedUrl) => {
         myOs.platform.mockImplementation(() => <NodeJS.Platform>platform);
         myOs.arch.mockImplementation(() => arch);
-        let cliUrl: string = Utils.getCliUrl('1', '1.2.3', fileName, Utils.DEFAULT_DOWNLOAD_DETAILS);
+        let cliUrl: string = Utils.getCliUrl('1.2.3', fileName, Utils.DEFAULT_DOWNLOAD_DETAILS);
         expect(cliUrl).toBe(DEFAULT_CLI_URL + expectedUrl);
 
         process.env.JF_ENV_LOCAL = V1_CONFIG;
-        cliUrl = Utils.getCliUrl('1', '1.2.3', fileName, Utils.extractDownloadDetails('jfrog-cli-remote', {} as JfrogCredentials));
+        cliUrl = Utils.getCliUrl('1.2.3', fileName, Utils.extractDownloadDetails('jfrog-cli-remote', {} as JfrogCredentials));
         expect(cliUrl).toBe(CUSTOM_CLI_URL + expectedUrl);
     });
 });
@@ -193,11 +193,11 @@ describe('JFrog CLI V2 URL Tests', () => {
         myOs.platform.mockImplementation(() => <NodeJS.Platform>platform);
         myOs.arch.mockImplementation(() => arch);
 
-        let cliUrl: string = Utils.getCliUrl('2', '2.3.4', fileName, Utils.extractDownloadDetails('', {} as JfrogCredentials));
+        let cliUrl: string = Utils.getCliUrl('2.3.4', fileName, Utils.extractDownloadDetails('', {} as JfrogCredentials));
         expect(cliUrl).toBe(DEFAULT_CLI_URL + expectedUrl);
 
         process.env.JF_ENV_LOCAL = V2_CONFIG;
-        cliUrl = Utils.getCliUrl('2', '2.3.4', fileName, Utils.extractDownloadDetails('jfrog-cli-remote', {} as JfrogCredentials));
+        cliUrl = Utils.getCliUrl('2.3.4', fileName, Utils.extractDownloadDetails('jfrog-cli-remote', {} as JfrogCredentials));
         expect(cliUrl).toBe(CUSTOM_CLI_URL + expectedUrl);
     });
 });

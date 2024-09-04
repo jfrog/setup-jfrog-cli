@@ -7,7 +7,7 @@ import { OutgoingHttpHeaders } from 'http';
 import { arch, platform, tmpdir } from 'os';
 import * as path from 'path';
 import { join } from 'path';
-import { lt } from 'semver';
+import { gt, lt } from 'semver';
 
 export class Utils {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -26,18 +26,20 @@ export class Utils {
     private static readonly LATEST_CLI_VERSION: string = 'latest';
     // The value in the download URL to set to get the latest version
     private static readonly LATEST_RELEASE_VERSION: string = '[RELEASE]';
-    // State name for saving JF CLI path to use on cleanup
-    public static readonly JF_CLI_PATH_STATE: string = 'JF_CLI_PATH_STATE';
+    // Placeholder CLI version to use to keep 'latest' in cache.
+    public static readonly LATEST_SEMVER: string = '100.100.100';
     // The default server id name for separate env config
     public static readonly SETUP_JFROG_CLI_SERVER_ID: string = 'setup-jfrog-cli-server';
     // Directory name which holds markdown files for the Workflow summary
     private static readonly JOB_SUMMARY_DIR_NAME: string = 'jfrog-command-summary';
     // JFrog CLI command summary output directory environment variable
     public static readonly JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV: string = 'JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR';
+    // Minimum JFrog CLI version supported for job summary command
+    private static readonly MIN_CLI_VERSION_JOB_SUMMARY: string = '2.66.0';
 
     // Inputs
     // Version input
-    private static readonly CLI_VERSION_ARG: string = 'version';
+    public static readonly CLI_VERSION_ARG: string = 'version';
     // Download repository input
     private static readonly CLI_REMOTE_ARG: string = 'download-repository';
     // OpenID Connect audience input
@@ -223,50 +225,48 @@ export class Utils {
     public static async getAndAddCliToPath(jfrogCredentials: JfrogCredentials) {
         let version: string = core.getInput(Utils.CLI_VERSION_ARG);
         let cliRemote: string = core.getInput(Utils.CLI_REMOTE_ARG);
-        let major: string = version.split('.')[0];
-        if (version === Utils.LATEST_CLI_VERSION) {
-            version = Utils.LATEST_RELEASE_VERSION;
-            major = '2';
-        } else if (lt(version, this.MIN_CLI_VERSION)) {
+        const isLatestVer: boolean = version === Utils.LATEST_CLI_VERSION;
+
+        if (!isLatestVer && lt(version, this.MIN_CLI_VERSION)) {
             throw new Error('Requested to download JFrog CLI version ' + version + ' but must be at least ' + this.MIN_CLI_VERSION);
         }
-
-        let jfFileName: string = Utils.getJfExecutableName();
-        let jfrogFileName: string = Utils.getJFrogExecutableName();
-        if (this.loadFromCache(jfFileName, jfrogFileName, version)) {
-            // Download is not needed
+        if (!isLatestVer && this.loadFromCache(version)) {
+            core.info('Found JFrog CLI in cache. No need to download');
             return;
         }
-
         // Download JFrog CLI
         let downloadDetails: DownloadDetails = Utils.extractDownloadDetails(cliRemote, jfrogCredentials);
-        let url: string = Utils.getCliUrl(major, version, jfrogFileName, downloadDetails);
+        let url: string = Utils.getCliUrl(version, Utils.getJFrogExecutableName(), downloadDetails);
         core.info('Downloading JFrog CLI from ' + url);
         let downloadedExecutable: string = await toolCache.downloadTool(url, undefined, downloadDetails.auth);
 
         // Cache 'jf' and 'jfrog' executables
-        await this.cacheAndAddPath(downloadedExecutable, version, jfFileName, jfrogFileName);
+        await this.cacheAndAddPath(downloadedExecutable, version);
     }
 
     /**
      * Try to load the JFrog CLI executables from cache.
      *
-     * @param jfFileName    - 'jf' or 'jf.exe'
-     * @param jfrogFileName - 'jfrog' or 'jfrog.exe'
      * @param version       - JFrog CLI version
      * @returns true if the CLI executable was loaded from cache and added to path
      */
-    private static loadFromCache(jfFileName: string, jfrogFileName: string, version: string): boolean {
-        if (version === Utils.LATEST_RELEASE_VERSION) {
-            return false;
+    public static loadFromCache(version: string): boolean {
+        const jfFileName: string = Utils.getJfExecutableName();
+        const jfrogFileName: string = Utils.getJFrogExecutableName();
+        if (version === Utils.LATEST_CLI_VERSION) {
+            // If the version is 'latest', we keep it on cache as 100.100.100
+            version = Utils.LATEST_SEMVER;
         }
-        let jfExecDir: string = toolCache.find(jfFileName, version);
-        let jfrogExecDir: string = toolCache.find(jfrogFileName, version);
+        const jfExecDir: string = toolCache.find(jfFileName, version);
+        const jfrogExecDir: string = toolCache.find(jfrogFileName, version);
         if (jfExecDir && jfrogExecDir) {
             core.addPath(jfExecDir);
             core.addPath(jfrogExecDir);
-            // Save the JF CLI path to use on cleanup. saveState/getState are methods to pass data between a step, and its cleanup function.
-            core.saveState(Utils.JF_CLI_PATH_STATE, jfExecDir);
+
+            if (!Utils.isWindows()) {
+                chmodSync(join(jfExecDir, jfFileName), 0o555);
+                chmodSync(join(jfrogExecDir, jfrogFileName), 0o555);
+            }
             return true;
         }
         return false;
@@ -276,10 +276,14 @@ export class Utils {
      * Add JFrog CLI executables to cache and to the system path.
      * @param downloadedExecutable - Path to the downloaded JFrog CLI executable
      * @param version              - JFrog CLI version
-     * @param jfFileName           - 'jf' or 'jf.exe'
-     * @param jfrogFileName        - 'jfrog' or 'jfrog.exe'
      */
-    private static async cacheAndAddPath(downloadedExecutable: string, version: string, jfFileName: string, jfrogFileName: string) {
+    private static async cacheAndAddPath(downloadedExecutable: string, version: string) {
+        if (version === Utils.LATEST_CLI_VERSION) {
+            // If the version is 'latest', we keep it on cache as 100.100.100 as GitHub actions cache supports only semver versions
+            version = Utils.LATEST_SEMVER;
+        }
+        const jfFileName: string = Utils.getJfExecutableName();
+        const jfrogFileName: string = Utils.getJFrogExecutableName();
         let jfCacheDir: string = await toolCache.cacheFile(downloadedExecutable, jfFileName, jfFileName, version);
         core.addPath(jfCacheDir);
 
@@ -290,16 +294,27 @@ export class Utils {
             chmodSync(join(jfCacheDir, jfFileName), 0o555);
             chmodSync(join(jfrogCacheDir, jfrogFileName), 0o555);
         }
-
-        // Save the JF CLI path to use on cleanup. saveState/getState are methods to pass data between a step, and it's cleanup function.
-        core.saveState(Utils.JF_CLI_PATH_STATE, jfCacheDir);
     }
 
-    public static getCliUrl(major: string, version: string, fileName: string, downloadDetails: DownloadDetails): string {
-        let architecture: string = 'jfrog-cli-' + Utils.getArchitecture();
-        let artifactoryUrl: string = downloadDetails.artifactoryUrl.replace(/\/$/, '');
+    /**
+     * Get the JFrog CLI download URL.
+     * @param version - Requested version
+     * @param fileName - Executable file name
+     * @param downloadDetails - Source Artifactory details
+     */
+    public static getCliUrl(version: string, fileName: string, downloadDetails: DownloadDetails): string {
+        const architecture: string = 'jfrog-cli-' + Utils.getArchitecture();
+        const artifactoryUrl: string = downloadDetails.artifactoryUrl.replace(/\/$/, '');
+        let major: string;
+        if (version === Utils.LATEST_CLI_VERSION) {
+            version = Utils.LATEST_RELEASE_VERSION;
+            major = '2';
+        } else {
+            major = version.split('.')[0];
+        }
         return `${artifactoryUrl}/${downloadDetails.repository}/v${major}/${version}/${architecture}/${fileName}`;
     }
+
     // Get Config Tokens created on your local machine using JFrog CLI.
     // The Tokens configured with JF_ENV_ environment variables.
     public static getConfigTokens(): Set<string> {
@@ -455,11 +470,14 @@ export class Utils {
      * @throws An error if the JFrog CLI command exits with a non-success code.
      */
     public static async runCliAndGetOutput(args: string[], options?: ExecOptions): Promise<string> {
-        let output: ExecOutput = await getExecOutput('jf', args, options);
+        let output: ExecOutput;
+        output = await getExecOutput('jf', args, { ...options, ignoreReturnCode: true });
         if (output.exitCode !== core.ExitCode.Success) {
-            core.info(output.stdout);
-            core.info(output.stderr);
-            throw new Error('JFrog CLI exited with exit code ' + output.exitCode);
+            if (options?.silent) {
+                core.info(output.stdout);
+                core.info(output.stderr);
+            }
+            throw new Error(`JFrog CLI exited with exit code ${output.exitCode}`);
         }
         return output.stdout;
     }
@@ -514,6 +532,11 @@ export class Utils {
             return 'Basic ' + Buffer.from(serverObj.user + ':' + serverObj.password).toString('base64');
         }
         return;
+    }
+
+    public static isJobSummarySupported(): boolean {
+        const version: string = core.getInput(Utils.CLI_VERSION_ARG);
+        return version === Utils.LATEST_CLI_VERSION || gt(version, Utils.MIN_CLI_VERSION_JOB_SUMMARY);
     }
 
     /**
