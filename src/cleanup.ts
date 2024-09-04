@@ -2,7 +2,7 @@ import * as core from '@actions/core';
 import { Utils } from './utils';
 
 async function cleanup() {
-    if (!addCachedJfToPath()) {
+    if (!Utils.loadFromCache(core.getInput(Utils.CLI_VERSION_ARG))) {
         core.warning('Could not find JFrog CLI executable. Skipping cleanup.');
         return;
     }
@@ -19,6 +19,15 @@ async function cleanup() {
     }
 }
 
+/**
+ * Executes post tasks related to build information.
+ *
+ * This function performs several tasks after the main build process:
+ * 1. Checks if auto build publish and job summary are disabled.
+ * 2. Verifies connection to JFrog Artifactory.
+ * 3. Collects and publishes build information if needed.
+ * 4. Generates a job summary if required.
+ */
 async function buildInfoPostTasks() {
     const disableAutoBuildPublish: boolean = core.getBooleanInput(Utils.AUTO_BUILD_PUBLISH_DISABLE);
     const disableJobSummary: boolean = core.getBooleanInput(Utils.JOB_SUMMARY_DISABLE);
@@ -49,7 +58,7 @@ async function buildInfoPostTasks() {
             core.info('Auto build info publish is disabled. Skipping auto build info collection and publishing');
         }
     } catch (error) {
-        core.warning('failed while attempting to collect and publish build info: ' + error);
+        core.warning('Failed while attempting to collect and publish build info: ' + error);
     }
 
     // Generate job summary
@@ -63,19 +72,8 @@ async function buildInfoPostTasks() {
             core.info('Job summary is disabled. Skipping job summary generation');
         }
     } catch (error) {
-        core.warning('failed while attempting to generate job summary: ' + error);
+        core.warning('Failed while attempting to generate job summary: ' + error);
     }
-}
-
-function addCachedJfToPath(): boolean {
-    let version: string = core.getInput(Utils.CLI_VERSION_ARG);
-    if (version == Utils.LATEST_CLI_VERSION) {
-        // If the version is 'latest', we keep it on cache as 100.100.100
-        version = Utils.LATEST_SEMVER;
-    }
-    let jfFileName: string = Utils.getJfExecutableName();
-    let jfrogFileName: string = Utils.getJFrogExecutableName();
-    return Utils.loadFromCache(jfFileName, jfrogFileName, version);
 }
 
 interface BuildPublishResponse {
@@ -119,7 +117,7 @@ async function collectAndPublishBuildInfoIfNeeded() {
         core.startGroup('Collect the Git information');
         await Utils.runCli(['rt', 'build-add-git'], { cwd: workingDirectory });
     } catch (error) {
-        core.warning('failed while attempting to collect Git information: ' + error);
+        core.warning('Failed while attempting to collect Git information: ' + error);
     } finally {
         core.endGroup();
     }

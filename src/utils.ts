@@ -223,42 +223,41 @@ export class Utils {
     public static async getAndAddCliToPath(jfrogCredentials: JfrogCredentials) {
         let version: string = core.getInput(Utils.CLI_VERSION_ARG);
         let cliRemote: string = core.getInput(Utils.CLI_REMOTE_ARG);
-        let major: string = version.split('.')[0];
-        if (version === Utils.LATEST_CLI_VERSION) {
-            version = Utils.LATEST_RELEASE_VERSION;
-            major = '2';
-        } else if (lt(version, this.MIN_CLI_VERSION)) {
+
+        if (lt(version, this.MIN_CLI_VERSION)) {
             throw new Error('Requested to download JFrog CLI version ' + version + ' but must be at least ' + this.MIN_CLI_VERSION);
         }
 
-        let jfFileName: string = Utils.getJfExecutableName();
-        let jfrogFileName: string = Utils.getJFrogExecutableName();
-        if (version !== Utils.LATEST_RELEASE_VERSION && this.loadFromCache(jfFileName, jfrogFileName, version)) {
+        if (version !== Utils.LATEST_CLI_VERSION && this.loadFromCache(version)) {
             core.info('Found JFrog CLI in cache. No need to download');
             return;
         }
 
         // Download JFrog CLI
         let downloadDetails: DownloadDetails = Utils.extractDownloadDetails(cliRemote, jfrogCredentials);
-        let url: string = Utils.getCliUrl(major, version, jfrogFileName, downloadDetails);
+        let url: string = Utils.getCliUrl(version, Utils.getJFrogExecutableName(), downloadDetails);
         core.info('Downloading JFrog CLI from ' + url);
         let downloadedExecutable: string = await toolCache.downloadTool(url, undefined, downloadDetails.auth);
 
         // Cache 'jf' and 'jfrog' executables
-        await this.cacheAndAddPath(downloadedExecutable, version, jfFileName, jfrogFileName);
+        await this.cacheAndAddPath(downloadedExecutable, version);
     }
 
     /**
      * Try to load the JFrog CLI executables from cache.
      *
-     * @param jfFileName    - 'jf' or 'jf.exe'
-     * @param jfrogFileName - 'jfrog' or 'jfrog.exe'
      * @param version       - JFrog CLI version
      * @returns true if the CLI executable was loaded from cache and added to path
      */
-    public static loadFromCache(jfFileName: string, jfrogFileName: string, version: string): boolean {
-        let jfExecDir: string = toolCache.find(jfFileName, version);
-        let jfrogExecDir: string = toolCache.find(jfrogFileName, version);
+    public static loadFromCache(version: string): boolean {
+        const jfFileName: string = Utils.getJfExecutableName();
+        const jfrogFileName: string = Utils.getJFrogExecutableName();
+        if (version == Utils.LATEST_CLI_VERSION) {
+            // If the version is 'latest', we keep it on cache as 100.100.100
+            version = Utils.LATEST_SEMVER;
+        }
+        const jfExecDir: string = toolCache.find(jfFileName, version);
+        const jfrogExecDir: string = toolCache.find(jfrogFileName, version);
         if (jfExecDir && jfrogExecDir) {
             core.addPath(jfExecDir);
             core.addPath(jfrogExecDir);
@@ -276,14 +275,14 @@ export class Utils {
      * Add JFrog CLI executables to cache and to the system path.
      * @param downloadedExecutable - Path to the downloaded JFrog CLI executable
      * @param version              - JFrog CLI version
-     * @param jfFileName           - 'jf' or 'jf.exe'
-     * @param jfrogFileName        - 'jfrog' or 'jfrog.exe'
      */
-    private static async cacheAndAddPath(downloadedExecutable: string, version: string, jfFileName: string, jfrogFileName: string) {
+    private static async cacheAndAddPath(downloadedExecutable: string, version: string) {
         if (version === Utils.LATEST_RELEASE_VERSION) {
             // If the version is 'latest', we keep it on cache as 100.100.100 as GitHub actions cache supports only semver versions
             version = Utils.LATEST_SEMVER;
         }
+        const jfFileName: string = Utils.getJfExecutableName();
+        const jfrogFileName: string = Utils.getJFrogExecutableName();
         let jfCacheDir: string = await toolCache.cacheFile(downloadedExecutable, jfFileName, jfFileName, version);
         core.addPath(jfCacheDir);
 
@@ -296,9 +295,14 @@ export class Utils {
         }
     }
 
-    public static getCliUrl(major: string, version: string, fileName: string, downloadDetails: DownloadDetails): string {
-        let architecture: string = 'jfrog-cli-' + Utils.getArchitecture();
-        let artifactoryUrl: string = downloadDetails.artifactoryUrl.replace(/\/$/, '');
+    public static getCliUrl(version: string, fileName: string, downloadDetails: DownloadDetails): string {
+        const architecture: string = 'jfrog-cli-' + Utils.getArchitecture();
+        const artifactoryUrl: string = downloadDetails.artifactoryUrl.replace(/\/$/, '');
+        let major: string = version.split('.')[0];
+        if (version === Utils.LATEST_CLI_VERSION) {
+            version = Utils.LATEST_RELEASE_VERSION;
+            major = '2';
+        }
         return `${artifactoryUrl}/${downloadDetails.repository}/v${major}/${version}/${architecture}/${fileName}`;
     }
     // Get Config Tokens created on your local machine using JFrog CLI.
