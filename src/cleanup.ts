@@ -6,6 +6,7 @@ async function cleanup() {
         core.warning('Could not find JFrog CLI executable. Skipping cleanup.');
         return;
     }
+    // Run post tasks related to Build Info (auto build publish, job summary)
     await buildInfoPostTasks();
 
     // Cleanup JFrog CLI servers configuration
@@ -48,8 +49,8 @@ async function buildInfoPostTasks() {
         core.info('Auto build info publish is disabled. Skipping auto build info collection and publishing');
     }
 
-    // Generate job summary
-    if (!disableJobSummary) {
+    // Generate job summary if not disabled and the JFrog CLI version supports it
+    if (!disableJobSummary && Utils.isJobSummarySupported()) {
         await generateJobSummary();
     } else {
         core.info('Job summary is disabled. Skipping job summary generation');

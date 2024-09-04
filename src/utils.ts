@@ -7,7 +7,7 @@ import { OutgoingHttpHeaders } from 'http';
 import { arch, platform, tmpdir } from 'os';
 import * as path from 'path';
 import { join } from 'path';
-import { lt } from 'semver';
+import { gt, lt } from 'semver';
 
 export class Utils {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -34,6 +34,8 @@ export class Utils {
     private static readonly JOB_SUMMARY_DIR_NAME: string = 'jfrog-command-summary';
     // JFrog CLI command summary output directory environment variable
     public static readonly JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV: string = 'JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR';
+    // Minimum JFrog CLI version supported for job summary command
+    private static readonly MIN_CLI_VERSION_JOB_SUMMARY: string = '2.66.0';
 
     // Inputs
     // Version input
@@ -523,6 +525,11 @@ export class Utils {
             return 'Basic ' + Buffer.from(serverObj.user + ':' + serverObj.password).toString('base64');
         }
         return;
+    }
+
+    public static isJobSummarySupported(): boolean {
+        const version: string = core.getInput(Utils.CLI_VERSION_ARG);
+        return version === Utils.LATEST_CLI_VERSION || gt(version, Utils.MIN_CLI_VERSION_JOB_SUMMARY);
     }
 
     /**
