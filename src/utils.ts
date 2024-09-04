@@ -223,12 +223,12 @@ export class Utils {
     public static async getAndAddCliToPath(jfrogCredentials: JfrogCredentials) {
         let version: string = core.getInput(Utils.CLI_VERSION_ARG);
         let cliRemote: string = core.getInput(Utils.CLI_REMOTE_ARG);
-
-        if (lt(version, this.MIN_CLI_VERSION)) {
+        const isLatestVer: boolean = version !== Utils.LATEST_CLI_VERSION;
+        if (!isLatestVer && lt(version, this.MIN_CLI_VERSION)) {
             throw new Error('Requested to download JFrog CLI version ' + version + ' but must be at least ' + this.MIN_CLI_VERSION);
         }
 
-        if (version !== Utils.LATEST_CLI_VERSION && this.loadFromCache(version)) {
+        if (!isLatestVer && this.loadFromCache(version)) {
             core.info('Found JFrog CLI in cache. No need to download');
             return;
         }
