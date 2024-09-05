@@ -107,6 +107,8 @@ async function collectAndPublishBuildInfoIfNeeded() {
     try {
         core.startGroup('Publish the build info to JFrog Artifactory');
         await Utils.runCli(['rt', 'build-publish'], { cwd: workingDirectory });
+    } catch (error) {
+        core.warning('Failed while attempting to publish the build info to JFrog Artifactory: ' + error);
     } finally {
         core.endGroup();
     }
