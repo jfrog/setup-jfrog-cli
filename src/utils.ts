@@ -462,9 +462,9 @@ export class Utils {
      * @param options - Execution options
      */
     public static async runCli(args: string[], options?: ExecOptions) {
-        let res: number = await exec('jf', args, options);
+        let res: number = await exec('jf', args, { ...options, ignoreReturnCode: true });
         if (res !== core.ExitCode.Success) {
-            throw new Error('JFrog CLI exited with exit code ' + res);
+            throw new Error('JFrog CLI exited with exit code: ' + res);
         }
     }
 
