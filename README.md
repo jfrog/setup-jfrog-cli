@@ -350,6 +350,10 @@ To read more about the JFrog CLI supported commands, visit the following link:
 [JFrog CLI Command Summaries Documentation](https://docs.jfrog-applications.jfrog.io/jfrog-applications/jfrog-cli/cli-command-summaries).
 
 ## Code Scanning Alerts
+
+**Note:** To use code scanning alerts, ensure you are using JFrog CLI version `v2.67.0` or above.
+
+
 The action also supports the display of code scanning alerts in the GitHub Actions UI.
 
 Code scanning alerts are generated following the execution of the `jf docker scan` and `jf scan` commands.
