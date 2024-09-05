@@ -2,9 +2,10 @@ import * as os from 'os';
 import * as core from '@actions/core';
 
 import { Utils, DownloadDetails, JfrogCredentials, JWTTokenData } from '../src/utils';
-import { tmpdir } from 'os';
+import semver = require('semver/preload');
 jest.mock('os');
 jest.mock('@actions/core');
+jest.mock('semver');
 
 const DEFAULT_CLI_URL: string = 'https://releases.jfrog.io/artifactory/jfrog-cli/';
 const CUSTOM_CLI_URL: string = 'http://127.0.0.1:8081/artifactory/jfrog-cli-remote/';
@@ -363,5 +364,35 @@ describe('Job Summaries', () => {
             // Restore the mock to avoid affecting other tests
             jest.restoreAllMocks();
         });
+    });
+});
+
+describe('isJobSummarySupported', () => {
+    const MIN_CLI_VERSION_JOB_SUMMARY: string = '2.66.0';
+    const LATEST_CLI_VERSION: string = 'latest';
+
+    beforeEach(() => {
+        jest.resetAllMocks();
+    });
+
+    it('should return true if the version is the latest', () => {
+        jest.spyOn(core, 'getInput').mockReturnValue(LATEST_CLI_VERSION);
+        expect(Utils.isJobSummarySupported()).toBe(true);
+    });
+
+    it('should return true if the version is greater than or equal to the minimum supported version', () => {
+        const version: string = '2.66.0';
+        jest.spyOn(core, 'getInput').mockReturnValue(version);
+        (semver.gte as jest.Mock).mockReturnValue(true);
+        expect(Utils.isJobSummarySupported()).toBe(true);
+        expect(semver.gte).toHaveBeenCalledWith(version, MIN_CLI_VERSION_JOB_SUMMARY);
+    });
+
+    it('should return false if the version is less than the minimum supported version', () => {
+        const version: string = '2.65.0';
+        jest.spyOn(core, 'getInput').mockReturnValue(version);
+        (semver.gte as jest.Mock).mockReturnValue(false);
+        expect(Utils.isJobSummarySupported()).toBe(false);
+        expect(semver.gte).toHaveBeenCalledWith(version, MIN_CLI_VERSION_JOB_SUMMARY);
     });
 });

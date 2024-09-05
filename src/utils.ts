@@ -7,7 +7,7 @@ import { OutgoingHttpHeaders } from 'http';
 import { arch, platform, tmpdir } from 'os';
 import * as path from 'path';
 import { join } from 'path';
-import { gt, lt } from 'semver';
+import { gte, lt } from 'semver';
 import { Octokit } from '@octokit/core';
 import { OctokitResponse } from '@octokit/types/dist-types/OctokitResponse';
 import * as github from '@actions/github';
@@ -547,7 +547,7 @@ export class Utils {
 
     public static isJobSummarySupported(): boolean {
         const version: string = core.getInput(Utils.CLI_VERSION_ARG);
-        return version === Utils.LATEST_CLI_VERSION || gt(version, Utils.MIN_CLI_VERSION_JOB_SUMMARY);
+        return version === Utils.LATEST_CLI_VERSION || gte(version, Utils.MIN_CLI_VERSION_JOB_SUMMARY);
     }
 
     /**
@@ -654,15 +654,20 @@ export class Utils {
      * @returns <string[]> the paths of the code scanning sarif files.
      */
     private static async getCodeScanningEncodedSarif(): Promise<string> {
-        const finalSarifFile: string = path.join(Utils.getJobOutputDirectoryPath(), this.SECURITY_DIR_NAME, this.SARIF_REPORTS_DIR_NAME, this.CODE_SCANNING_FINAL_SARIF_FILE);
+        const finalSarifFile: string = path.join(
+            Utils.getJobOutputDirectoryPath(),
+            this.SECURITY_DIR_NAME,
+            this.SARIF_REPORTS_DIR_NAME,
+            this.CODE_SCANNING_FINAL_SARIF_FILE,
+        );
         if (!existsSync(finalSarifFile)) {
             console.debug('No code scanning sarif file was found.');
-            return "";
+            return '';
         }
 
         // Read the SARIF file, compress and encode it to match the code-scanning/sarif API requirements.
         const sarif: string = await fs.readFile(finalSarifFile, 'utf-8');
-        return await this.compressAndEncodeSarif(sarif)
+        return await this.compressAndEncodeSarif(sarif);
     }
 
     private static async readMarkdownContent() {
