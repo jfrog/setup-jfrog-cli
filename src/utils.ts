@@ -300,11 +300,6 @@ export class Utils {
 
         let jfrogCacheDir: string = await toolCache.cacheFile(downloadedExecutable, jfrogFileName, jfrogFileName, version);
         core.addPath(jfrogCacheDir);
-
-        if (!Utils.isWindows()) {
-            chmodSync(join(jfCacheDir, jfFileName), 0o555);
-            chmodSync(join(jfrogCacheDir, jfrogFileName), 0o555);
-        }
     }
 
     /**
