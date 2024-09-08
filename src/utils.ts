@@ -274,10 +274,6 @@ export class Utils {
             core.addPath(jfExecDir);
             core.addPath(jfrogExecDir);
 
-            if (!Utils.isWindows()) {
-                chmodSync(join(jfExecDir, jfFileName), 0o555);
-                chmodSync(join(jfrogExecDir, jfrogFileName), 0o555);
-            }
             return true;
         }
         return false;
@@ -300,6 +296,11 @@ export class Utils {
 
         let jfrogCacheDir: string = await toolCache.cacheFile(downloadedExecutable, jfrogFileName, jfrogFileName, version);
         core.addPath(jfrogCacheDir);
+
+        if (!Utils.isWindows()) {
+            chmodSync(join(jfCacheDir, jfFileName), 0o555);
+            chmodSync(join(jfrogCacheDir, jfrogFileName), 0o555);
+        }
     }
 
     /**
