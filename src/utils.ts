@@ -274,10 +274,6 @@ export class Utils {
             core.addPath(jfExecDir);
             core.addPath(jfrogExecDir);
 
-            if (!Utils.isWindows()) {
-                chmodSync(join(jfExecDir, jfFileName), 0o555);
-                chmodSync(join(jfrogExecDir, jfrogFileName), 0o555);
-            }
             return true;
         }
         return false;
