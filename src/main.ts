@@ -6,8 +6,12 @@ async function main() {
         core.startGroup('Setup JFrog CLI');
         Utils.setCliEnv();
         let jfrogCredentials: JfrogCredentials = await Utils.getJfrogCredentials();
-        await Utils.getAndAddCliToPath(jfrogCredentials);
-        await Utils.configJFrogServers(jfrogCredentials);
+        if (core.getInput(Utils.OIDC_ONLY) !== 'true') {
+            await Utils.getAndAddCliToPath(jfrogCredentials);
+            await Utils.configJFrogServers(jfrogCredentials);
+        } else {
+            core.debug('Skipping JFrog CLI setup as oidc-only is enabled.');
+        }
     } catch (error) {
         core.setFailed((<any>error).message);
     } finally {
