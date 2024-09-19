@@ -337,7 +337,26 @@ To disable the JFrog Job Summary altogether, set the `disable-job-summary` input
     disable-job-summary: true
 ```
 
-### JFrog Job Summary Example:
+### Published Sections
+| Section                       | Command                                                                                      |
+|-------------------------------|----------------------------------------------------------------------------------------------|
+| Curation Audit                | <img src="images/icons/maven.svg" width="30"> `jf mvn install`                               |
+|                               | <img src="images/icons/npm.svg" width="30"> `jf npm install`                                 |
+|                               | <img src="images/icons/pypi.svg" width="30"> `jf pip/pipenv/poetry install`                  |
+|                               | <img src="images/icons/go.svg" width="30"> `jf go build`                                     |
+| Build Info                    | `jf rt build-publish` ([automatically](#default-behavior) or manually)                       |
+| Build Info: Security          | `jf build-scan`                                                                              |
+| Published Modules: Artifacts  | <img src="images/icons/docker.svg" width="30"> `jf docker push`, `jf rt build-docker-create` |
+|                               | <img src="images/icons/maven.svg" width="30"> `jf mvn install`                               |
+|                               | <img src="images/icons/npm.svg" width="30"> `jf npm publish`                                 |
+|                               | <img src="images/icons/pypi.svg" width="30"> `jf twine upload`                               |
+|                               | <img src="images/icons/go.svg" width="30"> `jf go publish`                                   |
+|                               | <img src="images/icons/terraform.svg" width="30"> `jf terraform publish`                     |
+|                               | <img src="images/icons/generic.svg" width="30"> `jf rt upload`                               |
+| Published Modules: Security   | <img src="images/icons/docker.svg" width="30"> `jf docker scan`                              |
+| Code Scanning                 | `jf docker scan`, `jf scan`                                                                  |
+
+### JFrog Job Summary Example
 
 ![JFrog-Job-Summary](images/job_summary.png)
 
