@@ -337,7 +337,18 @@ To disable the JFrog Job Summary altogether, set the `disable-job-summary` input
     disable-job-summary: true
 ```
 
-### JFrog Job Summary Example:
+### Supported Commands
+| Section                       | Package Managers / Commands                                                                                                                                                                                                                                                                                                           |
+|-------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Curation Audit                | <img src="images/icons/maven.svg" width="30"><img src="images/icons/npm.svg" width="30"><img src="images/icons/pypi.svg" width="30"><img src="images/icons/go.svg" width="30">                                                                                                                                                        |
+| Published Modules Artifacts   | <img src="images/icons/docker.svg" width="30"><img src="images/icons/maven.svg" width="30"><img src="images/icons/npm.svg" width="30"><img src="images/icons/pypi.svg" width="30"><img src="images/icons/go.svg" width="30"><img src="images/icons/terraform.svg" width="30"><img src="images/icons/generic.png" width="30"> |
+| Published Modules Security    | <img src="images/icons/docker.svg" width="30"> (`jf docker scan`)                                                                                                                                                                                                                                                                     |
+| Published Build Info Security | `jf build-scan`                                                                                                                                                                                                                                                                                                                       |
+| Code Scanning                 | `jf docker scan`, `jf scan`                                                                                                                                                                                                                                                                                                           |
+
+Published Build Info / Modules Views are available if `jf rt build-publish` was run (automatically or manually).
+
+### JFrog Job Summary Example
 
 ![JFrog-Job-Summary](images/job_summary.png)
 
