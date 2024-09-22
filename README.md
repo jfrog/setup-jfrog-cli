@@ -319,7 +319,7 @@ This is to prevent GitHub from masking the URL.
 
 ### Default Behavior:
 
-By default, the [build-info](https://jfrog.com/help/r/jfrog-pipelines-documentation/buildinfo) collected during the workflow will be automatically published to Artifactory when the workflow completes. 
+By default, [build-info](https://jfrog.com/help/r/jfrog-pipelines-documentation/buildinfo) will be collected during the workflow and automatically published to Artifactory when the workflow completes.
 
 This behavior is disabled if the `jf rt build-publish` command was manually run during the workflow, or if requested explicitly by setting the `disable-auto-build-publish` input to `true`:
 
