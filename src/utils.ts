@@ -56,7 +56,7 @@ export class Utils {
     // OpenID Connect audience input
     private static readonly OIDC_AUDIENCE_ARG: string = 'oidc-audience';
     // OpenID Connect provider_name input
-    private static readonly OIDC_INTEGRATION_PROVIDER_NAME: string = 'oidc-provider-name';
+    static readonly OIDC_INTEGRATION_PROVIDER_NAME: string = 'oidc-provider-name';
     // Disable Job Summaries feature flag
     public static readonly JOB_SUMMARY_DISABLE: string = 'disable-job-summary';
     // Disable auto build info publish feature flag
@@ -82,6 +82,8 @@ export class Utils {
             return jfrogCredentials;
         }
 
+        // Used for usage reporting
+        this.exportVariableIfNotSet("JFROG_CLI_OIDC_CONFIG","TRUE")
         if (!jfrogCredentials.jfrogUrl) {
             throw new Error(`JF_URL must be provided when oidc-provider-name is specified`);
         }
