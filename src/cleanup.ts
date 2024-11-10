@@ -32,7 +32,6 @@ async function cleanup() {
 async function buildInfoPostTasks() {
     const disableAutoBuildPublish: boolean = core.getBooleanInput(Utils.AUTO_BUILD_PUBLISH_DISABLE);
     const disableJobSummary: boolean = core.getBooleanInput(Utils.JOB_SUMMARY_DISABLE) || !Utils.isJobSummarySupported();
-
     if (disableAutoBuildPublish && disableJobSummary) {
         core.info(`Both auto-build-publish and job-summary are disabled. Skipping Build Info post tasks.`);
         return;
