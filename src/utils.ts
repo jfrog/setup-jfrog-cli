@@ -83,7 +83,7 @@ export class Utils {
         }
 
         // Used for usage reporting
-        this.exportVariableIfNotSet("JFROG_CLI_OIDC_CONFIG","TRUE")
+        this.exportVariableIfNotSet("JFROG_CLI_USAGE_CONFIG_OIDC","TRUE")
         if (!jfrogCredentials.jfrogUrl) {
             throw new Error(`JF_URL must be provided when oidc-provider-name is specified`);
         }

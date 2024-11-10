@@ -108,7 +108,7 @@ async function collectAndPublishBuildInfoIfNeeded() {
     try {
         core.startGroup('Publish the build info to JFrog Artifactory');
         // Used for usage reporting
-        core.exportVariable("JFROG_CLI_AUTO_PUBLISHED", "TRUE");
+        core.exportVariable("JFROG_CLI_USAGE_BUILD_PUBLISHED_AUTO", "TRUE");
         await Utils.runCli(['rt', 'build-publish'], { cwd: workingDirectory });
     } catch (error) {
         core.warning('Failed while attempting to publish the build info to JFrog Artifactory: ' + error);
