@@ -96,7 +96,10 @@ export class Utils {
         }
 
         try {
-            return await this.getJfrogAccessTokenThroughOidcProtocol(jfrogCredentials, jsonWebToken, oidcProviderName);
+            jfrogCredentials = await this.getJfrogAccessTokenThroughOidcProtocol(jfrogCredentials, jsonWebToken, oidcProviderName);
+            // Set environment variable to track OIDC logins in the usage report.
+            core.exportVariable('JFROG_CLI_USAGE_CONFIG_OIDC', 'TRUE');
+            return jfrogCredentials;
         } catch (error: any) {
             throw new Error(`Exchanging JSON web token with an access token failed: ${error.message}`);
         }
