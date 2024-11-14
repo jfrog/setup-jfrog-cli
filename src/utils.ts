@@ -151,6 +151,8 @@ export class Utils {
         core.debug('Exchanging GitHub JSON web token with a JFrog access token...');
 
         let projectKey: string = process.env.JF_PROJECT || '';
+        let jobId: string = process.env.GITHUB_JOB || '';
+        let runId: string = process.env.GITHUB_RUN_ID || '';
 
         const httpClient: HttpClient = new HttpClient();
         const data: string = `{
@@ -158,7 +160,9 @@ export class Utils {
             "subject_token_type": "urn:ietf:params:oauth:token-type:id_token",
             "subject_token": "${jsonWebToken}",
             "provider_name": "${oidcProviderName}",
-            "project_key": "${projectKey}"
+            "project_key": "${projectKey}",
+            "gh_job_id": "${jobId}",
+            "gh_run_id": "${runId}",
         }`;
 
         const additionalHeaders: OutgoingHttpHeaders = {
