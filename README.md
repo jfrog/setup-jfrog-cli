@@ -19,6 +19,7 @@
     -   [Setting JFrog CLI Version](#setting-jfrog-cli-version)
     -   [Setting the JFrog Project Key](#setting-the-jfrog-project-key)
     -   [Downloading JFrog CLI from Artifactory](#downloading-jfrog-cli-from-artifactory)
+    -   [Custom Server ID and Multi-Configuration](#custom-server-id-and-multi-configuration)
 -   [JFrog Job Summary](#jfrog-job-summary)
 -   [Code Scanning Alerts](#code-scanning-alerts)
 -   [Example Projects](#example-projects)
@@ -299,6 +300,25 @@ Here's how you do this:
       with:
           download-repository: jfrog-cli-remote
     ```
+</details>
+
+<details>
+    <summary>Custom Server ID and Multi-Configuration</summary>
+
+### Custom Server ID and Multi-Configuration
+
+The action configures JFrog CLI with a default server ID, which is unique for each run of a workflow.
+
+You may override the default server ID by providing a custom server ID:
+
+ ```yml
+ - uses: jfrog/setup-jfrog-cli@v4
+   with:
+       custom-server-id: my-server
+ ```
+
+You can also use multiple configurations in the same workflow by providing a custom server ID for each configuration.
+Alternating between configurations can be done by providing the `--server-id` options to JFrog CLI commands or by setting a default server using  `jf c use <server-id>`.
 </details>
 
 ## JFrog Job Summary
