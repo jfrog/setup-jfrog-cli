@@ -317,8 +317,9 @@ You may override the default server ID by providing a custom server ID:
        custom-server-id: my-server
  ```
 
-You can also use multiple configurations in the same workflow by providing a custom server ID for each configuration.
-Alternating between configurations can be done by providing the `--server-id` options to JFrog CLI commands or by setting a default server using  `jf c use <server-id>`.
+You may also use multiple configurations in the same workflow by providing a custom server ID for each configuration.
+
+Alternating between configurations can be done by providing the `--server-id` option to JFrog CLI commands or by setting a default server using  `jf c use <server-id>`.
 </details>
 
 ## JFrog Job Summary
