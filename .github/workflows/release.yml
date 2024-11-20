@@ -1,7 +1,19 @@
 name: "Release"
 on:
-  release:
-    types: [published]
+  workflow_dispatch:
+    inputs:
+      major:
+        description: 'MAJOR semantic severity'
+        required: true
+        type: string
+      minor:
+        description: 'Minor semantic severity'
+        required: true
+        type: string
+      patch:
+        description: 'patch semantic severity'
+        required: true
+        type: string
 
 jobs:
   release:
@@ -9,10 +21,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Update v4 tags
+      - name: GitHub Release
+        uses: ncipollo/release-action@v1
+        with:  
+          tag: v${{ inputs.major }}.${{ inputs.minor }}.${{ inputs.patch }}
+          allowUpdates: true
+          generateReleaseNotes: true
+      - name: Update tags
         run: |
-          git tag -f v4
-          git tag -f v4.4
+          git tag -f v${{ inputs.major }}
+          git tag -f v${{ inputs.major }}.${{ inputs.minor }}
       - name: Push changes
         uses: ad-m/github-push-action@master
         with:
