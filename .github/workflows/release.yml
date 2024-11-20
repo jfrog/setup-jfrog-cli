@@ -9,8 +9,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Update v4 tag
-        run: git tag -f v4
+      - name: Update v4 tags
+        run: |
+          git tag -f v4
+          git tag -f v4.4
       - name: Push changes
         uses: ad-m/github-push-action@master
         with:
