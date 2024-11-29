@@ -160,7 +160,7 @@ export class Utils {
             "subject_token_type": "urn:ietf:params:oauth:token-type:id_token",
             "subject_token": "${jsonWebToken}",
             "provider_name": "${oidcProviderName}",
-            "project_key": "${projectKey}"
+            "project_key": "${projectKey}",
         }`;
 
         const additionalHeaders: OutgoingHttpHeaders = {
