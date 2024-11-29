@@ -162,7 +162,7 @@ export class Utils {
             "provider_name": "${oidcProviderName}",
             "project_key": "${projectKey}",
             "gh_job_id": "${jobId}",
-            "gh_run_id": "${runId}"
+            "gh_run_id": "${runId}",
         }`;
 
         const additionalHeaders: OutgoingHttpHeaders = {
