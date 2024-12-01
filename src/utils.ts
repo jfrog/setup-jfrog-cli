@@ -161,6 +161,8 @@ export class Utils {
             "subject_token": "${jsonWebToken}",
             "provider_name": "${oidcProviderName}",
             "project_key": "${projectKey}",
+            "gh_job_id": "${jobId}",
+            "gh_run_id": "${runId}"
         }`;
 
         const additionalHeaders: OutgoingHttpHeaders = {
