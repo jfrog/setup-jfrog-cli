@@ -1,11 +1,24 @@
 import * as os from 'os';
 import * as core from '@actions/core';
 
-import { Utils, DownloadDetails, JfrogCredentials, JWTTokenData } from '../src/utils';
+import { DownloadDetails, JfrogCredentials, JWTTokenData, Utils } from '../src/utils';
+import * as jsYaml from 'js-yaml';
+import * as fs from 'fs';
+import * as path from 'path';
 import semver = require('semver/preload');
+
 jest.mock('os');
 jest.mock('@actions/core');
 jest.mock('semver');
+jest.mock('@actions/core');
+jest.mock('fs', () => ({
+    promises: {
+        readFile: jest.fn(),
+    },
+    existsSync: jest.fn(),
+}));
+jest.mock('path');
+
 const DEFAULT_CLI_URL: string = 'https://releases.jfrog.io/artifactory/jfrog-cli/';
 const CUSTOM_CLI_URL: string = 'http://127.0.0.1:8081/artifactory/jfrog-cli-remote/';
 // Config in JFrog CLI 1.46.3 and below
@@ -456,5 +469,62 @@ describe('Utils.removeJFrogServers', () => {
             expect(Utils.runCli).toHaveBeenCalledWith(['c', 'rm', serverId, '--quiet']);
         }
         expect(core.exportVariable).toHaveBeenCalledWith(Utils.JFROG_CLI_SERVER_IDS_ENV_VAR, '');
+    });
+});
+
+
+describe('getApplicationKey', () => {
+    const mockReadFile: jest.Mock = fs.promises.readFile as jest.Mock;
+    const mockExistsSync: jest.Mock = fs.existsSync as jest.Mock;
+    const mockPath: jest.Mock = path.join as jest.Mock;
+
+    beforeEach(() => {
+        jest.resetAllMocks();
+    });
+
+    it('should return application key from config file', async () => {
+        mockPath.mockReturnValue('mocked-path');
+        mockExistsSync.mockReturnValue(true);
+        mockReadFile.mockResolvedValue(jsYaml.dump({ application: { key: 'config-app-key' } }));
+
+        const result: string = await (Utils as any).getApplicationKey();
+        expect(result).toBe('config-app-key');
+        expect(mockReadFile).toHaveBeenCalledWith('mocked-path', 'utf-8');
+    });
+
+    it('should return empty string if config file does not exist', async () => {
+        mockPath.mockReturnValue('mocked-path');
+        mockExistsSync.mockReturnValue(false);
+
+        const result: string = await (Utils as any).getApplicationKey();
+        expect(result).toBe('');
+        expect(mockReadFile).not.toHaveBeenCalled();
+    });
+
+    it('should return empty string if config file is empty', async () => {
+        mockPath.mockReturnValue('mocked-path');
+        mockExistsSync.mockReturnValue(true);
+        mockReadFile.mockResolvedValue('');
+
+        const result: string = await (Utils as any).getApplicationKey();
+        expect(result).toBe('');
+    });
+
+    it('should return empty string if application root is not found in config file', async () => {
+        mockPath.mockReturnValue('mocked-path');
+        mockExistsSync.mockReturnValue(true);
+        mockReadFile.mockResolvedValue(jsYaml.dump({}));
+
+        const result: string = await (Utils as any).getApplicationKey();
+        expect(result).toBe('');
+    });
+
+    it('should return empty string if application key is not found in config file', async () => {
+        mockPath.mockReturnValue('mocked-path');
+        mockExistsSync.mockReturnValue(true);
+        mockReadFile.mockResolvedValue(jsYaml.dump({ application: {} }));
+
+        const result: string = await (Utils as any).getApplicationKey();
+        expect(result).toBe('');
     });
 });
