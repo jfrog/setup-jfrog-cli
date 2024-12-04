@@ -59,6 +59,8 @@ export class Utils {
     private static readonly OIDC_AUDIENCE_ARG: string = 'oidc-audience';
     // OpenID Connect provider_name input
     private static readonly OIDC_INTEGRATION_PROVIDER_NAME: string = 'oidc-provider-name';
+    // Whether to skip JFrog CLI setup and only use OIDC
+    public static readonly OIDC_ONLY: string = 'oidc-only';
     // Disable Job Summaries feature flag
     public static readonly JOB_SUMMARY_DISABLE: string = 'disable-job-summary';
     // Disable auto build info publish feature flag
