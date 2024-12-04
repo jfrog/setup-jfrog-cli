@@ -2,10 +2,10 @@ import * as core from '@actions/core';
 import { Utils } from './utils';
 
 async function cleanup() {
-    if (!Utils.loadFromCache(core.getInput(Utils.CLI_VERSION_ARG))) {
-        core.warning('Could not find JFrog CLI executable. Skipping cleanup.');
+    if (await shouldSkipCleanup()) {
         return;
     }
+
     // Run post tasks related to Build Info (auto build publish, job summary)
     await buildInfoPostTasks();
 
@@ -156,6 +156,21 @@ async function generateJobSummary() {
     } finally {
         core.endGroup();
     }
+}
+
+async function shouldSkipCleanup(): Promise<boolean> {
+    if (!Utils.loadFromCache(core.getInput(Utils.CLI_VERSION_ARG))) {
+        core.warning('Could not find JFrog CLI executable. Skipping cleanup.');
+        return true;
+    }
+
+    // Skip cleanup if no servers are configured (already removed)
+    const servers: string | undefined = process.env[Utils.JFROG_CLI_SERVER_IDS_ENV_VAR];
+    if (!servers) {
+        core.debug('No servers are configured. Skipping cleanup.');
+        return true;
+    }
+    return false;
 }
 
 cleanup();

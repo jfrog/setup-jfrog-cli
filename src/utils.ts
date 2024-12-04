@@ -33,8 +33,10 @@ export class Utils {
     private static readonly LATEST_RELEASE_VERSION: string = '[RELEASE]';
     // Placeholder CLI version to use to keep 'latest' in cache.
     public static readonly LATEST_SEMVER: string = '100.100.100';
-    // The default server id name for separate env config
-    public static readonly SETUP_JFROG_CLI_SERVER_ID: string = 'setup-jfrog-cli-server';
+    // The prefix for the default server id name for JFrog CLI config
+    public static readonly SETUP_JFROG_CLI_SERVER_ID_PREFIX: string = 'setup-jfrog-cli-server';
+    // Environment variable to hold all configured server IDs, separated by ';'
+    public static readonly JFROG_CLI_SERVER_IDS_ENV_VAR: string = 'SETUP_JFROG_CLI_SERVER_IDS';
     // Directory name which holds markdown files for the Workflow summary
     private static readonly JOB_SUMMARY_DIR_NAME: string = 'jfrog-command-summary';
     // Directory name which holds security command summary files
@@ -61,6 +63,8 @@ export class Utils {
     public static readonly JOB_SUMMARY_DISABLE: string = 'disable-job-summary';
     // Disable auto build info publish feature flag
     public static readonly AUTO_BUILD_PUBLISH_DISABLE: string = 'disable-auto-build-publish';
+    // Custom server ID input
+    private static readonly CUSTOM_SERVER_ID: string = 'custom-server-id';
     // URL for the markdown header image
     // This is hosted statically because its usage is outside the context of the JFrog setup action.
     // It cannot be linked to the repository, as GitHub serves the image from a CDN,
@@ -356,7 +360,7 @@ export class Utils {
         let accessToken: string | undefined = jfrogCredentials.accessToken;
 
         if (url) {
-            let configCmd: string[] = [Utils.SETUP_JFROG_CLI_SERVER_ID, '--url', url, '--interactive=false', '--overwrite=true'];
+            let configCmd: string[] = [Utils.getServerIdForConfig(), '--url', url, '--interactive=false', '--overwrite=true'];
             if (accessToken) {
                 configCmd.push('--access-token', accessToken);
             } else if (user && password) {
@@ -364,6 +368,40 @@ export class Utils {
             }
             return configCmd;
         }
+    }
+
+    /**
+     * Get server ID for JFrog CLI configuration. Save the server ID in the servers env var if it doesn't already exist.
+     */
+    private static getServerIdForConfig(): string {
+        let serverId: string = Utils.getCustomOrDefaultServerId();
+
+        // Add new serverId to the servers env var if it doesn't already exist.
+        if (Utils.getConfiguredJFrogServers().includes(serverId)) {
+            return serverId;
+        }
+        const currentValue: string | undefined = process.env[Utils.JFROG_CLI_SERVER_IDS_ENV_VAR];
+        const newVal: string = currentValue ? `${currentValue};${serverId}` : serverId;
+        core.exportVariable(Utils.JFROG_CLI_SERVER_IDS_ENV_VAR, newVal);
+        return serverId;
+    }
+
+    /**
+     * Return custom server ID if provided, or default server ID otherwise.
+     */
+    private static getCustomOrDefaultServerId(): string {
+        let customServerId: string = core.getInput(Utils.CUSTOM_SERVER_ID);
+        if (customServerId) {
+            return customServerId;
+        }
+        return Utils.getRunDefaultServerId();
+    }
+
+    /**
+     * Return a server ID that is unique for this workflow run based on the GitHub repository and run ID.
+     */
+    static getRunDefaultServerId(): string {
+        return [Utils.SETUP_JFROG_CLI_SERVER_ID_PREFIX, process.env.GITHUB_REPOSITORY, process.env.GITHUB_RUN_ID].join('-');
     }
 
     public static setCliEnv() {
@@ -428,8 +466,26 @@ export class Utils {
         }
     }
 
+    /**
+     * Removed configured JFrog CLI servers that are saved in the servers env var, and unset the env var.
+     */
     public static async removeJFrogServers() {
-        await Utils.runCli(['c', 'rm', '--quiet']);
+        for (const serverId of Utils.getConfiguredJFrogServers()) {
+            core.debug(`Removing server ID: '${serverId}'...`);
+            await Utils.runCli(['c', 'rm', serverId, '--quiet']);
+        }
+        core.exportVariable(Utils.JFROG_CLI_SERVER_IDS_ENV_VAR, '');
+    }
+
+    /**
+     * Split and return the configured JFrog CLI servers that are saved in the servers env var.
+     */
+    public static getConfiguredJFrogServers(): string[] {
+        const serversValue: string | undefined = process.env[Utils.JFROG_CLI_SERVER_IDS_ENV_VAR];
+        if (!serversValue) {
+            return [];
+        }
+        return serversValue.split(';');
     }
 
     public static getArchitecture() {

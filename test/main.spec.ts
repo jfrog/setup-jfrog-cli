@@ -111,7 +111,7 @@ describe('Collect JFrog Credentials from env vars exceptions', () => {
     });
 });
 
-test('Get separate env config', async () => {
+function testConfigCommand(expectedServerId: string) {
     // No url
     let configCommand: string[] | undefined = Utils.getSeparateEnvConfigArgs({} as JfrogCredentials);
     expect(configCommand).toBe(undefined);
@@ -121,14 +121,14 @@ test('Get separate env config', async () => {
 
     // No credentials
     configCommand = Utils.getSeparateEnvConfigArgs(jfrogCredentials);
-    expect(configCommand).toStrictEqual([Utils.SETUP_JFROG_CLI_SERVER_ID, '--url', DEFAULT_CLI_URL, '--interactive=false', '--overwrite=true']);
+    expect(configCommand).toStrictEqual([expectedServerId, '--url', DEFAULT_CLI_URL, '--interactive=false', '--overwrite=true']);
 
     // Basic authentication
     jfrogCredentials.username = 'user';
     jfrogCredentials.password = 'password';
     configCommand = Utils.getSeparateEnvConfigArgs(jfrogCredentials);
     expect(configCommand).toStrictEqual([
-        Utils.SETUP_JFROG_CLI_SERVER_ID,
+        expectedServerId,
         '--url',
         DEFAULT_CLI_URL,
         '--interactive=false',
@@ -145,7 +145,7 @@ test('Get separate env config', async () => {
     jfrogCredentials.accessToken = 'accessToken';
     configCommand = Utils.getSeparateEnvConfigArgs(jfrogCredentials);
     expect(configCommand).toStrictEqual([
-        Utils.SETUP_JFROG_CLI_SERVER_ID,
+        expectedServerId,
         '--url',
         DEFAULT_CLI_URL,
         '--interactive=false',
@@ -153,6 +153,42 @@ test('Get separate env config', async () => {
         '--access-token',
         'accessToken',
     ]);
+}
+
+describe('JFrog CLI Configuration', () => {
+    beforeAll(() => {
+        process.env.GITHUB_REPOSITORY = 'owner/repo';
+        process.env.GITHUB_RUN_ID = '1';
+    });
+
+    afterAll(() => {
+        ['GITHUB_REPOSITORY', 'GITHUB_RUN_ID', Utils.JFROG_CLI_SERVER_IDS_ENV_VAR].forEach((envKey) => {
+            delete process.env[envKey];
+        });
+    });
+    const myCore: jest.Mocked<typeof core> = core as any;
+
+    test('Get separate env config', async () => {
+        myCore.exportVariable = jest.fn().mockImplementation((name: string, val: string) => {
+            process.env[name] = val;
+        });
+
+        // Before setting a custom server ID, expect the default server ID to be used.
+        testConfigCommand(Utils.getRunDefaultServerId());
+
+        // Expect the custom server ID to be used.
+        let customServerId: string = 'custom-server-id';
+        jest.spyOn(core, 'getInput').mockReturnValue(customServerId);
+        testConfigCommand(customServerId);
+
+        // Expect the servers env var to include both servers.
+        const servers: string[] = Utils.getConfiguredJFrogServers();
+        expect(servers).toStrictEqual([Utils.getRunDefaultServerId(), customServerId]);
+    });
+
+    test('Get default server ID', async () => {
+        expect(Utils.getRunDefaultServerId()).toStrictEqual('setup-jfrog-cli-server-owner/repo-1');
+    });
 });
 
 describe('JFrog CLI V1 URL Tests', () => {
