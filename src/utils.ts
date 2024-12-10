@@ -33,8 +33,8 @@ export class Utils {
     private static readonly LATEST_RELEASE_VERSION: string = '[RELEASE]';
     // Placeholder CLI version to use to keep 'latest' in cache.
     public static readonly LATEST_SEMVER: string = '100.100.100';
-    // The prefix for the default server id name for JFrog CLI config
-    public static readonly SETUP_JFROG_CLI_SERVER_ID_PREFIX: string = 'setup-jfrog-cli-server';
+    // The default server id name for separate env config
+    public static readonly SETUP_JFROG_CLI_SERVER_ID: string = 'setup-jfrog-cli-server';
     // Environment variable to hold all configured server IDs, separated by ';'
     public static readonly JFROG_CLI_SERVER_IDS_ENV_VAR: string = 'SETUP_JFROG_CLI_SERVER_IDS';
     // Directory name which holds markdown files for the Workflow summary
@@ -398,10 +398,10 @@ export class Utils {
     }
 
     /**
-     * Return a server ID that is unique for this workflow run based on the GitHub repository and run ID.
+     * Return the default server ID for JFrog CLI server configuration.
      */
     static getRunDefaultServerId(): string {
-        return [Utils.SETUP_JFROG_CLI_SERVER_ID_PREFIX, process.env.GITHUB_REPOSITORY, process.env.GITHUB_RUN_ID].join('-');
+        return Utils.SETUP_JFROG_CLI_SERVER_ID;
     }
 
     public static setCliEnv() {

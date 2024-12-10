@@ -156,15 +156,8 @@ function testConfigCommand(expectedServerId: string) {
 }
 
 describe('JFrog CLI Configuration', () => {
-    beforeAll(() => {
-        process.env.GITHUB_REPOSITORY = 'owner/repo';
-        process.env.GITHUB_RUN_ID = '1';
-    });
-
     afterAll(() => {
-        ['GITHUB_REPOSITORY', 'GITHUB_RUN_ID', Utils.JFROG_CLI_SERVER_IDS_ENV_VAR].forEach((envKey) => {
-            delete process.env[envKey];
-        });
+        delete process.env[Utils.JFROG_CLI_SERVER_IDS_ENV_VAR];
     });
     const myCore: jest.Mocked<typeof core> = core as any;
 
@@ -187,7 +180,7 @@ describe('JFrog CLI Configuration', () => {
     });
 
     test('Get default server ID', async () => {
-        expect(Utils.getRunDefaultServerId()).toStrictEqual('setup-jfrog-cli-server-owner/repo-1');
+        expect(Utils.getRunDefaultServerId()).toStrictEqual('setup-jfrog-cli-server');
     });
 });
 
