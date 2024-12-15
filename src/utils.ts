@@ -70,7 +70,8 @@ export class Utils {
     // It cannot be linked to the repository, as GitHub serves the image from a CDN,
     // which gets blocked by the browser, resulting in an empty image.
     private static MARKDOWN_HEADER_PNG_URL: string = 'https://media.jfrog.com/wp-content/uploads/2024/09/02161430/jfrog-job-summary.svg';
-    private static isSummaryHeaderAccessible: boolean;
+    // Flag to indicate if the summary header is accessible, can be undefined if not checked yet.
+    private static isSummaryHeaderAccessible: boolean | undefined = undefined;
 
     /**
      * Retrieves server credentials for accessing JFrog's server
@@ -806,13 +807,16 @@ export class Utils {
      * @private
      */
     private static async isHeaderPngAccessible(): Promise<boolean> {
-        // const url: string = this.MARKDOWN_HEADER_PNG_URL;
+        if (this.isSummaryHeaderAccessible != undefined) {
+            return this.isSummaryHeaderAccessible;
+        }
+        const url: string = this.MARKDOWN_HEADER_PNG_URL;
         const httpClient: HttpClient = new HttpClient();
         try {
             const requestOptions: OutgoingHttpHeaders = {
                 socketTimeout: 5000, // Set timeout to 5 seconds
             };
-            const response: HttpClientResponse = await httpClient.head('https://some-not-a-real-url-for-test.com', requestOptions);
+            const response: HttpClientResponse = await httpClient.head(url, requestOptions);
             this.isSummaryHeaderAccessible = response.message.statusCode === 200;
         } catch (error) {
             core.warning('No internet access to the header image, using the text header instead.');
