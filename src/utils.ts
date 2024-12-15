@@ -394,9 +394,12 @@ export class Utils {
     private static getCustomOrDefaultServerId(): string {
         let inputtedCustomServerId: string = core.getInput(Utils.CUSTOM_SERVER_ID);
         if (inputtedCustomServerId != '') {
+            core.info(`Using custom server ID: '${inputtedCustomServerId}'`);
             this.customServerId = inputtedCustomServerId;
             return this.customServerId;
         }
+        core.info(`Using default server ID: '${Utils.getRunDefaultServerId()}'`);
+        core.info(`the value of custom is: '${ this.customServerId}'`);
         return Utils.getRunDefaultServerId();
     }
 
@@ -474,9 +477,10 @@ export class Utils {
      * If a custom server ID is defined, only remove the custom server ID.
      */
     public static async removeJFrogServers() {
+        core.info("the value of custom is: '" + this.customServerId + "'");
         if (this.customServerId) {
             // Remove only the custom server ID
-            core.debug(`Removing server ID: '${this.customServerId}'...`);
+            core.debug(`Removing custom server ID: '${this.customServerId}'...`);
             await Utils.runCli(['c', 'rm', this.customServerId, '--quiet']);
         } else {
             // Remove all configured server IDs
