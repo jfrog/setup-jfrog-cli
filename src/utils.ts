@@ -71,6 +71,8 @@ export class Utils {
     // which gets blocked by the browser, resulting in an empty image.
     private static MARKDOWN_HEADER_PNG_URL: string = 'https://media.jfrog.com/wp-content/uploads/2024/09/02161430/jfrog-job-summary.svg';
     private static isSummaryHeaderAccessible: boolean;
+    // Optional custom server ID defined by the user
+    private static customServerId: string | undefined = undefined;
 
     /**
      * Retrieves server credentials for accessing JFrog's server
@@ -387,12 +389,13 @@ export class Utils {
     }
 
     /**
-     * Return custom server ID if provided, or default server ID otherwise.
+     * Returns the custom server ID if provided, otherwise returns the default server ID.
      */
     private static getCustomOrDefaultServerId(): string {
-        let customServerId: string = core.getInput(Utils.CUSTOM_SERVER_ID);
-        if (customServerId) {
-            return customServerId;
+        let inputtedCustomServerId: string = core.getInput(Utils.CUSTOM_SERVER_ID);
+        if (inputtedCustomServerId != '') {
+            this.customServerId = inputtedCustomServerId;
+            return this.customServerId;
         }
         return Utils.getRunDefaultServerId();
     }
@@ -467,14 +470,22 @@ export class Utils {
     }
 
     /**
-     * Removed configured JFrog CLI servers that are saved in the servers env var, and unset the env var.
+     * Removes configured JFrog CLI servers saved in the environment variable.
+     * If a custom server ID is defined, only remove the custom server ID.
      */
     public static async removeJFrogServers() {
-        for (const serverId of Utils.getConfiguredJFrogServers()) {
-            core.debug(`Removing server ID: '${serverId}'...`);
-            await Utils.runCli(['c', 'rm', serverId, '--quiet']);
+        if (this.customServerId) {
+            // Remove only the custom server ID
+            core.debug(`Removing server ID: '${this.customServerId}'...`);
+            await Utils.runCli(['c', 'rm', this.customServerId, '--quiet']);
+        } else {
+            // Remove all configured server IDs
+            for (const serverId of Utils.getConfiguredJFrogServers()) {
+                core.debug(`Removing server ID: '${serverId}'...`);
+                await Utils.runCli(['c', 'rm', serverId, '--quiet']);
+            }
+            core.exportVariable(Utils.JFROG_CLI_SERVER_IDS_ENV_VAR, '');
         }
-        core.exportVariable(Utils.JFROG_CLI_SERVER_IDS_ENV_VAR, '');
     }
 
     /**
