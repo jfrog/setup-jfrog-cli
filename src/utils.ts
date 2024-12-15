@@ -13,7 +13,6 @@ import { OctokitResponse } from '@octokit/types/dist-types/OctokitResponse';
 import * as github from '@actions/github';
 import { gzip } from 'zlib';
 import { promisify } from 'util';
-import { RequestOptions } from '@actions/http-client/lib/interfaces';
 
 export class Utils {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
