@@ -390,7 +390,7 @@ export class Utils {
      * Returns the custom server ID if provided, otherwise returns the default server ID.
      */
     private static getCustomOrDefaultServerId(): string {
-        const customServerId :string | undefined = this.getInputtedCustomId();
+        const customServerId: string | undefined = this.getInputtedCustomId();
         return customServerId || this.getRunDefaultServerId();
     }
 
@@ -399,7 +399,7 @@ export class Utils {
         if (customServerId) {
             return customServerId;
         }
-        return undefined
+        return undefined;
     }
 
     /**
@@ -476,7 +476,7 @@ export class Utils {
      * If a custom server ID is defined, only remove the custom server ID.
      */
     public static async removeJFrogServers() {
-        const customServerId:string | undefined = this.getInputtedCustomId();
+        const customServerId: string | undefined = this.getInputtedCustomId();
         core.info(`The value of custom is: '${customServerId}'`);
 
         if (customServerId) {
