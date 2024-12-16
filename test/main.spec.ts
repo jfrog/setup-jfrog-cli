@@ -6,7 +6,6 @@ import semver = require('semver/preload');
 jest.mock('os');
 jest.mock('@actions/core');
 jest.mock('semver');
-
 const DEFAULT_CLI_URL: string = 'https://releases.jfrog.io/artifactory/jfrog-cli/';
 const CUSTOM_CLI_URL: string = 'http://127.0.0.1:8081/artifactory/jfrog-cli-remote/';
 // Config in JFrog CLI 1.46.3 and below
@@ -423,5 +422,39 @@ describe('isJobSummarySupported', () => {
         (semver.gte as jest.Mock).mockReturnValue(false);
         expect(Utils.isJobSummarySupported()).toBe(false);
         expect(semver.gte).toHaveBeenCalledWith(version, MIN_CLI_VERSION_JOB_SUMMARY);
+    });
+});
+
+describe('Utils.removeJFrogServers', () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
+
+    it('should remove only the custom server ID if defined', async () => {
+        const customServerId: string = 'custom-server-id';
+        jest.spyOn(Utils as any, 'getInputtedCustomId').mockReturnValue(customServerId);
+        jest.spyOn(Utils as any, 'runCli').mockResolvedValue(undefined);
+
+        await Utils.removeJFrogServers();
+
+        expect(core.info).toHaveBeenCalledWith(`The value of custom is: '${customServerId}'`);
+        expect(core.debug).toHaveBeenCalledWith(`Removing custom server ID: '${customServerId}'...`);
+        expect(Utils.runCli).toHaveBeenCalledWith(['c', 'rm', customServerId, '--quiet']);
+    });
+
+    it('should remove all configured server IDs if no custom server ID is defined', async () => {
+        jest.spyOn(Utils as any, 'getInputtedCustomId').mockReturnValue(undefined);
+        const serverIds: string[] = ['server1', 'server2'];
+        jest.spyOn(Utils as any, 'getConfiguredJFrogServers').mockReturnValue(serverIds);
+        jest.spyOn(Utils as any, 'runCli').mockResolvedValue(undefined);
+
+        await Utils.removeJFrogServers();
+
+        expect(core.info).toHaveBeenCalledWith(`The value of custom is: 'undefined'`);
+        for (const serverId of serverIds) {
+            expect(core.debug).toHaveBeenCalledWith(`Removing server ID: '${serverId}'...`);
+            expect(Utils.runCli).toHaveBeenCalledWith(['c', 'rm', serverId, '--quiet']);
+        }
+        expect(core.exportVariable).toHaveBeenCalledWith(Utils.JFROG_CLI_SERVER_IDS_ENV_VAR, '');
     });
 });

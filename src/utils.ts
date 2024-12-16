@@ -387,14 +387,19 @@ export class Utils {
     }
 
     /**
-     * Return custom server ID if provided, or default server ID otherwise.
+     * Returns the custom server ID if provided, otherwise returns the default server ID.
      */
     private static getCustomOrDefaultServerId(): string {
+        const customServerId: string | undefined = this.getInputtedCustomId();
+        return customServerId || this.getRunDefaultServerId();
+    }
+
+    private static getInputtedCustomId(): string | undefined {
         let customServerId: string = core.getInput(Utils.CUSTOM_SERVER_ID);
         if (customServerId) {
             return customServerId;
         }
-        return Utils.getRunDefaultServerId();
+        return undefined;
     }
 
     /**
@@ -467,14 +472,25 @@ export class Utils {
     }
 
     /**
-     * Removed configured JFrog CLI servers that are saved in the servers env var, and unset the env var.
+     * Removes configured JFrog CLI servers saved in the environment variable.
+     * If a custom server ID is defined, only remove the custom server ID.
      */
     public static async removeJFrogServers() {
-        for (const serverId of Utils.getConfiguredJFrogServers()) {
-            core.debug(`Removing server ID: '${serverId}'...`);
-            await Utils.runCli(['c', 'rm', serverId, '--quiet']);
+        const customServerId: string | undefined = this.getInputtedCustomId();
+        core.info(`The value of custom is: '${customServerId}'`);
+
+        if (customServerId) {
+            // Remove only the custom server ID
+            core.debug(`Removing custom server ID: '${customServerId}'...`);
+            await Utils.runCli(['c', 'rm', customServerId, '--quiet']);
+        } else {
+            // Remove all configured server IDs
+            for (const serverId of Utils.getConfiguredJFrogServers()) {
+                core.debug(`Removing server ID: '${serverId}'...`);
+                await Utils.runCli(['c', 'rm', serverId, '--quiet']);
+            }
+            core.exportVariable(Utils.JFROG_CLI_SERVER_IDS_ENV_VAR, '');
         }
-        core.exportVariable(Utils.JFROG_CLI_SERVER_IDS_ENV_VAR, '');
     }
 
     /**
