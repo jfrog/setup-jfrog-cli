@@ -13,6 +13,7 @@ import { OctokitResponse } from '@octokit/types/dist-types/OctokitResponse';
 import * as github from '@actions/github';
 import { gzip } from 'zlib';
 import { promisify } from 'util';
+import { load } from 'js-yaml';
 
 export class Utils {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -59,6 +60,16 @@ export class Utils {
     private static readonly OIDC_AUDIENCE_ARG: string = 'oidc-audience';
     // OpenID Connect provider_name input
     private static readonly OIDC_INTEGRATION_PROVIDER_NAME: string = 'oidc-provider-name';
+    // Application yaml root key
+    private static readonly APPLICATION_ROOT_YML: string = 'application';
+    // Application Config file key, yaml should look like:
+    // application:
+    //   key: <application key>
+    private static readonly KEY: string = 'key';
+    // Config file directory name
+    private static readonly JF_CONFIG_DIR_NAME: string = '.jfrog';
+    // Config file name
+    private static readonly JF_CONFIG_FILE_NAME: string = 'config.yml';
     // Disable Job Summaries feature flag
     public static readonly JOB_SUMMARY_DISABLE: string = 'disable-job-summary';
     // Disable auto build info publish feature flag
@@ -99,14 +110,73 @@ export class Utils {
             throw new Error(`Getting openID Connect JSON web token failed: ${error.message}`);
         }
 
+        const applicationKey: string = await this.getApplicationKey();
         try {
-            jfrogCredentials = await this.getJfrogAccessTokenThroughOidcProtocol(jfrogCredentials, jsonWebToken, oidcProviderName);
+            jfrogCredentials = await this.getJfrogAccessTokenThroughOidcProtocol(jfrogCredentials, jsonWebToken, oidcProviderName, applicationKey);
             // Set environment variable to track OIDC logins in the usage report.
             core.exportVariable('JFROG_CLI_USAGE_CONFIG_OIDC', 'TRUE');
             return jfrogCredentials;
         } catch (error: any) {
             throw new Error(`Exchanging JSON web token with an access token failed: ${error.message}`);
         }
+    }
+
+    /**
+     * Retrieves the application key from .jfrog/config file.
+     *
+     * This method attempts to read config file from the file system.
+     * If the configuration file exists and contains the application key, it returns the key.
+     * If the configuration file does not exist or does not contain the application key, it returns an empty string.
+     *
+     * @returns A promise that resolves to the application key as a string.
+     */
+    private static async getApplicationKey(): Promise<string> {
+        const configFilePath: string = path.join(this.JF_CONFIG_DIR_NAME, this.JF_CONFIG_FILE_NAME);
+        try {
+            const config: string = await this.readConfigFromFileSystem(configFilePath);
+            if (!config) {
+                console.debug('Config file is empty or not found.');
+                return '';
+            }
+            const configObj: any = load(config);
+            const application: string = configObj[this.APPLICATION_ROOT_YML];
+            if (!application) {
+                console.log('Application root is not found in the config file.');
+                return '';
+            }
+
+            const applicationKey: string = application[this.KEY];
+            if (!applicationKey) {
+                console.log('Application key is not found in the config file.');
+                return '';
+            }
+            console.debug('Found application key: ' + applicationKey);
+            return applicationKey;
+        } catch (error) {
+            console.error('Error reading config:', error);
+            return '';
+        }
+    }
+
+    /**
+     * Reads .jfrog configuration file from file system.
+     *
+     * This method attempts to read .jfrog configuration file from the specified relative path.
+     * If the file exists, it reads the file content and returns it as a string.
+     * If the file does not exist, it returns an empty string.
+     *
+     * @param configRelativePath - The relative path to the configuration file.
+     * @returns A promise that resolves to the content of the configuration file as a string.
+     */
+    private static async readConfigFromFileSystem(configRelativePath: string): Promise<string> {
+        core.debug(`Reading config from file system. Looking for ${configRelativePath}`);
+        if (!existsSync(configRelativePath)) {
+            core.debug(`config.yml not found in ${configRelativePath}`);
+            return '';
+        }
+
+        core.debug(`config.yml found in ${configRelativePath}`);
+        return await fs.readFile(configRelativePath, 'utf-8');
     }
 
     /**
@@ -143,12 +213,14 @@ export class Utils {
      * @param jfrogCredentials existing JFrog credentials - url, access token, username + password
      * @param jsonWebToken JWT achieved from GitHub JWT provider
      * @param oidcProviderName OIDC provider name
+     * @param applicationKey
      * @returns an access token for the requested Artifactory server
      */
     private static async getJfrogAccessTokenThroughOidcProtocol(
         jfrogCredentials: JfrogCredentials,
         jsonWebToken: string,
         oidcProviderName: string,
+        applicationKey: string,
     ): Promise<JfrogCredentials> {
         // If we've reached this stage, the jfrogCredentials.jfrogUrl field should hold a non-empty value obtained from process.env.JF_URL
         const exchangeUrl: string = jfrogCredentials.jfrogUrl!.replace(/\/$/, '') + '/access/api/v1/oidc/token';
@@ -166,7 +238,8 @@ export class Utils {
             "provider_name": "${oidcProviderName}",
             "project_key": "${projectKey}",
             "gh_job_id": "${jobId}",
-            "gh_run_id": "${runId}"
+            "gh_run_id": "${runId}",
+            "application_key": "${applicationKey}"
         }`;
 
         const additionalHeaders: OutgoingHttpHeaders = {
