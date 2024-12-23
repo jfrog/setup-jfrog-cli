@@ -93,6 +93,10 @@ export class Utils {
         let jfrogCredentials: JfrogCredentials = this.collectJfrogCredentialsFromEnvVars();
         const oidcProviderName: string = core.getInput(Utils.OIDC_INTEGRATION_PROVIDER_NAME);
         if (!oidcProviderName) {
+            // Set environment variable to track OIDC usage.
+            core.exportVariable('JFROG_CLI_USAGE_CONFIG_OIDC', '');
+            core.exportVariable('JFROG_CLI_USAGE_OIDC_USED', 'FALSE');
+
             // Use JF_ENV or the credentials found in the environment variables
             return jfrogCredentials;
         }
@@ -113,8 +117,10 @@ export class Utils {
         const applicationKey: string = await this.getApplicationKey();
         try {
             jfrogCredentials = await this.getJfrogAccessTokenThroughOidcProtocol(jfrogCredentials, jsonWebToken, oidcProviderName, applicationKey);
-            // Set environment variable to track OIDC logins in the usage report.
+
+            // Set environment variable to track OIDC usage.
             core.exportVariable('JFROG_CLI_USAGE_CONFIG_OIDC', 'TRUE');
+            core.exportVariable('JFROG_CLI_USAGE_OIDC_USED', 'TRUE');
             return jfrogCredentials;
         } catch (error: any) {
             throw new Error(`Exchanging JSON web token with an access token failed: ${error.message}`);
@@ -513,6 +519,20 @@ export class Utils {
         if (!core.getBooleanInput(Utils.JOB_SUMMARY_DISABLE)) {
             Utils.enableJobSummaries();
         }
+
+        Utils.setUsageEnvVars()
+    }
+  
+    // Set usage variables to be captured by JFrog CLI visibility metric service.
+    public static setUsageEnvVars(): void {
+        // Set the GitHub repository name or default to an empty string.
+        core.exportVariable('JFROG_CLI_USAGE_GIT_REPO', process.env.GITHUB_REPOSITORY ?? '');
+        // Set the GitHub workflow name or default to an empty string.
+        core.exportVariable('JFROG_CLI_USAGE_JOB_ID', process.env.GITHUB_WORKFLOW ?? '');
+        // Set the GitHub run ID or default to an empty string.
+        core.exportVariable('JFROG_CLI_USAGE_RUN_ID', process.env.GITHUB_RUN_ID ?? '');
+        // Indicate if JF_GIT_TOKEN is provided as an environment variable.
+        core.exportVariable('JFROG_CLI_USAGE_GH_TOKEN_FOR_CODE_SCANNING_ALERTS_PROVIDED', !!process.env.JF_GIT_TOKEN);
     }
 
     /**
