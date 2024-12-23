@@ -93,6 +93,10 @@ export class Utils {
         let jfrogCredentials: JfrogCredentials = this.collectJfrogCredentialsFromEnvVars();
         const oidcProviderName: string = core.getInput(Utils.OIDC_INTEGRATION_PROVIDER_NAME);
         if (!oidcProviderName) {
+            // Set environment variable to track OIDC usage.
+            core.exportVariable('JFROG_CLI_USAGE_CONFIG_OIDC', '');
+            core.exportVariable('JFROG_CLI_USAGE_OIDC_USED', 'FALSE');
+
             // Use JF_ENV or the credentials found in the environment variables
             return jfrogCredentials;
         }
@@ -113,8 +117,10 @@ export class Utils {
         const applicationKey: string = await this.getApplicationKey();
         try {
             jfrogCredentials = await this.getJfrogAccessTokenThroughOidcProtocol(jfrogCredentials, jsonWebToken, oidcProviderName, applicationKey);
-            // Set environment variable to track OIDC logins in the usage report.
+
+            // Set environment variable to track OIDC usage.
             core.exportVariable('JFROG_CLI_USAGE_CONFIG_OIDC', 'TRUE');
+            core.exportVariable('JFROG_CLI_USAGE_OIDC_USED', 'TRUE');
             return jfrogCredentials;
         } catch (error: any) {
             throw new Error(`Exchanging JSON web token with an access token failed: ${error.message}`);
