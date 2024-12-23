@@ -523,7 +523,7 @@ export class Utils {
         Utils.setUsageEnvVars()
     }
 
-    // Set usage variables to be captured by JFrog CLI.
+    // Set usage variables to be captured by JFrog CLI visibility metric service.
     public static setUsageEnvVars(): void {
     // Set the GitHub repository name or default to an empty string.
     core.exportVariable('JFROG_CLI_USAGE_GIT_REPO', process.env.GITHUB_REPOSITORY ?? '');
