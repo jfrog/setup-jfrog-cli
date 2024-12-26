@@ -81,7 +81,8 @@ export class Utils {
     // It cannot be linked to the repository, as GitHub serves the image from a CDN,
     // which gets blocked by the browser, resulting in an empty image.
     private static MARKDOWN_HEADER_PNG_URL: string = 'https://media.jfrog.com/wp-content/uploads/2024/09/02161430/jfrog-job-summary.svg';
-    private static isSummaryHeaderAccessible: boolean;
+    // Flag to indicate if the summary header is accessible, can be undefined if not checked yet.
+    private static isSummaryHeaderAccessible: boolean | undefined = undefined;
 
     /**
      * Retrieves server credentials for accessing JFrog's server
@@ -913,18 +914,31 @@ export class Utils {
         return `![](${process.env.JF_URL}/ui/api/v1/u?s=1&m=1&job_id=${process.env.GITHUB_JOB}&run_id=${process.env.GITHUB_RUN_ID}&git_repo=${process.env.GITHUB_REPOSITORY})`;
     }
 
+    /**
+     * Checks if the header image is accessible via the internet.
+     * Saves the result in a static variable to avoid multiple checks.
+     * @private
+     */
     private static async isHeaderPngAccessible(): Promise<boolean> {
+        if (this.isSummaryHeaderAccessible != undefined) {
+            return this.isSummaryHeaderAccessible;
+        }
         const url: string = this.MARKDOWN_HEADER_PNG_URL;
         const httpClient: HttpClient = new HttpClient();
         try {
-            const response: HttpClientResponse = await httpClient.head(url);
-            return response.message.statusCode === 200;
+            // Set timeout to 5 seconds
+            const requestOptions: OutgoingHttpHeaders = {
+                socketTimeout: 5000,
+            };
+            const response: HttpClientResponse = await httpClient.head(url, requestOptions);
+            this.isSummaryHeaderAccessible = response.message.statusCode === 200;
         } catch (error) {
             core.warning('No internet access to the header image, using the text header instead.');
-            return false;
+            this.isSummaryHeaderAccessible = false;
         } finally {
             httpClient.dispose();
         }
+        return this.isSummaryHeaderAccessible;
     }
 
     private static getTempDirectory(): string {
