@@ -916,7 +916,7 @@ export class Utils {
 
     /**
      * Checks if the header image is accessible via the internet.
-     * saves the result in a static variable to avoid multiple checks.
+     * Saves the result in a static variable to avoid multiple checks.
      * @private
      */
     private static async isHeaderPngAccessible(): Promise<boolean> {
@@ -926,8 +926,9 @@ export class Utils {
         const url: string = this.MARKDOWN_HEADER_PNG_URL;
         const httpClient: HttpClient = new HttpClient();
         try {
+            // Set timeout to 5 seconds
             const requestOptions: OutgoingHttpHeaders = {
-                socketTimeout: 5000, // Set timeout to 5 seconds
+                socketTimeout: 5000,
             };
             const response: HttpClientResponse = await httpClient.head(url, requestOptions);
             this.isSummaryHeaderAccessible = response.message.statusCode === 200;
