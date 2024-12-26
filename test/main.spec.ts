@@ -472,7 +472,6 @@ describe('Utils.removeJFrogServers', () => {
     });
 });
 
-
 describe('getApplicationKey', () => {
     const mockReadFile: jest.Mock = fs.promises.readFile as jest.Mock;
     const mockExistsSync: jest.Mock = fs.existsSync as jest.Mock;
@@ -568,4 +567,3 @@ describe('setUsageEnvVars', () => {
         expect(core.exportVariable).toHaveBeenCalledWith('JFROG_CLI_USAGE_GH_TOKEN_FOR_CODE_SCANNING_ALERTS_PROVIDED', false);
     });
 });
-
