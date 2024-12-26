@@ -13,6 +13,7 @@ import { OctokitResponse } from '@octokit/types/dist-types/OctokitResponse';
 import * as github from '@actions/github';
 import { gzip } from 'zlib';
 import { promisify } from 'util';
+import { load } from 'js-yaml';
 
 export class Utils {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -59,6 +60,16 @@ export class Utils {
     private static readonly OIDC_AUDIENCE_ARG: string = 'oidc-audience';
     // OpenID Connect provider_name input
     private static readonly OIDC_INTEGRATION_PROVIDER_NAME: string = 'oidc-provider-name';
+    // Application yaml root key
+    private static readonly APPLICATION_ROOT_YML: string = 'application';
+    // Application Config file key, yaml should look like:
+    // application:
+    //   key: <application key>
+    private static readonly KEY: string = 'key';
+    // Config file directory name
+    private static readonly JF_CONFIG_DIR_NAME: string = '.jfrog';
+    // Config file name
+    private static readonly JF_CONFIG_FILE_NAME: string = 'config.yml';
     // Disable Job Summaries feature flag
     public static readonly JOB_SUMMARY_DISABLE: string = 'disable-job-summary';
     // Disable auto build info publish feature flag
@@ -83,6 +94,10 @@ export class Utils {
         let jfrogCredentials: JfrogCredentials = this.collectJfrogCredentialsFromEnvVars();
         const oidcProviderName: string = core.getInput(Utils.OIDC_INTEGRATION_PROVIDER_NAME);
         if (!oidcProviderName) {
+            // Set environment variable to track OIDC usage.
+            core.exportVariable('JFROG_CLI_USAGE_CONFIG_OIDC', '');
+            core.exportVariable('JFROG_CLI_USAGE_OIDC_USED', 'FALSE');
+
             // Use JF_ENV or the credentials found in the environment variables
             return jfrogCredentials;
         }
@@ -100,14 +115,75 @@ export class Utils {
             throw new Error(`Getting openID Connect JSON web token failed: ${error.message}`);
         }
 
+        const applicationKey: string = await this.getApplicationKey();
         try {
-            jfrogCredentials = await this.getJfrogAccessTokenThroughOidcProtocol(jfrogCredentials, jsonWebToken, oidcProviderName);
-            // Set environment variable to track OIDC logins in the usage report.
+            jfrogCredentials = await this.getJfrogAccessTokenThroughOidcProtocol(jfrogCredentials, jsonWebToken, oidcProviderName, applicationKey);
+
+            // Set environment variable to track OIDC usage.
             core.exportVariable('JFROG_CLI_USAGE_CONFIG_OIDC', 'TRUE');
+            core.exportVariable('JFROG_CLI_USAGE_OIDC_USED', 'TRUE');
             return jfrogCredentials;
         } catch (error: any) {
             throw new Error(`Exchanging JSON web token with an access token failed: ${error.message}`);
         }
+    }
+
+    /**
+     * Retrieves the application key from .jfrog/config file.
+     *
+     * This method attempts to read config file from the file system.
+     * If the configuration file exists and contains the application key, it returns the key.
+     * If the configuration file does not exist or does not contain the application key, it returns an empty string.
+     *
+     * @returns A promise that resolves to the application key as a string.
+     */
+    private static async getApplicationKey(): Promise<string> {
+        const configFilePath: string = path.join(this.JF_CONFIG_DIR_NAME, this.JF_CONFIG_FILE_NAME);
+        try {
+            const config: string = await this.readConfigFromFileSystem(configFilePath);
+            if (!config) {
+                console.debug('Config file is empty or not found.');
+                return '';
+            }
+            const configObj: any = load(config);
+            const application: string = configObj[this.APPLICATION_ROOT_YML];
+            if (!application) {
+                console.log('Application root is not found in the config file.');
+                return '';
+            }
+
+            const applicationKey: string = application[this.KEY];
+            if (!applicationKey) {
+                console.log('Application key is not found in the config file.');
+                return '';
+            }
+            console.debug('Found application key: ' + applicationKey);
+            return applicationKey;
+        } catch (error) {
+            console.error('Error reading config:', error);
+            return '';
+        }
+    }
+
+    /**
+     * Reads .jfrog configuration file from file system.
+     *
+     * This method attempts to read .jfrog configuration file from the specified relative path.
+     * If the file exists, it reads the file content and returns it as a string.
+     * If the file does not exist, it returns an empty string.
+     *
+     * @param configRelativePath - The relative path to the configuration file.
+     * @returns A promise that resolves to the content of the configuration file as a string.
+     */
+    private static async readConfigFromFileSystem(configRelativePath: string): Promise<string> {
+        core.debug(`Reading config from file system. Looking for ${configRelativePath}`);
+        if (!existsSync(configRelativePath)) {
+            core.debug(`config.yml not found in ${configRelativePath}`);
+            return '';
+        }
+
+        core.debug(`config.yml found in ${configRelativePath}`);
+        return await fs.readFile(configRelativePath, 'utf-8');
     }
 
     /**
@@ -144,12 +220,14 @@ export class Utils {
      * @param jfrogCredentials existing JFrog credentials - url, access token, username + password
      * @param jsonWebToken JWT achieved from GitHub JWT provider
      * @param oidcProviderName OIDC provider name
+     * @param applicationKey
      * @returns an access token for the requested Artifactory server
      */
     private static async getJfrogAccessTokenThroughOidcProtocol(
         jfrogCredentials: JfrogCredentials,
         jsonWebToken: string,
         oidcProviderName: string,
+        applicationKey: string,
     ): Promise<JfrogCredentials> {
         // If we've reached this stage, the jfrogCredentials.jfrogUrl field should hold a non-empty value obtained from process.env.JF_URL
         const exchangeUrl: string = jfrogCredentials.jfrogUrl!.replace(/\/$/, '') + '/access/api/v1/oidc/token';
@@ -167,7 +245,8 @@ export class Utils {
             "provider_name": "${oidcProviderName}",
             "project_key": "${projectKey}",
             "gh_job_id": "${jobId}",
-            "gh_run_id": "${runId}"
+            "gh_run_id": "${runId}",
+            "application_key": "${applicationKey}"
         }`;
 
         const additionalHeaders: OutgoingHttpHeaders = {
@@ -388,14 +467,19 @@ export class Utils {
     }
 
     /**
-     * Return custom server ID if provided, or default server ID otherwise.
+     * Returns the custom server ID if provided, otherwise returns the default server ID.
      */
     private static getCustomOrDefaultServerId(): string {
+        const customServerId: string | undefined = this.getInputtedCustomId();
+        return customServerId || this.getRunDefaultServerId();
+    }
+
+    private static getInputtedCustomId(): string | undefined {
         let customServerId: string = core.getInput(Utils.CUSTOM_SERVER_ID);
         if (customServerId) {
             return customServerId;
         }
-        return Utils.getRunDefaultServerId();
+        return undefined;
     }
 
     /**
@@ -436,6 +520,20 @@ export class Utils {
         if (!core.getBooleanInput(Utils.JOB_SUMMARY_DISABLE)) {
             Utils.enableJobSummaries();
         }
+
+        Utils.setUsageEnvVars();
+    }
+
+    // Set usage variables to be captured by JFrog CLI visibility metric service.
+    public static setUsageEnvVars(): void {
+        // Set the GitHub repository name or default to an empty string.
+        core.exportVariable('JFROG_CLI_USAGE_GIT_REPO', process.env.GITHUB_REPOSITORY ?? '');
+        // Set the GitHub workflow name or default to an empty string.
+        core.exportVariable('JFROG_CLI_USAGE_JOB_ID', process.env.GITHUB_WORKFLOW ?? '');
+        // Set the GitHub run ID or default to an empty string.
+        core.exportVariable('JFROG_CLI_USAGE_RUN_ID', process.env.GITHUB_RUN_ID ?? '');
+        // Indicate if JF_GIT_TOKEN is provided as an environment variable.
+        core.exportVariable('JFROG_CLI_USAGE_GH_TOKEN_FOR_CODE_SCANNING_ALERTS_PROVIDED', !!process.env.JF_GIT_TOKEN);
     }
 
     /**
@@ -468,14 +566,25 @@ export class Utils {
     }
 
     /**
-     * Removed configured JFrog CLI servers that are saved in the servers env var, and unset the env var.
+     * Removes configured JFrog CLI servers saved in the environment variable.
+     * If a custom server ID is defined, only remove the custom server ID.
      */
     public static async removeJFrogServers() {
-        for (const serverId of Utils.getConfiguredJFrogServers()) {
-            core.debug(`Removing server ID: '${serverId}'...`);
-            await Utils.runCli(['c', 'rm', serverId, '--quiet']);
+        const customServerId: string | undefined = this.getInputtedCustomId();
+        core.info(`The value of custom is: '${customServerId}'`);
+
+        if (customServerId) {
+            // Remove only the custom server ID
+            core.debug(`Removing custom server ID: '${customServerId}'...`);
+            await Utils.runCli(['c', 'rm', customServerId, '--quiet']);
+        } else {
+            // Remove all configured server IDs
+            for (const serverId of Utils.getConfiguredJFrogServers()) {
+                core.debug(`Removing server ID: '${serverId}'...`);
+                await Utils.runCli(['c', 'rm', serverId, '--quiet']);
+            }
+            core.exportVariable(Utils.JFROG_CLI_SERVER_IDS_ENV_VAR, '');
         }
-        core.exportVariable(Utils.JFROG_CLI_SERVER_IDS_ENV_VAR, '');
     }
 
     /**
@@ -798,7 +907,11 @@ export class Utils {
     }
 
     private static getMarkdownFooter() {
-        return '\n\n # \n\n The above Job Summary was generated by the <a href="https://github.com/marketplace/actions/setup-jfrog-cli"> Setup JFrog CLI GitHub Action </a>';
+        return `\n\n # \n\n ${this.getUsageBadge()} \n\n The above Job Summary was generated by the <a href="https://github.com/marketplace/actions/setup-jfrog-cli"> Setup JFrog CLI GitHub Action </a>`;
+    }
+
+    private static getUsageBadge(): string {
+        return `![](${process.env.JF_URL}/ui/api/v1/u?s=1&m=1&job_id=${process.env.GITHUB_JOB}&run_id=${process.env.GITHUB_RUN_ID}&git_repo=${process.env.GITHUB_REPOSITORY})`;
     }
 
     /**

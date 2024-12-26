@@ -1,11 +1,23 @@
 import * as os from 'os';
 import * as core from '@actions/core';
 
-import { Utils, DownloadDetails, JfrogCredentials, JWTTokenData } from '../src/utils';
+import { DownloadDetails, JfrogCredentials, JWTTokenData, Utils } from '../src/utils';
+import * as jsYaml from 'js-yaml';
+import * as fs from 'fs';
+import * as path from 'path';
 import semver = require('semver/preload');
+
 jest.mock('os');
 jest.mock('@actions/core');
 jest.mock('semver');
+jest.mock('@actions/core');
+jest.mock('fs', () => ({
+    promises: {
+        readFile: jest.fn(),
+    },
+    existsSync: jest.fn(),
+}));
+jest.mock('path');
 
 const DEFAULT_CLI_URL: string = 'https://releases.jfrog.io/artifactory/jfrog-cli/';
 const CUSTOM_CLI_URL: string = 'http://127.0.0.1:8081/artifactory/jfrog-cli-remote/';
@@ -423,5 +435,135 @@ describe('isJobSummarySupported', () => {
         (semver.gte as jest.Mock).mockReturnValue(false);
         expect(Utils.isJobSummarySupported()).toBe(false);
         expect(semver.gte).toHaveBeenCalledWith(version, MIN_CLI_VERSION_JOB_SUMMARY);
+    });
+});
+
+describe('Utils.removeJFrogServers', () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
+
+    it('should remove only the custom server ID if defined', async () => {
+        const customServerId: string = 'custom-server-id';
+        jest.spyOn(Utils as any, 'getInputtedCustomId').mockReturnValue(customServerId);
+        jest.spyOn(Utils as any, 'runCli').mockResolvedValue(undefined);
+
+        await Utils.removeJFrogServers();
+
+        expect(core.info).toHaveBeenCalledWith(`The value of custom is: '${customServerId}'`);
+        expect(core.debug).toHaveBeenCalledWith(`Removing custom server ID: '${customServerId}'...`);
+        expect(Utils.runCli).toHaveBeenCalledWith(['c', 'rm', customServerId, '--quiet']);
+    });
+
+    it('should remove all configured server IDs if no custom server ID is defined', async () => {
+        jest.spyOn(Utils as any, 'getInputtedCustomId').mockReturnValue(undefined);
+        const serverIds: string[] = ['server1', 'server2'];
+        jest.spyOn(Utils as any, 'getConfiguredJFrogServers').mockReturnValue(serverIds);
+        jest.spyOn(Utils as any, 'runCli').mockResolvedValue(undefined);
+
+        await Utils.removeJFrogServers();
+
+        expect(core.info).toHaveBeenCalledWith(`The value of custom is: 'undefined'`);
+        for (const serverId of serverIds) {
+            expect(core.debug).toHaveBeenCalledWith(`Removing server ID: '${serverId}'...`);
+            expect(Utils.runCli).toHaveBeenCalledWith(['c', 'rm', serverId, '--quiet']);
+        }
+        expect(core.exportVariable).toHaveBeenCalledWith(Utils.JFROG_CLI_SERVER_IDS_ENV_VAR, '');
+    });
+});
+
+describe('getApplicationKey', () => {
+    const mockReadFile: jest.Mock = fs.promises.readFile as jest.Mock;
+    const mockExistsSync: jest.Mock = fs.existsSync as jest.Mock;
+    const mockPath: jest.Mock = path.join as jest.Mock;
+
+    beforeEach(() => {
+        jest.resetAllMocks();
+    });
+
+    it('should return application key from config file', async () => {
+        mockPath.mockReturnValue('mocked-path');
+        mockExistsSync.mockReturnValue(true);
+        mockReadFile.mockResolvedValue(jsYaml.dump({ application: { key: 'config-app-key' } }));
+
+        const result: string = await (Utils as any).getApplicationKey();
+        expect(result).toBe('config-app-key');
+        expect(mockReadFile).toHaveBeenCalledWith('mocked-path', 'utf-8');
+    });
+
+    it('should return empty string if config file does not exist', async () => {
+        mockPath.mockReturnValue('mocked-path');
+        mockExistsSync.mockReturnValue(false);
+
+        const result: string = await (Utils as any).getApplicationKey();
+        expect(result).toBe('');
+        expect(mockReadFile).not.toHaveBeenCalled();
+    });
+
+    it('should return empty string if config file is empty', async () => {
+        mockPath.mockReturnValue('mocked-path');
+        mockExistsSync.mockReturnValue(true);
+        mockReadFile.mockResolvedValue('');
+
+        const result: string = await (Utils as any).getApplicationKey();
+        expect(result).toBe('');
+    });
+
+    it('should return empty string if application root is not found in config file', async () => {
+        mockPath.mockReturnValue('mocked-path');
+        mockExistsSync.mockReturnValue(true);
+        mockReadFile.mockResolvedValue(jsYaml.dump({}));
+
+        const result: string = await (Utils as any).getApplicationKey();
+        expect(result).toBe('');
+    });
+
+    it('should return empty string if application key is not found in config file', async () => {
+        mockPath.mockReturnValue('mocked-path');
+        mockExistsSync.mockReturnValue(true);
+        mockReadFile.mockResolvedValue(jsYaml.dump({ application: {} }));
+
+        const result: string = await (Utils as any).getApplicationKey();
+        expect(result).toBe('');
+    });
+});
+
+describe('setUsageEnvVars', () => {
+    beforeEach(() => {
+        // Clear environment variables before each test
+        delete process.env.GITHUB_REPOSITORY;
+        delete process.env.GITHUB_WORKFLOW;
+        delete process.env.GITHUB_RUN_ID;
+        delete process.env.JF_GIT_TOKEN;
+
+        jest.clearAllMocks();
+    });
+
+    it('should export the correct environment variables when all inputs are set', () => {
+        // Mock environment variables
+        process.env.GITHUB_REPOSITORY = 'owner/repo';
+        process.env.GITHUB_WORKFLOW = 'test-workflow';
+        process.env.GITHUB_RUN_ID = '12345';
+        process.env.JF_GIT_TOKEN = 'dummy-token';
+
+        // Call the function
+        Utils.setUsageEnvVars();
+
+        // Verify exported variables
+        expect(core.exportVariable).toHaveBeenCalledWith('JFROG_CLI_USAGE_JOB_ID', 'test-workflow');
+        expect(core.exportVariable).toHaveBeenCalledWith('JFROG_CLI_USAGE_RUN_ID', '12345');
+        expect(core.exportVariable).toHaveBeenCalledWith('JFROG_CLI_USAGE_GIT_REPO', 'owner/repo');
+        expect(core.exportVariable).toHaveBeenCalledWith('JFROG_CLI_USAGE_GH_TOKEN_FOR_CODE_SCANNING_ALERTS_PROVIDED', true);
+    });
+
+    it('should export empty strings for missing environment variables', () => {
+        // Call the function with no environment variables set
+        Utils.setUsageEnvVars();
+
+        // Verify exported variables
+        expect(core.exportVariable).toHaveBeenCalledWith('JFROG_CLI_USAGE_JOB_ID', '');
+        expect(core.exportVariable).toHaveBeenCalledWith('JFROG_CLI_USAGE_RUN_ID', '');
+        expect(core.exportVariable).toHaveBeenCalledWith('JFROG_CLI_USAGE_GIT_REPO', '');
+        expect(core.exportVariable).toHaveBeenCalledWith('JFROG_CLI_USAGE_GH_TOKEN_FOR_CODE_SCANNING_ALERTS_PROVIDED', false);
     });
 });
