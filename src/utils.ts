@@ -966,8 +966,8 @@ export class Utils {
      * Note: To avoid confusion, this returns the workflow name, which we consider as job_id,
      * whereas GitHub uses job_id to refer to the specific job within a workflow.
      */
-    public static GitHubJobIdEncoded(): string {
-        return encodeURIComponent(process.env.GITHUB_WORKFLOW || '');
+    static GitHubJobIdEncoded(): string {
+        return this.encodeForUrl(process.env.GITHUB_WORKFLOW || '');
     }
 }
 
