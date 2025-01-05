@@ -568,31 +568,38 @@ describe('setUsageEnvVars', () => {
     });
 });
 
-describe('Utils', () => {
+describe('Test correct encoding of badge URL', () => {
     describe('getUsageBadge', () => {
         beforeEach(() => {
             process.env.JF_URL = 'https://example.jfrog.io/';
-            process.env.GITHUB_WORKFLOW = 'test-job';
-            process.env.GITHUB_REPOSITORY = 'test/repo';
             process.env.GITHUB_RUN_ID = '123';
         });
 
         afterEach(() => {
             delete process.env.JF_URL;
-            delete process.env.GITHUB_JOB;
+            delete process.env.GITHUB_WORKFLOW;
             delete process.env.GITHUB_REPOSITORY;
             delete process.env.GITHUB_RUN_ID;
         });
 
         it('should return the correct usage badge URL', () => {
+            process.env.GITHUB_WORKFLOW = 'test-job';
+            process.env.GITHUB_REPOSITORY = 'test/repo';
             const expectedBadge: string = '![](https://example.jfrog.io/ui/api/v1/u?s=1&m=1&job_id=test-job&run_id=123&git_repo=test%2Frepo)';
             expect(Utils.getUsageBadge()).toBe(expectedBadge);
         });
 
-        it('should URL encode the job ID and repository', () => {
+        it('should URL encode the job ID and repository with spaces', () => {
             process.env.GITHUB_WORKFLOW = 'test job';
             process.env.GITHUB_REPOSITORY = 'test repo';
-            const expectedBadge: string = '![](https://example.jfrog.io/ui/api/v1/u?s=1&m=1&job_id=test%20job&run_id=123&git_repo=test%20repo)';
+            const expectedBadge: string = '![](https://example.jfrog.io/ui/api/v1/u?s=1&m=1&job_id=test+job&run_id=123&git_repo=test+repo)';
+            expect(Utils.getUsageBadge()).toBe(expectedBadge);
+        });
+
+        it('should URL encode the job ID and repository with special characters', () => {
+            process.env.GITHUB_WORKFLOW = 'test/job@workflow';
+            process.env.GITHUB_REPOSITORY = 'test/repo@special';
+            const expectedBadge: string = '![](https://example.jfrog.io/ui/api/v1/u?s=1&m=1&job_id=test%2Fjob%40workflow&run_id=123&git_repo=test%2Frepo%40special)';
             expect(Utils.getUsageBadge()).toBe(expectedBadge);
         });
 
@@ -601,30 +608,6 @@ describe('Utils', () => {
             delete process.env.GITHUB_REPOSITORY;
             const expectedBadge: string = '![](https://example.jfrog.io/ui/api/v1/u?s=1&m=1&job_id=&run_id=123&git_repo=)';
             expect(Utils.getUsageBadge()).toBe(expectedBadge);
-        });
-    });
-});
-describe('Utils', () => {
-    describe('getGitHubJobId', () => {
-        afterEach(() => {
-            delete process.env.GITHUB_WORKFLOW;
-        });
-
-        it('should return URL encoded job ID with spaces', () => {
-            process.env.GITHUB_WORKFLOW = 'test workflow';
-            const expectedJobId: string = 'test%20workflow';
-            expect(Utils.getGithubJobId()).toBe(expectedJobId);
-        });
-
-        it('should return URL encoded job ID with multiple spaces', () => {
-            process.env.GITHUB_WORKFLOW = 'test workflow with spaces';
-            const expectedJobId: string = 'test%20workflow%20with%20spaces';
-            expect(Utils.getGithubJobId()).toBe(expectedJobId);
-        });
-
-        it('should return an empty string if GITHUB_WORKFLOW is not set', () => {
-            const expectedJobId: string = '';
-            expect(Utils.getGithubJobId()).toBe(expectedJobId);
         });
     });
 });

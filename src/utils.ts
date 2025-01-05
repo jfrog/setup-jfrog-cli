@@ -913,14 +913,17 @@ export class Utils {
     static getUsageBadge(): string {
         const platformUrl: string = Utils.getPlatformUrl();
         const githubJobId: string = this.getGithubJobId();
-        const gitRepo: string = Utils.encodeForUrl(process.env.GITHUB_REPOSITORY || '');
+        const gitRepo: string = process.env.GITHUB_REPOSITORY || '';
         const runId: string = process.env.GITHUB_RUN_ID || '';
-
-        return `![](${platformUrl}ui/api/v1/u?s=1&m=1&job_id=${githubJobId}&run_id=${runId}&git_repo=${gitRepo})`;
-    }
-
-    private static encodeForUrl(value: string): string {
-        return encodeURIComponent(value);
+        const url: URL = new URL(`${platformUrl}ui/api/v1/u`);
+        // source query param indicating the source of the request
+        url.searchParams.set('s', '1');
+        // metric query param indicating the metric type
+        url.searchParams.set('m', '1');
+        url.searchParams.set('job_id', githubJobId);
+        url.searchParams.set('run_id', runId);
+        url.searchParams.set('git_repo', gitRepo);
+        return `![](${url.toString()})`;
     }
 
     /**
@@ -966,7 +969,7 @@ export class Utils {
      * whereas GitHub uses job_id to refer to the specific job within a workflow.
      */
     static getGithubJobId(): string {
-        return this.encodeForUrl(process.env.GITHUB_WORKFLOW || '');
+        return process.env.GITHUB_WORKFLOW || '';
     }
 }
 
