@@ -569,3 +569,28 @@ describe('setUsageEnvVars', () => {
     });
 });
 
+describe('Utils', () => {
+    describe('getGitHubJobId', () => {
+        afterEach(() => {
+            delete process.env.GITHUB_WORKFLOW;
+        });
+
+        it('should return URL encoded job ID with spaces', () => {
+            process.env.GITHUB_WORKFLOW = 'test workflow';
+            const expectedJobId:string = 'test%20workflow';
+            expect(Utils.getGitHubJobId()).toBe(expectedJobId);
+        });
+
+        it('should return URL encoded job ID with multiple spaces', () => {
+            process.env.GITHUB_WORKFLOW = 'test workflow with spaces';
+            const expectedJobId:string = 'test%20workflow%20with%20spaces';
+            expect(Utils.getGitHubJobId()).toBe(expectedJobId);
+        });
+
+        it('should return an empty string if GITHUB_WORKFLOW is not set', () => {
+            const expectedJobId:string = '';
+            expect(Utils.getGitHubJobId()).toBe(expectedJobId);
+        });
+    });
+});
+

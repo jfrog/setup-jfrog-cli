@@ -14,6 +14,7 @@ import * as github from '@actions/github';
 import { gzip } from 'zlib';
 import { promisify } from 'util';
 import { load } from 'js-yaml';
+import * as url from 'node:url';
 
 export class Utils {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -233,7 +234,7 @@ export class Utils {
         core.debug('Exchanging GitHub JSON web token with a JFrog access token...');
 
         let projectKey: string = process.env.JF_PROJECT || '';
-        let jobId: string = process.env.GITHUB_JOB || '';
+        let jobId: string = Utils.getGitHubJobId();
         let runId: string = process.env.GITHUB_RUN_ID || '';
 
         const httpClient: HttpClient = new HttpClient();
@@ -931,6 +932,10 @@ export class Utils {
             throw new Error('Failed to determine the temporary directory');
         }
         return tempDir;
+    }
+
+    public static getGitHubJobId(): string {
+        return encodeURIComponent(process.env.GITHUB_WORKFLOW || '');
     }
 }
 
