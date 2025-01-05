@@ -236,6 +236,7 @@ export class Utils {
         let projectKey: string = process.env.JF_PROJECT || '';
         let jobId: string = this.getGithubJobId();
         let runId: string = process.env.GITHUB_RUN_ID || '';
+        let githubRepository: string = process.env.GITHUB_REPOSITORY || '';
 
         const httpClient: HttpClient = new HttpClient();
         const data: string = `{
@@ -246,6 +247,7 @@ export class Utils {
             "project_key": "${projectKey}",
             "gh_job_id": "${jobId}",
             "gh_run_id": "${runId}",
+            "gh_repo": "${githubRepository}",
             "application_key": "${applicationKey}"
         }`;
 
