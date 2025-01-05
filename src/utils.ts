@@ -14,7 +14,6 @@ import * as github from '@actions/github';
 import { gzip } from 'zlib';
 import { promisify } from 'util';
 import { load } from 'js-yaml';
-import * as url from 'node:url';
 
 export class Utils {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -235,7 +234,7 @@ export class Utils {
         core.debug('Exchanging GitHub JSON web token with a JFrog access token...');
 
         let projectKey: string = process.env.JF_PROJECT || '';
-        let jobId: string = Utils.GitHubJobIdEncoded();
+        let jobId: string = this.getGithubJobId();
         let runId: string = process.env.GITHUB_RUN_ID || '';
 
         const httpClient: HttpClient = new HttpClient();
@@ -913,7 +912,7 @@ export class Utils {
 
     static getUsageBadge(): string {
         const platformUrl: string = Utils.getPlatformUrl();
-        const githubJobId: string = this.GitHubJobIdEncoded()
+        const githubJobId: string = this.getGithubJobId();
         const gitRepo: string = Utils.encodeForUrl(process.env.GITHUB_REPOSITORY || '');
         const runId: string = process.env.GITHUB_RUN_ID || '';
 
@@ -966,7 +965,7 @@ export class Utils {
      * Note: To avoid confusion, this returns the workflow name, which we consider as job_id,
      * whereas GitHub uses job_id to refer to the specific job within a workflow.
      */
-    static GitHubJobIdEncoded(): string {
+    static getGithubJobId(): string {
         return this.encodeForUrl(process.env.GITHUB_WORKFLOW || '');
     }
 }
