@@ -235,7 +235,7 @@ export class Utils {
         core.debug('Exchanging GitHub JSON web token with a JFrog access token...');
 
         let projectKey: string = process.env.JF_PROJECT || '';
-        let jobId: string = Utils.getGitHubJobId();
+        let jobId: string = Utils.GitHubJobIdEncoded();
         let runId: string = process.env.GITHUB_RUN_ID || '';
 
         const httpClient: HttpClient = new HttpClient();
@@ -913,7 +913,7 @@ export class Utils {
 
     static getUsageBadge(): string {
         const platformUrl: string = Utils.getPlatformUrl();
-        const githubJobId: string = Utils.encodeForUrl(process.env.GITHUB_JOB || '');
+        const githubJobId: string = this.GitHubJobIdEncoded()
         const gitRepo: string = Utils.encodeForUrl(process.env.GITHUB_REPOSITORY || '');
         const runId: string = process.env.GITHUB_RUN_ID || '';
 
@@ -961,7 +961,12 @@ export class Utils {
         return tempDir;
     }
 
-    public static getGitHubJobId(): string {
+    /**
+     * Retrieves the GitHub workflow name from the environment variables and URL encodes it.
+     * Note: To avoid confusion, this returns the workflow name, which we consider as job_id,
+     * whereas GitHub uses job_id to refer to the specific job within a workflow.
+     */
+    public static GitHubJobIdEncoded(): string {
         return encodeURIComponent(process.env.GITHUB_WORKFLOW || '');
     }
 }

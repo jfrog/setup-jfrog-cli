@@ -572,7 +572,7 @@ describe('Utils', () => {
     describe('getUsageBadge', () => {
         beforeEach(() => {
             process.env.JF_URL = 'https://example.jfrog.io/';
-            process.env.GITHUB_JOB = 'test-job';
+            process.env.GITHUB_WORKFLOW = 'test-job';
             process.env.GITHUB_REPOSITORY = 'test/repo';
             process.env.GITHUB_RUN_ID = '123';
         });
@@ -590,14 +590,14 @@ describe('Utils', () => {
         });
 
         it('should URL encode the job ID and repository', () => {
-            process.env.GITHUB_JOB = 'test job';
+            process.env.GITHUB_WORKFLOW = 'test job';
             process.env.GITHUB_REPOSITORY = 'test repo';
             const expectedBadge: string = '![](https://example.jfrog.io/ui/api/v1/u?s=1&m=1&job_id=test%20job&run_id=123&git_repo=test%20repo)';
             expect(Utils.getUsageBadge()).toBe(expectedBadge);
         });
 
         it('should handle missing environment variables gracefully', () => {
-            delete process.env.GITHUB_JOB;
+            delete process.env.GITHUB_WORKFLOW;
             delete process.env.GITHUB_REPOSITORY;
             const expectedBadge: string = '![](https://example.jfrog.io/ui/api/v1/u?s=1&m=1&job_id=&run_id=123&git_repo=)';
             expect(Utils.getUsageBadge()).toBe(expectedBadge);
@@ -613,18 +613,18 @@ describe('Utils', () => {
         it('should return URL encoded job ID with spaces', () => {
             process.env.GITHUB_WORKFLOW = 'test workflow';
             const expectedJobId:string = 'test%20workflow';
-            expect(Utils.getGitHubJobId()).toBe(expectedJobId);
+            expect(Utils.GitHubJobIdEncoded()).toBe(expectedJobId);
         });
 
         it('should return URL encoded job ID with multiple spaces', () => {
             process.env.GITHUB_WORKFLOW = 'test workflow with spaces';
             const expectedJobId:string = 'test%20workflow%20with%20spaces';
-            expect(Utils.getGitHubJobId()).toBe(expectedJobId);
+            expect(Utils.GitHubJobIdEncoded()).toBe(expectedJobId);
         });
 
         it('should return an empty string if GITHUB_WORKFLOW is not set', () => {
             const expectedJobId:string = '';
-            expect(Utils.getGitHubJobId()).toBe(expectedJobId);
+            expect(Utils.GitHubJobIdEncoded()).toBe(expectedJobId);
         });
     });
 });
