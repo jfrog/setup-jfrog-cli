@@ -977,9 +977,9 @@ export class Utils {
     }
 
     /**
-     * Retrieves the GitHub workflow name from the environment variables and URL encodes it.
-     * Note: To avoid confusion, this returns the workflow name, which we consider as job_id,
-     * whereas GitHub uses job_id to refer to the specific job within a workflow.
+     * Retrieves the GitHub job ID, which in this context refers to the GitHub workflow name.
+     * Note: We use "job" instead of "workflow" to align with our terminology, where "GitHub job summary"
+     * refers to the entire workflow summary. Here, "job ID" means the workflow name, not individual jobs within the workflow.
      */
     static getGithubJobId(): string {
         return process.env.GITHUB_WORKFLOW || '';
