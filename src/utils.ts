@@ -254,7 +254,7 @@ export class Utils {
         const additionalHeaders: OutgoingHttpHeaders = {
             'Content-Type': 'application/json',
         };
-
+        core.info('Data sent to token exchange: ' + data);
         const response: HttpClientResponse = await httpClient.post(exchangeUrl, data, additionalHeaders);
         const responseString: string = await response.readBody();
         const responseJson: TokenExchangeResponseData = JSON.parse(responseString);
