@@ -83,6 +83,18 @@ export class Utils {
     private static MARKDOWN_HEADER_PNG_URL: string = 'https://media.jfrog.com/wp-content/uploads/2024/09/02161430/jfrog-job-summary.svg';
     // Flag to indicate if the summary header is accessible, can be undefined if not checked yet.
     private static isSummaryHeaderAccessible: boolean | undefined = undefined;
+    // Job ID query parameter key
+    private static readonly JOB_ID_PARAM_KEY: string = 'job_id';
+    // Run ID query parameter key
+    private static readonly RUN_ID_PARAM_KEY: string = 'run_id';
+    // Git repository query parameter key
+    private static readonly GIT_REPO_PARAM_KEY: string = 'git_repo';
+    // Source query parameter indicating the source of the request
+    private static readonly SOURCE_PARAM_KEY: string = 's';
+    private static readonly SOURCE_PARAM_VALUE: string = '1';
+    // Metric query parameter indicating the metric type
+    private static readonly METRIC_PARAM_KEY: string = 'm';
+    private static readonly METRIC_PARAM_VALUE: string = '1';
 
     /**
      * Retrieves server credentials for accessing JFrog's server
@@ -919,24 +931,11 @@ export class Utils {
         const runId: string = process.env.GITHUB_RUN_ID || '';
         const url: URL = new URL(`${platformUrl}ui/api/v1/u`);
 
-        // Source query parameter indicating the source of the request
-        const SOURCE_PARAM_KEY: string = 's';
-        const SOURCE_PARAM_VALUE: string = '1';
-
-        // Metric query parameter indicating the metric type
-        const METRIC_PARAM_KEY: string = 'm';
-        const METRIC_PARAM_VALUE: string = '1';
-
-        const JOB_ID_PARAM_KEY: string = 'job_id';
-        const RUN_ID_PARAM_KEY: string = 'run_id';
-        const GIT_REPO_PARAM_KEY: string = 'git_repo';
-
-        url.searchParams.set(SOURCE_PARAM_KEY, SOURCE_PARAM_VALUE);
-        url.searchParams.set(METRIC_PARAM_KEY, METRIC_PARAM_VALUE);
-        url.searchParams.set(JOB_ID_PARAM_KEY, githubJobId);
-        url.searchParams.set(RUN_ID_PARAM_KEY, runId);
-        url.searchParams.set(GIT_REPO_PARAM_KEY, gitRepo);
-
+        url.searchParams.set(Utils.SOURCE_PARAM_KEY, Utils.SOURCE_PARAM_VALUE);
+        url.searchParams.set(Utils.METRIC_PARAM_KEY, Utils.METRIC_PARAM_VALUE);
+        url.searchParams.set(Utils.JOB_ID_PARAM_KEY, githubJobId);
+        url.searchParams.set(Utils.RUN_ID_PARAM_KEY, runId);
+        url.searchParams.set(Utils.GIT_REPO_PARAM_KEY, gitRepo);
         return `![](${url.toString()})`;
     }
 
