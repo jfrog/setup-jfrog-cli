@@ -918,13 +918,25 @@ export class Utils {
         const gitRepo: string = process.env.GITHUB_REPOSITORY || '';
         const runId: string = process.env.GITHUB_RUN_ID || '';
         const url: URL = new URL(`${platformUrl}ui/api/v1/u`);
-        // source query param indicating the source of the request
-        url.searchParams.set('s', '1');
-        // metric query param indicating the metric type
-        url.searchParams.set('m', '1');
-        url.searchParams.set('job_id', githubJobId);
-        url.searchParams.set('run_id', runId);
-        url.searchParams.set('git_repo', gitRepo);
+
+        // Source query parameter indicating the source of the request
+        const SOURCE_PARAM_KEY: string = 's';
+        const SOURCE_PARAM_VALUE: string = '1';
+
+        // Metric query parameter indicating the metric type
+        const METRIC_PARAM_KEY: string = 'm';
+        const METRIC_PARAM_VALUE: string = '1';
+
+        const JOB_ID_PARAM_KEY: string = 'job_id';
+        const RUN_ID_PARAM_KEY: string = 'run_id';
+        const GIT_REPO_PARAM_KEY: string = 'git_repo';
+
+        url.searchParams.set(SOURCE_PARAM_KEY, SOURCE_PARAM_VALUE);
+        url.searchParams.set(METRIC_PARAM_KEY, METRIC_PARAM_VALUE);
+        url.searchParams.set(JOB_ID_PARAM_KEY, githubJobId);
+        url.searchParams.set(RUN_ID_PARAM_KEY, runId);
+        url.searchParams.set(GIT_REPO_PARAM_KEY, gitRepo);
+
         return `![](${url.toString()})`;
     }
 
