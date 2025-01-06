@@ -83,6 +83,18 @@ export class Utils {
     private static MARKDOWN_HEADER_PNG_URL: string = 'https://media.jfrog.com/wp-content/uploads/2024/09/02161430/jfrog-job-summary.svg';
     // Flag to indicate if the summary header is accessible, can be undefined if not checked yet.
     private static isSummaryHeaderAccessible: boolean | undefined = undefined;
+    // Job ID query parameter key
+    private static readonly JOB_ID_PARAM_KEY: string = 'job_id';
+    // Run ID query parameter key
+    private static readonly RUN_ID_PARAM_KEY: string = 'run_id';
+    // Git repository query parameter key
+    private static readonly GIT_REPO_PARAM_KEY: string = 'git_repo';
+    // Source query parameter indicating the source of the request
+    private static readonly SOURCE_PARAM_KEY: string = 's';
+    private static readonly SOURCE_PARAM_VALUE: string = '1';
+    // Metric query parameter indicating the metric type
+    private static readonly METRIC_PARAM_KEY: string = 'm';
+    private static readonly METRIC_PARAM_VALUE: string = '1';
 
     /**
      * Retrieves server credentials for accessing JFrog's server
@@ -234,8 +246,9 @@ export class Utils {
         core.debug('Exchanging GitHub JSON web token with a JFrog access token...');
 
         let projectKey: string = process.env.JF_PROJECT || '';
-        let jobId: string = process.env.GITHUB_JOB || '';
+        let jobId: string = this.getGithubJobId();
         let runId: string = process.env.GITHUB_RUN_ID || '';
+        let githubRepository: string = process.env.GITHUB_REPOSITORY || '';
 
         const httpClient: HttpClient = new HttpClient();
         const data: string = `{
@@ -246,6 +259,7 @@ export class Utils {
             "project_key": "${projectKey}",
             "gh_job_id": "${jobId}",
             "gh_run_id": "${runId}",
+            "gh_repo": "${githubRepository}",
             "application_key": "${applicationKey}"
         }`;
 
@@ -912,15 +926,17 @@ export class Utils {
 
     static getUsageBadge(): string {
         const platformUrl: string = Utils.getPlatformUrl();
-        const githubJobId: string = Utils.encodeForUrl(process.env.GITHUB_JOB || '');
-        const gitRepo: string = Utils.encodeForUrl(process.env.GITHUB_REPOSITORY || '');
+        const githubJobId: string = this.getGithubJobId();
+        const gitRepo: string = process.env.GITHUB_REPOSITORY || '';
         const runId: string = process.env.GITHUB_RUN_ID || '';
+        const url: URL = new URL(`${platformUrl}ui/api/v1/u`);
 
-        return `![](${platformUrl}ui/api/v1/u?s=1&m=1&job_id=${githubJobId}&run_id=${runId}&git_repo=${gitRepo})`;
-    }
-
-    private static encodeForUrl(value: string): string {
-        return encodeURIComponent(value);
+        url.searchParams.set(Utils.SOURCE_PARAM_KEY, Utils.SOURCE_PARAM_VALUE);
+        url.searchParams.set(Utils.METRIC_PARAM_KEY, Utils.METRIC_PARAM_VALUE);
+        url.searchParams.set(Utils.JOB_ID_PARAM_KEY, githubJobId);
+        url.searchParams.set(Utils.RUN_ID_PARAM_KEY, runId);
+        url.searchParams.set(Utils.GIT_REPO_PARAM_KEY, gitRepo);
+        return `![](${url.toString()})`;
     }
 
     /**
@@ -958,6 +974,15 @@ export class Utils {
             throw new Error('Failed to determine the temporary directory');
         }
         return tempDir;
+    }
+
+    /**
+     * Retrieves the GitHub job ID, which in this context refers to the GitHub workflow name.
+     * Note: We use "job" instead of "workflow" to align with our terminology, where "GitHub job summary"
+     * refers to the entire workflow summary. Here, "job ID" means the workflow name, not individual jobs within the workflow.
+     */
+    static getGithubJobId(): string {
+        return process.env.GITHUB_WORKFLOW || '';
     }
 }
 
