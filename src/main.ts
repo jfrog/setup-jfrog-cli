@@ -4,7 +4,11 @@ import { JfrogCredentials, Utils } from './utils';
 async function main() {
     try {
         core.startGroup('Setup JFrog CLI');
-        Utils.setCliEnv();
+        if (core.getInput(Utils.OIDC_ONLY) !== 'true') {
+            Utils.setCliEnv();
+        } else {
+            core.debug('Skipping CLI env setup as oidc-only is enabled.');
+        }
         let jfrogCredentials: JfrogCredentials = await Utils.getJfrogCredentials();
         if (core.getInput(Utils.OIDC_ONLY) !== 'true') {
             await Utils.getAndAddCliToPath(jfrogCredentials);
