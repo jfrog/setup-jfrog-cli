@@ -4,10 +4,12 @@
 
 # Setup JFrog CLI
 
+
 [![Scanned by Frogbot](https://raw.github.com/jfrog/frogbot/master/images/frogbot-badge.svg)](https://github.com/jfrog/frogbot#readme)
 [![Build status](https://github.com/jfrog/setup-jfrog-cli/workflows/Test/badge.svg)](https://github.com/jfrog/setup-jfrog-cli/actions)
 
 </div>
+
 
 ## Table of Contents
 
