@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - *
-      # TODO return to master after testing
-      #- master
 permissions:
   id-token: write
 env:
