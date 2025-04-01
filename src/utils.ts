@@ -290,7 +290,9 @@ export class Utils {
             switch (true) {
                 case !!oidcProviderName:
                     configCmd.push('--oidc-provider-name', oidcProviderName);
-                    configCmd.push('--oidc-audience', oidcAudience || '');
+                    // if (oidcAudience!==""){
+                    //     configCmd.push('--oidc-audience', oidcAudience );
+                    // }
                     configCmd.push('--oidc-provider-type', 'GitHub');
                     configCmd.push('--oidc-oidc-token-id', oidcTokenId || '');
                     break;
