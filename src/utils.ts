@@ -379,17 +379,20 @@ export class Utils {
             Utils.enableJobSummaries();
         }
 
-        Utils.setUsageEnvVars();
-    }
+        // Sets JobID & RunID as env vars to be consumed by the CLI.
+        let ciJobID: string | undefined = process.env.GITHUB_WORKFLOW;
+        if (ciJobID) {
+            Utils.exportVariableIfNotSet('JFROG_CLI_CI_JOB_ID', ciJobID);
+        }
+        let ciRunID: string | undefined = process.env.GITHUB_RUN_ID;
+        if (ciRunID) {
+            Utils.exportVariableIfNotSet('JFROG_CLI_CI_RUN_ID', ciRunID);
+        }
 
-    // Set usage variables to be captured by JFrog CLI visibility metric service.
-    public static setUsageEnvVars(): void {
         // Set the GitHub repository name or default to an empty string.
-        core.exportVariable('JFROG_CLI_USAGE_GIT_REPO', process.env.GITHUB_REPOSITORY ?? '');
-        // Set the GitHub workflow name or default to an empty string.
-        core.exportVariable('JFROG_CLI_USAGE_JOB_ID', process.env.GITHUB_WORKFLOW ?? '');
-        // Set the GitHub run ID or default to an empty string.
-        core.exportVariable('JFROG_CLI_USAGE_RUN_ID', process.env.GITHUB_RUN_ID ?? '');
+        core.exportVariable('JFROG_CLI_SOURCECODE_REPOSITORY', process.env.GITHUB_REPOSITORY ?? '');
+
+        // Set usage variables to be captured by JFrog CLI visibility metric service.
         // Indicate if JF_GIT_TOKEN is provided as an environment variable.
         core.exportVariable('JFROG_CLI_USAGE_GH_TOKEN_FOR_CODE_SCANNING_ALERTS_PROVIDED', !!process.env.JF_GIT_TOKEN);
     }
