@@ -13,7 +13,6 @@ import { OctokitResponse } from '@octokit/types/dist-types/OctokitResponse';
 import * as github from '@actions/github';
 import { gzip } from 'zlib';
 import { promisify } from 'util';
-import { load } from 'js-yaml';
 
 export class Utils {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -60,6 +59,10 @@ export class Utils {
     private static readonly OIDC_AUDIENCE_ARG: string = 'oidc-audience';
     // OpenID Connect provider_name input
     private static readonly OIDC_INTEGRATION_PROVIDER_NAME: string = 'oidc-provider-name';
+    // JFrog CLI ENV var name
+    private static readonly OIDC_CLI_TOKEN_ID_ENV_VAR_NAME: string = 'JFROG_CLI_OIDC_EXCHANGE_TOKEN_ID';
+    // Application Key enn var name used by the CLI
+    private static readonly APPLICATION_KEY_CLI_ENV_VAR_NAME: string = 'JFROG_CLI_APPLICATION_KEY';
     // Application yaml root key
     private static readonly APPLICATION_ROOT_YML: string = 'application';
     // Application Config file key, yaml should look like:
@@ -98,93 +101,42 @@ export class Utils {
 
     /**
      * Retrieves server credentials for accessing JFrog's server
-     * searching for existing environment variables such as JF_ACCESS_TOKEN or the combination of JF_USER and JF_PASSWORD.
-     * If the 'oidc-provider-name' argument was provided, it generates an access token for the specified JFrog's server using the OpenID Connect mechanism.
+     * by searching for existing environment variables such as JF_ACCESS_TOKEN or the combination of JF_USER and JF_PASSWORD.
+     * If the 'oidc-provider-name' argument is provided, it generates an access token for the specified JFrog's server using the OpenID Connect mechanism.
      * @returns JfrogCredentials struct filled with collected credentials
      */
     public static async getJfrogCredentials(): Promise<JfrogCredentials> {
-        let jfrogCredentials: JfrogCredentials = this.collectJfrogCredentialsFromEnvVars();
+        const jfrogCredentials: JfrogCredentials = this.collectJfrogCredentialsFromEnvVars();
         const oidcProviderName: string = core.getInput(Utils.OIDC_INTEGRATION_PROVIDER_NAME);
-        if (!oidcProviderName) {
-            // Use JF_ENV or the credentials found in the environment variables
-            return jfrogCredentials;
-        }
 
-        if (!jfrogCredentials.jfrogUrl) {
-            throw new Error(`JF_URL must be provided when oidc-provider-name is specified`);
+        // Use OIDC if provider name is specified
+        if (oidcProviderName) {
+            return await this.getOidcCredentials(jfrogCredentials);
         }
-        core.info('Obtaining an access token through OpenID Connect...');
-        const audience: string = core.getInput(Utils.OIDC_AUDIENCE_ARG);
-        let jsonWebToken: string | undefined;
-        try {
-            core.debug('Fetching JSON web token');
-            jsonWebToken = await core.getIDToken(audience);
-            core.exportVariable('JFROG_CLI_OIDC_EXCHANGE_TOKEN_ID', jsonWebToken);
-        } catch (error: any) {
-            throw new Error(`Getting openID Connect JSON web token failed: ${error.message}`);
-        }
-
-        const applicationKey: string = await this.getApplicationKey();
-        core.exportVariable('JFROG_CLI_APPLICATION_KEY', applicationKey);
         return jfrogCredentials;
     }
 
     /**
-     * Retrieves the application key from .jfrog/config file.
-     *
-     * This method attempts to read config file from the file system.
-     * If the configuration file exists and contains the application key, it returns the key.
-     * If the configuration file does not exist or does not contain the application key, it returns an empty string.
-     *
-     * @returns A promise that resolves to the application key as a string.
+     * Exchanges an ID token for JFrog access token using the OpenID Connect mechanism.
+     * @param jfrogCredentials - The existing JFrog credentials
+     * @returns The updated JfrogCredentials with the OIDC token
+     * @throws Error if JF_URL is not provided or if fetching the JSON web token fails
      */
-    private static async getApplicationKey(): Promise<string> {
-        const configFilePath: string = path.join(this.JF_CONFIG_DIR_NAME, this.JF_CONFIG_FILE_NAME);
+    private static async getOidcCredentials(jfrogCredentials: JfrogCredentials): Promise<JfrogCredentials> {
+        if (!jfrogCredentials.jfrogUrl) {
+            throw new Error(`JF_URL must be provided when oidc-provider-name is specified`);
+        }
+
+        core.info('Obtaining an access token through OpenID Connect...');
         try {
-            const config: string = await this.readConfigFromFileSystem(configFilePath);
-            if (!config) {
-                console.debug('Config file is empty or not found.');
-                return '';
-            }
-            const configObj: any = load(config);
-            const application: string = configObj[this.APPLICATION_ROOT_YML];
-            if (!application) {
-                console.log('Application root is not found in the config file.');
-                return '';
-            }
-
-            const applicationKey: string = application[this.KEY];
-            if (!applicationKey) {
-                console.log('Application key is not found in the config file.');
-                return '';
-            }
-            console.debug('Found application key: ' + applicationKey);
-            return applicationKey;
-        } catch (error) {
-            console.error('Error reading config:', error);
-            return '';
-        }
-    }
-
-    /**
-     * Reads .jfrog configuration file from file system.
-     *
-     * This method attempts to read .jfrog configuration file from the specified relative path.
-     * If the file exists, it reads the file content and returns it as a string.
-     * If the file does not exist, it returns an empty string.
-     *
-     * @param configRelativePath - The relative path to the configuration file.
-     * @returns A promise that resolves to the content of the configuration file as a string.
-     */
-    private static async readConfigFromFileSystem(configRelativePath: string): Promise<string> {
-        core.debug(`Reading config from file system. Looking for ${configRelativePath}`);
-        if (!existsSync(configRelativePath)) {
-            core.debug(`config.yml not found in ${configRelativePath}`);
-            return '';
+            const audience: string = core.getInput(Utils.OIDC_AUDIENCE_ARG);
+            core.debug('Fetching JSON web token');
+            core.exportVariable(this.OIDC_CLI_TOKEN_ID_ENV_VAR_NAME, await core.getIDToken(audience));
+        } catch (error: any) {
+            throw new Error(`Getting OpenID Connect JSON web token failed: ${error.message}`);
         }
 
-        core.debug(`config.yml found in ${configRelativePath}`);
-        return await fs.readFile(configRelativePath, 'utf-8');
+        return jfrogCredentials;
     }
 
     /**
@@ -214,117 +166,6 @@ export class Utils {
             core.setSecret(jfrogCredentials.password);
         }
         return jfrogCredentials;
-    }
-
-    /**
-     * Exchanges GitHub JWT with a valid JFrog access token
-     * @param jfrogCredentials existing JFrog credentials - url, access token, username + password
-     * @param jsonWebToken JWT achieved from GitHub JWT provider
-     * @param oidcProviderName OIDC provider name
-     * @param applicationKey
-     * @returns an access token for the requested Artifactory server
-     */
-    private static async getJfrogAccessTokenThroughOidcProtocol(
-        jfrogCredentials: JfrogCredentials,
-        jsonWebToken: string,
-        oidcProviderName: string,
-        applicationKey: string,
-    ): Promise<JfrogCredentials> {
-        // If we've reached this stage, the jfrogCredentials.jfrogUrl field should hold a non-empty value obtained from process.env.JF_URL
-        const exchangeUrl: string = jfrogCredentials.jfrogUrl!.replace(/\/$/, '') + '/access/api/v1/oidc/token';
-        core.debug('Exchanging GitHub JSON web token with a JFrog access token...');
-
-        let projectKey: string = process.env.JF_PROJECT || '';
-        let jobId: string = this.getGithubJobId();
-        let runId: string = process.env.GITHUB_RUN_ID || '';
-        let githubRepository: string = process.env.GITHUB_REPOSITORY || '';
-
-        const httpClient: HttpClient = new HttpClient();
-        const data: string = `{
-            "grant_type": "urn:ietf:params:oauth:grant-type:token-exchange",
-            "subject_token_type": "urn:ietf:params:oauth:token-type:id_token",
-            "subject_token": "${jsonWebToken}",
-            "provider_name": "${oidcProviderName}",
-            "project_key": "${projectKey}",
-            "gh_job_id": "${jobId}",
-            "gh_run_id": "${runId}",
-            "gh_repo": "${githubRepository}",
-            "application_key": "${applicationKey}"
-        }`;
-
-        const additionalHeaders: OutgoingHttpHeaders = {
-            'Content-Type': 'application/json',
-        };
-
-        const response: HttpClientResponse = await httpClient.post(exchangeUrl, data, additionalHeaders);
-        const responseString: string = await response.readBody();
-        const responseJson: TokenExchangeResponseData = JSON.parse(responseString);
-        jfrogCredentials.accessToken = responseJson.access_token;
-        if (jfrogCredentials.accessToken) {
-            this.outputOidcTokenAndUsername(jfrogCredentials.accessToken);
-        }
-        if (responseJson.errors) {
-            throw new Error(`${JSON.stringify(responseJson.errors)}`);
-        }
-        return jfrogCredentials;
-    }
-
-    /**
-     * Output the OIDC access token as a secret and the user from the OIDC access token subject as a secret.
-     * Both are set as secrets to prevent them from being printed in the logs or exported to other workflows.
-     * @param oidcToken access token received from the JFrog platform during OIDC token exchange
-     */
-    private static outputOidcTokenAndUsername(oidcToken: string): void {
-        // Making sure the token is treated as a secret
-        core.setSecret(oidcToken);
-        // Output the oidc access token as a secret
-        core.setOutput('oidc-token', oidcToken);
-
-        // Output the user from the oidc access token subject as a secret
-        let payload: JWTTokenData = this.decodeOidcToken(oidcToken);
-        let tokenUser: string = this.extractTokenUser(payload.sub);
-        // Mark the user as a secret
-        core.setSecret(tokenUser);
-        // Output the user from the oidc access token subject extracted from the last section of the subject
-        core.setOutput('oidc-user', tokenUser);
-    }
-
-    /**
-     * Extract the username from the OIDC access token subject.
-     * @param subject OIDC token subject
-     * @returns the username
-     */
-    public static extractTokenUser(subject: string): string {
-        // Main OIDC user parsing logic
-        if (subject.startsWith('jfrt@') || subject.includes('/users/')) {
-            let lastSlashIndex: number = subject.lastIndexOf('/');
-            // Return the user extracted from the token
-            return subject.substring(lastSlashIndex + 1);
-        }
-        // No parsing was needed, returning original sub from the token as the user
-        return subject;
-    }
-
-    /**
-     * Decode the OIDC access token and return the payload.
-     * @param oidcToken access token received from the JFrog platform during OIDC token exchange
-     * @returns the payload of the OIDC access token
-     */
-    public static decodeOidcToken(oidcToken: string): JWTTokenData {
-        // Split jfrogCredentials.accessToken into 3 parts divided by .
-        let tokenParts: string[] = oidcToken.split('.');
-        if (tokenParts.length != 3) {
-            // this error should not happen since access only generates valid JWT tokens
-            throw new Error(`OIDC invalid access token format`);
-        }
-        // Decode the second part of the token
-        let base64Payload: string = tokenParts[1];
-        let utf8Payload: string = Buffer.from(base64Payload, 'base64').toString('utf8');
-        let payload: JWTTokenData = JSON.parse(utf8Payload);
-        if (!payload || !payload.sub) {
-            throw new Error(`OIDC invalid access token format`);
-        }
-        return payload;
     }
 
     public static async getAndAddCliToPath(jfrogCredentials: JfrogCredentials) {
@@ -458,7 +299,7 @@ export class Utils {
                 case !!oidcProviderName:
                     configCmd.push('--oidc-provider-name', oidcProviderName);
                     configCmd.push('--oidc-audience', oidcAudience || '');
-                    configCmd.push('--oidc-provider-type', "GitHub");
+                    configCmd.push('--oidc-provider-type', 'GitHub');
                     break;
             }
             return configCmd;
