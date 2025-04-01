@@ -3,7 +3,7 @@ name: OpenID Connect Test
 on:
   push:
     branches:
-      - *
+      - '**'
 permissions:
   id-token: write
 env:
@@ -11,8 +11,8 @@ env:
 
 jobs:
   OIDC-Test:
-# TODO return after testings
-#    if: contains(github.event.pull_request.labels.*.name, 'safe to test') || github.event_name == 'push'
+    # TODO return after testings
+    #    if: contains(github.event.pull_request.labels.*.name, 'safe to test') || github.event_name == 'push'
     name: OIDC-Access integration test
     strategy:
       fail-fast: false
