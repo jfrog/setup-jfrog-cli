@@ -289,12 +289,12 @@ export class Utils {
             let configCmd: string[] = [Utils.getServerIdForConfig(), '--url', url, '--interactive=false', '--overwrite=true'];
             switch (true) {
                 case !!oidcProviderName:
-                    configCmd.push('--oidc-provider-name', oidcProviderName);
+                    configCmd.push('--oidc-provider-name=', oidcProviderName);
                     // if (oidcAudience!==""){
                     //     configCmd.push('--oidc-audience', oidcAudience );
                     // }
-                    configCmd.push('--oidc-provider-type', 'GitHub');
-                    configCmd.push('--oidc-oidc-token-id', oidcTokenId || '');
+                    configCmd.push('--oidc-provider-type=', 'GitHub');
+                    configCmd.push('--oidc-oidc-token-id=', oidcTokenId || '');
                     break;
                 case !!accessToken:
                     configCmd.push('--access-token', accessToken);
