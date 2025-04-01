@@ -6,6 +6,7 @@ on:
       - '**'
 permissions:
   id-token: write
+  contents: read
 env:
   JFROG_CLI_LOG_LEVEL: DEBUG
 
