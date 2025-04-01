@@ -126,7 +126,7 @@ export class Utils {
         core.info('Obtaining an access token through OpenID Connect...');
         try {
             core.debug('Fetching JSON web token');
-            jfrogCredentials.oidcTokenId = await core.getIDToken('jfrog-github');
+            jfrogCredentials.oidcTokenId = await core.getIDToken(jfrogCredentials.oidcAudience);
         } catch (error: any) {
             throw new Error(`Getting OpenID Connect JSON web token failed: ${error.message}`);
         }
