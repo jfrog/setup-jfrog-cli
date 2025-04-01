@@ -126,7 +126,7 @@ export class Utils {
         core.info('Obtaining an access token through OpenID Connect...');
         try {
             core.debug('Fetching JSON web token');
-            jfrogCredentials.oidcTokenId = await core.getIDToken(jfrogCredentials.oidcAudience);
+            jfrogCredentials.oidcTokenId = await core.getIDToken('jfrog-github');
         } catch (error: any) {
             throw new Error(`Getting OpenID Connect JSON web token failed: ${error.message}`);
         }
@@ -282,7 +282,6 @@ export class Utils {
         let password: string | undefined = jfrogCredentials.password;
         let accessToken: string | undefined = jfrogCredentials.accessToken;
         let oidcProviderName: string | undefined = jfrogCredentials.oidcProviderName;
-        let oidcAudience: string | undefined = jfrogCredentials.oidcAudience;
         let oidcTokenId: string | undefined = jfrogCredentials.oidcTokenId;
 
         if (url) {
@@ -293,9 +292,6 @@ export class Utils {
                     configCmd.push('--oidc-provider-type=Github');
                     configCmd.push(`--oidc-token-id=${oidcTokenId}`);
                     configCmd.push('--oidc-audience=jfrog-github');
-                    // if (oidcAudience && oidcAudience !== '') {
-                    //     configCmd.push('--oidc-audience=jfrog-github', oidcAudience);
-                    // }
                     break;
                 case !!accessToken:
                     configCmd.push('--access-token', accessToken);
