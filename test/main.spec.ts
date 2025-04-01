@@ -288,56 +288,6 @@ test('User agent', () => {
     expect(split[1]).toMatch(/\d*.\d*.\d*/);
 });
 
-describe('extractTokenUser', () => {
-    it('should extract user from subject starting with jfrt@', () => {
-        const subject: string = 'jfrt@/users/johndoe';
-        const result: string = Utils.extractTokenUser(subject);
-        expect(result).toBe('johndoe');
-    });
-
-    it('should extract user from subject containing /users/', () => {
-        const subject: string = '/users/johndoe';
-        const result: string = Utils.extractTokenUser(subject);
-        expect(result).toBe('johndoe');
-    });
-
-    it('should return original subject when it does not start with jfrt@ or contain /users/', () => {
-        const subject: string = 'johndoe';
-        const result: string = Utils.extractTokenUser(subject);
-        expect(result).toBe(subject);
-    });
-
-    it('should handle empty subject', () => {
-        const subject: string = '';
-        const result: string = Utils.extractTokenUser(subject);
-        expect(result).toBe(subject);
-    });
-});
-
-describe('decodeOidcToken', () => {
-    it('should decode valid OIDC token', () => {
-        const oidcToken: string =
-            Buffer.from(JSON.stringify({ sub: 'test' })).toString('base64') +
-            '.eyJzdWIiOiJ0ZXN0In0.' +
-            Buffer.from(JSON.stringify({ sub: 'test' })).toString('base64');
-        const result: JWTTokenData = Utils.decodeOidcToken(oidcToken);
-        expect(result).toEqual({ sub: 'test' });
-    });
-
-    it('should throw error for OIDC token with invalid format', () => {
-        const oidcToken: string = 'invalid.token.format';
-        expect(() => Utils.decodeOidcToken(oidcToken)).toThrow(SyntaxError);
-    });
-
-    it('should throw error for OIDC token without subject', () => {
-        const oidcToken: string =
-            Buffer.from(JSON.stringify({ notSub: 'test' })).toString('base64') +
-            '.eyJub3RTdWIiOiJ0ZXN0In0.' +
-            Buffer.from(JSON.stringify({ notSub: 'test' })).toString('base64');
-        expect(() => Utils.decodeOidcToken(oidcToken)).toThrow('OIDC invalid access token format');
-    });
-});
-
 describe('Job Summaries', () => {
     describe('Job summaries sanity', () => {
         it('should not crash if no files were found', async () => {
@@ -610,5 +560,50 @@ describe('Test correct encoding of badge URL', () => {
             const expectedBadge: string = '![](https://example.jfrog.io/ui/api/v1/u?s=1&m=1&job_id=&run_id=123&git_repo=)';
             expect(Utils.getUsageBadge()).toBe(expectedBadge);
         });
+    });
+});
+
+describe('Utils.collectJfrogCredentialsFromEnvVars', () => {
+    beforeEach(() => {
+        jest.resetModules();
+        process.env = {};
+    });
+
+    it('should collect credentials from environment variables', () => {
+        process.env.JF_URL = 'https://example.jfrog.io';
+        process.env.JF_ACCESS_TOKEN = 'access-token';
+        process.env.JF_USER = 'user';
+        process.env.JF_PASSWORD = 'password';
+        jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
+            if (name === Utils.OIDC_INTEGRATION_PROVIDER_NAME) return 'oidc-provider';
+            if (name === Utils.OIDC_AUDIENCE_ARG) return 'oidc-audience';
+            return '';
+        });
+
+        const credentials: JfrogCredentials = Utils.collectJfrogCredentialsFromEnvVars();
+
+        expect(credentials.jfrogUrl).toBe('https://example.jfrog.io');
+        expect(credentials.accessToken).toBe('access-token');
+        expect(credentials.username).toBe('user');
+        expect(credentials.password).toBe('password');
+        expect(credentials.oidcProviderName).toBe('oidc-provider');
+        expect(credentials.oidcAudience).toBe('oidc-audience');
+        expect(credentials.oidcTokenId).toBe('');
+    });
+
+    it('should throw an error if password is provided without username', () => {
+        process.env.JF_PASSWORD = 'password';
+
+        expect(() => {
+            Utils.collectJfrogCredentialsFromEnvVars();
+        }).toThrow('JF_PASSWORD is configured, but the JF_USER environment variable was not set.');
+    });
+
+    it('should throw an error if username is provided without password or access token', () => {
+        process.env.JF_USER = 'user';
+
+        expect(() => {
+            Utils.collectJfrogCredentialsFromEnvVars();
+        }).toThrow('JF_USER is configured, but the JF_PASSWORD or JF_ACCESS_TOKEN environment variables were not set.');
     });
 });

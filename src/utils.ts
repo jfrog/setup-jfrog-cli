@@ -56,9 +56,9 @@ export class Utils {
     // Download repository input
     private static readonly CLI_REMOTE_ARG: string = 'download-repository';
     // OpenID Connect audience input
-    private static readonly OIDC_AUDIENCE_ARG: string = 'oidc-audience';
+    public static readonly OIDC_AUDIENCE_ARG: string = 'oidc-audience';
     // OpenID Connect provider_name input
-    private static readonly OIDC_INTEGRATION_PROVIDER_NAME: string = 'oidc-provider-name';
+    public static readonly OIDC_INTEGRATION_PROVIDER_NAME: string = 'oidc-provider-name';
     // JFrog CLI ENV var name
     private static readonly OIDC_CLI_TOKEN_ID_ENV_VAR_NAME: string = 'JFROG_CLI_OIDC_EXCHANGE_TOKEN_ID';
     // Application Key enn var name used by the CLI
@@ -107,35 +107,29 @@ export class Utils {
      */
     public static async getJfrogCredentials(): Promise<JfrogCredentials> {
         const jfrogCredentials: JfrogCredentials = this.collectJfrogCredentialsFromEnvVars();
-        const oidcProviderName: string = core.getInput(Utils.OIDC_INTEGRATION_PROVIDER_NAME);
 
-        // Use OIDC if provider name is specified
-        if (oidcProviderName) {
-            return await this.getOidcCredentials(jfrogCredentials);
+        if (jfrogCredentials.oidcProviderName) {
+            return await this.setOidcTokenID(jfrogCredentials);
         }
         return jfrogCredentials;
     }
 
     /**
-     * Exchanges an ID token for JFrog access token using the OpenID Connect mechanism.
      * @param jfrogCredentials - The existing JFrog credentials
-     * @returns The updated JfrogCredentials with the OIDC token
+     * @returns The updated JfrogCredentials with the OIDC tokenID
      * @throws Error if JF_URL is not provided or if fetching the JSON web token fails
      */
-    private static async getOidcCredentials(jfrogCredentials: JfrogCredentials): Promise<JfrogCredentials> {
+    private static async setOidcTokenID(jfrogCredentials: JfrogCredentials): Promise<JfrogCredentials> {
         if (!jfrogCredentials.jfrogUrl) {
             throw new Error(`JF_URL must be provided when oidc-provider-name is specified`);
         }
-
         core.info('Obtaining an access token through OpenID Connect...');
         try {
-            const audience: string = core.getInput(Utils.OIDC_AUDIENCE_ARG);
             core.debug('Fetching JSON web token');
-            core.exportVariable(this.OIDC_CLI_TOKEN_ID_ENV_VAR_NAME, await core.getIDToken(audience));
+            jfrogCredentials.oidcTokenId = await core.getIDToken(jfrogCredentials.oidcAudience);
         } catch (error: any) {
             throw new Error(`Getting OpenID Connect JSON web token failed: ${error.message}`);
         }
-
         return jfrogCredentials;
     }
 
@@ -150,6 +144,9 @@ export class Utils {
             accessToken: process.env.JF_ACCESS_TOKEN,
             username: process.env.JF_USER,
             password: process.env.JF_PASSWORD,
+            oidcProviderName: core.getInput(Utils.OIDC_INTEGRATION_PROVIDER_NAME),
+            oidcAudience: core.getInput(Utils.OIDC_AUDIENCE_ARG),
+            oidcTokenId: '',
         } as JfrogCredentials;
 
         if (jfrogCredentials.password && !jfrogCredentials.username) {
@@ -286,6 +283,7 @@ export class Utils {
         let accessToken: string | undefined = jfrogCredentials.accessToken;
         let oidcProviderName: string | undefined = jfrogCredentials.oidcProviderName;
         let oidcAudience: string | undefined = jfrogCredentials.oidcAudience;
+        let oidcTokenId: string | undefined = jfrogCredentials.oidcTokenId;
 
         if (url) {
             let configCmd: string[] = [Utils.getServerIdForConfig(), '--url', url, '--interactive=false', '--overwrite=true'];
@@ -300,6 +298,7 @@ export class Utils {
                     configCmd.push('--oidc-provider-name', oidcProviderName);
                     configCmd.push('--oidc-audience', oidcAudience || '');
                     configCmd.push('--oidc-provider-type', 'GitHub');
+                    configCmd.push('--oidc-oidc-token-id', oidcTokenId || '');
                     break;
             }
             return configCmd;
@@ -841,6 +840,7 @@ export interface JfrogCredentials {
     accessToken: string | undefined;
     oidcProviderName: string | undefined;
     oidcAudience: string | undefined;
+    oidcTokenId: string | undefined;
 }
 
 export interface TokenExchangeResponseData {
