@@ -13,12 +13,12 @@ jobs:
   OIDC-Test:
 # TODO return after testings
 #    if: contains(github.event.pull_request.labels.*.name, 'safe to test') || github.event_name == 'push'
-    name: OIDC-Access integration test (${{ matrix.os }})
+    name: OIDC-Access integration test
     strategy:
       fail-fast: false
       matrix:
         os: [ ubuntu, windows, macos ]
-    runs-on: ${{ matrix.os }}-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
