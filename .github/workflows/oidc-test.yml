@@ -32,6 +32,7 @@ jobs:
         with:
           oidc-provider-name: "setup-jfrog-cli-test"
           download-repository: "generic-local-eyal"
+          version: '4.0.0'
 
       - name: Test JFrog CLI
         run: |
