@@ -294,7 +294,7 @@ export class Utils {
                     //     configCmd.push('--oidc-audience', oidcAudience );
                     // }
                     configCmd.push('--oidc-provider-type=GitHub');
-                    configCmd.push(`--oidc-oidc-token-id=${oidcTokenId}`);
+                    configCmd.push(`--oidc-token-id=${oidcTokenId}`);
                     break;
                 case !!accessToken:
                     configCmd.push('--access-token', accessToken);
