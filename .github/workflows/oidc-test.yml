@@ -23,7 +23,7 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-
+      # TODO this is for testing purpose before release, remove it after
       - name: Setup JFrog CLI
         id: setup-jfrog-cli
         uses: ./
