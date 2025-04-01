@@ -106,10 +106,6 @@ export class Utils {
         let jfrogCredentials: JfrogCredentials = this.collectJfrogCredentialsFromEnvVars();
         const oidcProviderName: string = core.getInput(Utils.OIDC_INTEGRATION_PROVIDER_NAME);
         if (!oidcProviderName) {
-            // Set environment variable to track OIDC usage.
-            core.exportVariable('JFROG_CLI_USAGE_CONFIG_OIDC', '');
-            core.exportVariable('JFROG_CLI_USAGE_OIDC_USED', 'FALSE');
-
             // Use JF_ENV or the credentials found in the environment variables
             return jfrogCredentials;
         }
@@ -123,21 +119,14 @@ export class Utils {
         try {
             core.debug('Fetching JSON web token');
             jsonWebToken = await core.getIDToken(audience);
+            core.exportVariable('JFROG_CLI_OIDC_EXCHANGE_TOKEN_ID', jsonWebToken);
         } catch (error: any) {
             throw new Error(`Getting openID Connect JSON web token failed: ${error.message}`);
         }
 
         const applicationKey: string = await this.getApplicationKey();
-        try {
-            jfrogCredentials = await this.getJfrogAccessTokenThroughOidcProtocol(jfrogCredentials, jsonWebToken, oidcProviderName, applicationKey);
-
-            // Set environment variable to track OIDC usage.
-            core.exportVariable('JFROG_CLI_USAGE_CONFIG_OIDC', 'TRUE');
-            core.exportVariable('JFROG_CLI_USAGE_OIDC_USED', 'TRUE');
-            return jfrogCredentials;
-        } catch (error: any) {
-            throw new Error(`Exchanging JSON web token with an access token failed: ${error.message}`);
-        }
+        core.exportVariable('JFROG_CLI_APPLICATION_KEY', applicationKey);
+        return jfrogCredentials;
     }
 
     /**
@@ -447,18 +436,30 @@ export class Utils {
          * @name url - JFrog Platform URL
          * @name user&password - JFrog Platform basic authentication
          * @name accessToken - Jfrog Platform access token
+         * @name oidcProviderName - OpenID Connect provider name defined in the JFrog Platform
+         * @name oidcAudience - JFrog Platform OpenID Connect audience
          */
         let url: string | undefined = jfrogCredentials.jfrogUrl;
         let user: string | undefined = jfrogCredentials.username;
         let password: string | undefined = jfrogCredentials.password;
         let accessToken: string | undefined = jfrogCredentials.accessToken;
+        let oidcProviderName: string | undefined = jfrogCredentials.oidcProviderName;
+        let oidcAudience: string | undefined = jfrogCredentials.oidcAudience;
 
         if (url) {
             let configCmd: string[] = [Utils.getServerIdForConfig(), '--url', url, '--interactive=false', '--overwrite=true'];
-            if (accessToken) {
-                configCmd.push('--access-token', accessToken);
-            } else if (user && password) {
-                configCmd.push('--user', user, '--password', password);
+            switch (true) {
+                case !!accessToken:
+                    configCmd.push('--access-token', accessToken);
+                    break;
+                case !!user && !!password:
+                    configCmd.push('--user', user, '--password', password);
+                    break;
+                case !!oidcProviderName:
+                    configCmd.push('--oidc-provider-name', oidcProviderName);
+                    configCmd.push('--oidc-audience', oidcAudience || '');
+                    configCmd.push('--oidc-provider-type', "GitHub");
+                    break;
             }
             return configCmd;
         }
@@ -997,6 +998,8 @@ export interface JfrogCredentials {
     username: string | undefined;
     password: string | undefined;
     accessToken: string | undefined;
+    oidcProviderName: string | undefined;
+    oidcAudience: string | undefined;
 }
 
 export interface TokenExchangeResponseData {
