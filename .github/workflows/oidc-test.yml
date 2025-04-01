@@ -3,7 +3,9 @@ name: OpenID Connect Test
 on:
   push:
     branches:
-      - master
+      # TODO return to master after testing
+      #- master
+      - *
   # Triggers the workflow on labeled PRs only.
   pull_request_target:
     types: [ labeled ]
@@ -20,7 +22,8 @@ env:
 
 jobs:
   OIDC-Test:
-    if: contains(github.event.pull_request.labels.*.name, 'safe to test') || github.event_name == 'push'
+# TODO return after testings
+#    if: contains(github.event.pull_request.labels.*.name, 'safe to test') || github.event_name == 'push'
     name: OIDC-Access integration test (${{ matrix.os }})
     strategy:
       fail-fast: false
