@@ -31,7 +31,7 @@ jobs:
           JF_URL: ${{ secrets.JFROG_PLATFORM_URL }}
           JF_ACCESS_TOKEN: ${{ secrets.JFROG_ACCESS_TOKEN }}
         with:
-          oidc-provider-name: setup-jfrog-cli
+          oidc-provider-name: setup-jfrog-cli-test
           download-repository: "generic-local-eyal"
           version: '4.0.0'
 
