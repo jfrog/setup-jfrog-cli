@@ -109,6 +109,7 @@ export class Utils {
         const jfrogCredentials: JfrogCredentials = this.collectJfrogCredentialsFromEnvVars();
 
         if (jfrogCredentials.oidcProviderName) {
+            core.info(`Retrieving OIDC token ID for provider: ${jfrogCredentials.oidcProviderName}`);
             return await this.setOidcTokenID(jfrogCredentials);
         }
         return jfrogCredentials;
