@@ -109,7 +109,6 @@ export class Utils {
         const jfrogCredentials: JfrogCredentials = this.collectJfrogCredentialsFromEnvVars();
 
         if (jfrogCredentials.oidcProviderName) {
-            core.info(`Retrieving OIDC token ID for provider: ${jfrogCredentials.oidcProviderName}`);
             return await this.setOidcTokenID(jfrogCredentials);
         }
         return jfrogCredentials;
@@ -131,6 +130,7 @@ export class Utils {
         } catch (error: any) {
             throw new Error(`Getting OpenID Connect JSON web token failed: ${error.message}`);
         }
+        core.debug('Successfully obtained an access token through OpenID Connect');
         return jfrogCredentials;
     }
 
