@@ -3,7 +3,8 @@ name: OpenID Connect Test
 on:
   push:
     branches:
-      - master
+#      - master
+      - "**"
   # Triggers the workflow on labeled PRs only.
   pull_request_target:
     types: [ labeled ]
@@ -17,7 +18,7 @@ permissions:
 
 jobs:
   OIDC-Test:
-    if: contains(github.event.pull_request.labels.*.name, 'safe to test') || github.event_name == 'push'
+#    if: contains(github.event.pull_request.labels.*.name, 'safe to test') || github.event_name == 'push'
     name: OIDC-Access integration test (${{ matrix.os }})
     strategy:
       fail-fast: false
@@ -27,9 +28,9 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-        with:
-          ref:
-              ${{ github.event.pull_request.head.ref || github.sha }}
+#        with:
+#          ref:
+#              ${{ github.event.pull_request.head.ref || github.sha }}
 
       - name: Setup JFrog CLI
         id: setup-jfrog-cli
