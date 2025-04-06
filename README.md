@@ -118,7 +118,6 @@ Example step utilizing OpenID Connect:
       oidc-provider-name: setup-jfrog-cli
 ```
 
-**Notice:** When using OIDC authentication, this action outputs both the OIDC token and the OIDC token username. These can be utilized within the current workflow to log into the JFrog platform through other actions or clients (e.g., for use with `docker login`). The added outputs are `oidc-token` and `oidc-user`, respectively.
 
 ### Handling Self-Signed Certificates
 
@@ -298,6 +297,8 @@ You can set the project key in the environment variable ```JF_PROJECT``` to avoi
 ### Downloading JFrog CLI from Artifactory
 
 If your agent has no Internet access, you can configure the workflow to download JFrog CLI from a [remote repository](https://www.jfrog.com/confluence/display/JFROG/Remote+Repositories) in your JFrog Artifactory, which is configured to proxy the official download URL.
+
+**Note:** This method is not supported with OIDC authentication.
 
 Here's how you do this:
 
