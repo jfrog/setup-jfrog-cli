@@ -2,14 +2,10 @@ import * as os from 'os';
 import * as core from '@actions/core';
 
 import { DownloadDetails, JfrogCredentials, Utils } from '../src/utils';
-import * as jsYaml from 'js-yaml';
-import * as fs from 'fs';
-import * as path from 'path';
 import semver = require('semver/preload');
 
 jest.mock('os');
 jest.mock('@actions/core');
-jest.mock('semver');
 jest.mock('@actions/core');
 jest.mock('fs', () => ({
     promises: {
@@ -359,7 +355,6 @@ describe('Job Summaries', () => {
 });
 
 describe('isJobSummarySupported', () => {
-    const MIN_CLI_VERSION_JOB_SUMMARY: string = '2.66.0';
     const LATEST_CLI_VERSION: string = 'latest';
 
     beforeEach(() => {
@@ -374,17 +369,13 @@ describe('isJobSummarySupported', () => {
     it('should return true if the version is greater than or equal to the minimum supported version', () => {
         const version: string = '2.66.0';
         jest.spyOn(core, 'getInput').mockReturnValue(version);
-        (semver.gte as jest.Mock).mockReturnValue(true);
         expect(Utils.isJobSummarySupported()).toBe(true);
-        expect(semver.gte).toHaveBeenCalledWith(version, MIN_CLI_VERSION_JOB_SUMMARY);
     });
 
     it('should return false if the version is less than the minimum supported version', () => {
         const version: string = '2.65.0';
         jest.spyOn(core, 'getInput').mockReturnValue(version);
-        (semver.gte as jest.Mock).mockReturnValue(false);
         expect(Utils.isJobSummarySupported()).toBe(false);
-        expect(semver.gte).toHaveBeenCalledWith(version, MIN_CLI_VERSION_JOB_SUMMARY);
     });
 });
 
@@ -509,5 +500,78 @@ describe('Utils.collectJfrogCredentialsFromEnvVars', () => {
         expect(() => {
             Utils.collectJfrogCredentialsFromEnvVars();
         }).toThrow('JF_USER is configured, but the JF_PASSWORD or JF_ACCESS_TOKEN environment variables were not set.');
+    });
+});
+
+describe('Utils.validateOidcSupported', () => {
+    // eslint-disable-next-line @typescript-eslint/typedef
+    const runTest = (cliVersion: string, jfrogCredentials: JfrogCredentials, shouldThrow: boolean, errorMessage: string): void => {
+        jest.spyOn(core, 'getInput').mockImplementation((name: string): string => {
+            if (name === Utils.CLI_VERSION_ARG) {
+                return cliVersion;
+            }
+            return '';
+        });
+
+        if (shouldThrow) {
+            expect(() => {
+                Utils.validateOidcSupported(jfrogCredentials);
+            }).toThrow(errorMessage);
+        } else {
+            expect(() => {
+                Utils.validateOidcSupported(jfrogCredentials);
+            }).not.toThrow();
+        }
+    };
+
+    it('should throw an error if OIDC provider is specified and version is below minimum supported', () => {
+        const jfrogCredentials: JfrogCredentials = {
+            jfrogUrl: 'https://example.jfrog.io',
+            username: undefined,
+            password: undefined,
+            accessToken: undefined,
+            oidcProviderName: 'github',
+            oidcAudience: 'jfrog-github',
+            oidcTokenId: undefined,
+        };
+
+        const cliVersion: string = '2.0.0';
+        const errorMessage: string = `OIDC provider is specified, but the JFrog CLI version ${cliVersion} does not support OIDC. Minimum required version is ${Utils.MIN_OIDC_SUPPORTED_VERSION}.`;
+
+        runTest(cliVersion, jfrogCredentials, true, errorMessage);
+    });
+
+    it('should not throw an error if OIDC provider is specified and version is above minimum supported', () => {
+        const jfrogCredentials: JfrogCredentials = {
+            jfrogUrl: 'https://example.jfrog.io',
+            username: undefined,
+            password: undefined,
+            accessToken: undefined,
+            oidcProviderName: 'github',
+            oidcAudience: 'jfrog-github',
+            oidcTokenId: undefined,
+        };
+
+        const cliVersion: string = '2.75.0';
+        const errorMessage: string = `OIDC provider is specified, but the JFrog CLI version ${cliVersion} does not support OIDC. Minimum required version is ${Utils.MIN_OIDC_SUPPORTED_VERSION}.`;
+
+        runTest(cliVersion, jfrogCredentials, false, errorMessage);
+    });
+
+    it('should not throw an error if OIDC provider is not specified', () => {
+        const jfrogCredentials: JfrogCredentials = {
+            jfrogUrl: 'https://example.jfrog.io',
+            username: undefined,
+            password: undefined,
+            accessToken: undefined,
+            oidcProviderName: undefined,
+            oidcAudience: undefined,
+            oidcTokenId: undefined,
+        };
+
+        const cliVersion: string = '2.74.3';
+        const errorMessage: string = `OIDC provider is specified, but the JFrog CLI version ${cliVersion} does not support OIDC. Minimum required version is ${Utils.MIN_OIDC_SUPPORTED_VERSION}.`;
+
+        runTest(cliVersion, jfrogCredentials, false, errorMessage);
     });
 });

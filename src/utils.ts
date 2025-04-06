@@ -49,6 +49,8 @@ export class Utils {
     private static readonly MIN_CLI_VERSION_JOB_SUMMARY: string = '2.66.0';
     // Code scanning sarif expected file extension.
     private static readonly CODE_SCANNING_FINAL_SARIF_FILE: string = 'final.sarif';
+    // Version which OIDC was introduced to the CLI
+    public static readonly MIN_OIDC_SUPPORTED_VERSION: string = '2.75.0';
 
     // Inputs
     // Version input
@@ -163,7 +165,31 @@ export class Utils {
         if (jfrogCredentials.password) {
             core.setSecret(jfrogCredentials.password);
         }
+
+        Utils.validateOidcSupported(jfrogCredentials);
+
         return jfrogCredentials;
+    }
+
+    /**
+     * Validates OIDC auth method is supported by the JFrog CLI version
+     * @param jfrogCredentials
+     */
+    public static validateOidcSupported(jfrogCredentials: JfrogCredentials) {
+        const version: string = core.getInput(Utils.CLI_VERSION_ARG);
+        const downloadRepository: string = core.getInput(Utils.CLI_REMOTE_ARG);
+
+        // Cannot download from repository while using OIDC, as we don't have the credentials yet.
+        if (!!downloadRepository && !jfrogCredentials.oidcProviderName) {
+            throw new Error(`Download repository feature is not supported while using OIDC.`);
+        }
+        if (!!version) {
+            if (jfrogCredentials.oidcProviderName && lt(version, Utils.MIN_OIDC_SUPPORTED_VERSION)) {
+                throw new Error(
+                    `OIDC provider is specified, but the JFrog CLI version ${version} does not support OIDC. Minimum required version is ${Utils.MIN_OIDC_SUPPORTED_VERSION}.\n Please update your JFrog CLI version or downgrade the setup-jfrog-cli action to v4.5.6.`,
+                );
+            }
+        }
     }
 
     public static async getAndAddCliToPath(jfrogCredentials: JfrogCredentials) {
