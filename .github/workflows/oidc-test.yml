@@ -34,10 +34,14 @@ jobs:
       - name: Setup JFrog CLI
         id: setup-jfrog-cli
         uses: ./
+        # Using both access tokens for debugging specific CLI
         env:
           JF_URL: ${{ secrets.JFROG_PLATFORM_URL }}
+          JF_ACCESS_TOKEN: ${{ secrets.JFROG_ACCESS_TOKEN }}
         with:
           oidc-provider-name: setup-jfrog-cli-test
+          download-repository: "generic-local-eyal"
+          version: '4.0.0'
 
       - name: Test JFrog CLI
         run: |
