@@ -2,7 +2,6 @@ import * as os from 'os';
 import * as core from '@actions/core';
 
 import { DownloadDetails, JfrogCredentials, Utils } from '../src/utils';
-import semver = require('semver/preload');
 
 jest.mock('os');
 jest.mock('@actions/core');

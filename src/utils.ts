@@ -177,7 +177,7 @@ export class Utils {
      */
     public static validateOidcSupported(jfrogCredentials: JfrogCredentials) {
         const version: string = core.getInput(Utils.CLI_VERSION_ARG);
-        if (version.toLowerCase() === 'latest') {
+        if (!!version && version.toLowerCase() === 'latest') {
             return;
         }
         const downloadRepository: string = core.getInput(Utils.CLI_REMOTE_ARG);
