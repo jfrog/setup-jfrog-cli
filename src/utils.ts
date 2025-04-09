@@ -13,6 +13,7 @@ import { OctokitResponse } from '@octokit/types/dist-types/OctokitResponse';
 import * as github from '@actions/github';
 import { gzip } from 'zlib';
 import { promisify } from 'util';
+import { LegacyOidc } from './legacyOidc';
 
 export class Utils {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -111,9 +112,25 @@ export class Utils {
         const jfrogCredentials: JfrogCredentials = this.collectJfrogCredentialsFromEnvVars();
 
         if (jfrogCredentials.oidcProviderName) {
-            return await this.setOidcTokenID(jfrogCredentials);
+            if (this.isCliSupportsOidc()) {
+                return await this.setOidcTokenID(jfrogCredentials);
+            } else {
+                // Fallback to legacy OIDC flow
+                return await LegacyOidc.handleLegacyOidcFlow(jfrogCredentials);
+            }
         }
         return jfrogCredentials;
+    }
+
+    /**
+     * Determine if the currently configured CLI version supports native OIDC token injection.
+     */
+    private static isCliSupportsOidc(): boolean {
+        const version: string = core.getInput(this.CLI_VERSION_ARG)?.toLowerCase();
+        if (version === 'latest') {
+            return true;
+        }
+        return !lt(version, Utils.MIN_OIDC_SUPPORTED_VERSION);
     }
 
     /**
@@ -166,16 +183,17 @@ export class Utils {
             core.setSecret(jfrogCredentials.password);
         }
 
-        Utils.validateOidcSupported(jfrogCredentials);
+        Utils.validateOidcNotWithRepositorySettings(jfrogCredentials);
 
         return jfrogCredentials;
     }
 
     /**
      * Validates OIDC auth method is supported by the JFrog CLI version
+     * // TODO rename or change
      * @param jfrogCredentials
      */
-    public static validateOidcSupported(jfrogCredentials: JfrogCredentials) {
+    public static validateOidcNotWithRepositorySettings(jfrogCredentials: JfrogCredentials) {
         const version: string = core.getInput(Utils.CLI_VERSION_ARG);
         if (!!version && version.toLowerCase() === 'latest') {
             return;
@@ -185,14 +203,6 @@ export class Utils {
         // Cannot download from repository while using OIDC, as we don't have the credentials yet.
         if (!!downloadRepository && !jfrogCredentials.oidcProviderName) {
             throw new Error(`Download repository feature is not supported while using OIDC.`);
-        }
-        if (!!version) {
-            if (jfrogCredentials.oidcProviderName && lt(version, Utils.MIN_OIDC_SUPPORTED_VERSION)) {
-                throw new Error(
-                    `JFrog CLI version ${version} does not support OIDC (requires >= ${Utils.MIN_OIDC_SUPPORTED_VERSION}).\n` +
-                        `Either upgrade your CLI or downgrade the setup-jfrog-cli action to v4.5.6.`,
-                );
-            }
         }
     }
 
@@ -880,19 +890,4 @@ export interface JfrogCredentials {
     oidcProviderName: string | undefined;
     oidcAudience: string | undefined;
     oidcTokenId: string | undefined;
-}
-
-export interface TokenExchangeResponseData {
-    access_token: string;
-    errors: string;
-}
-
-export interface JWTTokenData {
-    sub: string;
-    scp: string;
-    aud: string;
-    iss: string;
-    exp: bigint;
-    iat: bigint;
-    jti: string;
 }

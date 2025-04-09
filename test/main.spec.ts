@@ -514,11 +514,11 @@ describe('Utils.validateOidcSupported', () => {
 
         if (shouldThrow) {
             expect(() => {
-                Utils.validateOidcSupported(jfrogCredentials);
+                Utils.validateOidcNotWithRepositorySettings(jfrogCredentials);
             }).toThrow(errorMessage);
         } else {
             expect(() => {
-                Utils.validateOidcSupported(jfrogCredentials);
+                Utils.validateOidcNotWithRepositorySettings(jfrogCredentials);
             }).not.toThrow();
         }
     };
