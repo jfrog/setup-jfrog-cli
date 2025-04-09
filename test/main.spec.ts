@@ -536,7 +536,9 @@ describe('Utils.validateOidcSupported', () => {
         };
 
         const cliVersion: string = '2.0.0';
-        const errorMessage: string = `OIDC provider is specified, but the JFrog CLI version ${cliVersion} does not support OIDC. Minimum required version is ${Utils.MIN_OIDC_SUPPORTED_VERSION}.`;
+        const errorMessage: string =
+            `JFrog CLI version ${cliVersion} does not support OIDC (requires >= ${Utils.MIN_OIDC_SUPPORTED_VERSION}).\n` +
+            `Either upgrade your CLI or downgrade the setup-jfrog-cli action to v4.5.6.`;
 
         runTest(cliVersion, jfrogCredentials, true, errorMessage);
     });
@@ -573,5 +575,19 @@ describe('Utils.validateOidcSupported', () => {
         const errorMessage: string = `OIDC provider is specified, but the JFrog CLI version ${cliVersion} does not support OIDC. Minimum required version is ${Utils.MIN_OIDC_SUPPORTED_VERSION}.`;
 
         runTest(cliVersion, jfrogCredentials, false, errorMessage);
+    });
+
+    it('Should work when latest is specified', () => {
+        const jfrogCredentials: JfrogCredentials = {
+            jfrogUrl: 'https://example.jfrog.io',
+            username: undefined,
+            password: undefined,
+            accessToken: undefined,
+            oidcProviderName: 'github',
+            oidcAudience: 'jfrog-github',
+            oidcTokenId: undefined,
+        };
+        const cliVersion: string = 'latest';
+        runTest(cliVersion, jfrogCredentials, false, '');
     });
 });

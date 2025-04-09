@@ -177,6 +177,9 @@ export class Utils {
      */
     public static validateOidcSupported(jfrogCredentials: JfrogCredentials) {
         const version: string = core.getInput(Utils.CLI_VERSION_ARG);
+        if (version.toLowerCase() === 'latest') {
+            return;
+        }
         const downloadRepository: string = core.getInput(Utils.CLI_REMOTE_ARG);
 
         // Cannot download from repository while using OIDC, as we don't have the credentials yet.
@@ -186,7 +189,8 @@ export class Utils {
         if (!!version) {
             if (jfrogCredentials.oidcProviderName && lt(version, Utils.MIN_OIDC_SUPPORTED_VERSION)) {
                 throw new Error(
-                    `OIDC provider is specified, but the JFrog CLI version ${version} does not support OIDC. Minimum required version is ${Utils.MIN_OIDC_SUPPORTED_VERSION}.\n Please update your JFrog CLI version or downgrade the setup-jfrog-cli action to v4.5.6.`,
+                    `JFrog CLI version ${version} does not support OIDC (requires >= ${Utils.MIN_OIDC_SUPPORTED_VERSION}).\n` +
+                        `Either upgrade your CLI or downgrade the setup-jfrog-cli action to v4.5.6.`,
                 );
             }
         }
@@ -317,14 +321,20 @@ export class Utils {
                 case !!oidcProviderName:
                     configCmd.push(`--oidc-provider-name=${oidcProviderName}`);
                     configCmd.push('--oidc-provider-type=Github');
-                    configCmd.push(`--oidc-token-id=${oidcTokenId}`);
+                    if (oidcTokenId) {
+                        configCmd.push(`--oidc-token-id=${oidcTokenId}`);
+                    }
                     configCmd.push('--oidc-audience=jfrog-github');
                     break;
                 case !!accessToken:
-                    configCmd.push('--access-token', accessToken);
+                    if (accessToken) {
+                        configCmd.push('--access-token', accessToken);
+                    }
                     break;
                 case !!user && !!password:
-                    configCmd.push('--user', user, '--password', password);
+                    if (user && password) {
+                        configCmd.push('--user', user, '--password', password);
+                    }
                     break;
             }
             return configCmd;
