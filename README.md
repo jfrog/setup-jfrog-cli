@@ -124,7 +124,7 @@ Example step utilizing OpenID Connect:
 
 If your JFrog instance is configured with a self-signed SSL certificate, you may encounter errors with the GitHub Actions HTTP client not trusting your certificate. To help Node.js recognize and trust your self-signed certificate, follow these steps:
 
-1. **Prepare the SSL Certificate**: Save yoaur SSL certificate chain, including the root CA and any intermediate certificates, into a `.pem` file. Ensure that this file is accessible within your GitHub Actions environment.
+1. **Prepare the SSL Certificate**: Save your SSL certificate chain, including the root CA and any intermediate certificates, into a `.pem` file. Ensure that this file is accessible within your GitHub Actions environment.
 
 2. **Set the Environment Variable**: In your GitHub Actions workflow, set the `NODE_EXTRA_CA_CERTS` environment variable to specify the location of your `.pem` file. Add the following line to your workflow:
 
