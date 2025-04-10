@@ -118,7 +118,21 @@ Example step utilizing OpenID Connect:
       oidc-provider-name: setup-jfrog-cli
 ```
 
-**Notice:** When using OIDC authentication, this action outputs both the OIDC token and the OIDC token username. These can be utilized within the current workflow to log into the JFrog platform through other actions or clients (e.g., for use with `docker login`). The added outputs are `oidc-token` and `oidc-user`, respectively.
+**Notice:**
+
+Depending on the version of the CLI and how it is provisioned, this action intelligently chooses the optimal OIDC authentication flow:
+
+✅ Native OIDC (Recommended Path)
+
+If you are using JFrog CLI version 2.75.0 or above and not downloading the CLI from Artifactory
+(via the download-repository input),
+the setup action will use the CLI's native `--oidc-token-id` authentication mechanism.
+
+🔁 Manual Fallback (for legacy or remote setups)
+
+If the CLI version is below 2.75.0, or if you're downloading the CLI from Artifactory using download-repository, the action will automatically fall back to a manual OIDC token exchange using the JFrog Platform REST API.
+
+📝 This fallback logic is kept for backward compatibility but is planned for deprecation to avoid maintaining duplicate authentication flows.
 
 ### Handling Self-Signed Certificates
 
