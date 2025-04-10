@@ -42,6 +42,7 @@ jobs:
           "issuer_url": "https://token.actions.githubusercontent.com",
           "provider_type": "GitHub",
           "enable_permissive_configuration": "true",
+          "token_issuer" : "",
           "description": "This is a test configuration created for OIDC-Access integration test" }'
 
       - name: Create OIDC integration Identity Mapping
