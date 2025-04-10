@@ -55,7 +55,7 @@ export class Utils {
     // Version input
     public static readonly CLI_VERSION_ARG: string = 'version';
     // Download repository input
-    private static readonly CLI_REMOTE_ARG: string = 'download-repository';
+    public static readonly CLI_REMOTE_ARG: string = 'download-repository';
     // OpenID Connect audience input
     private static readonly OIDC_AUDIENCE_ARG: string = 'oidc-audience';
     // OpenID Connect provider_name input
@@ -96,6 +96,7 @@ export class Utils {
     private static readonly METRIC_PARAM_KEY: string = 'm';
     private static readonly METRIC_PARAM_VALUE: string = '1';
     private static MIN_CLI_OIDC_VERSION: string = '2.75.0';
+    private static DEFAULT_OIDC_AUDIENCE: string = 'jfrog-github';
 
     /**
      * Retrieves server credentials for accessing JFrog's server
@@ -124,7 +125,7 @@ export class Utils {
             username: process.env.JF_USER,
             password: process.env.JF_PASSWORD,
             oidcProviderName: core.getInput(Utils.OIDC_INTEGRATION_PROVIDER_NAME),
-            oidcAudience: core.getInput(Utils.OIDC_AUDIENCE_ARG),
+            oidcAudience: core.getInput(Utils.OIDC_AUDIENCE_ARG) || Utils.DEFAULT_OIDC_AUDIENCE,
             oidcTokenId: '',
         } as JfrogCredentials;
 
@@ -141,9 +142,6 @@ export class Utils {
         if (jfrogCredentials.password) {
             core.setSecret(jfrogCredentials.password);
         }
-
-        // TODO implement
-        //Utils.validateInputsConstraints(jfrogCredentials);
 
         return jfrogCredentials;
     }
@@ -375,6 +373,7 @@ export class Utils {
         let accessToken: string | undefined = jfrogCredentials.accessToken;
         let oidcProviderName: string | undefined = jfrogCredentials.oidcProviderName;
         let oidcTokenId: string | undefined = jfrogCredentials.oidcTokenId;
+        let oidcAudience: string | undefined = jfrogCredentials.oidcAudience;
 
         if (url) {
             let configCmd: string[] = [Utils.getServerIdForConfig(), '--url', url, '--interactive=false', '--overwrite=true'];
@@ -385,7 +384,7 @@ export class Utils {
                     if (oidcTokenId) {
                         configCmd.push(`--oidc-token-id=${oidcTokenId}`);
                     }
-                    configCmd.push('--oidc-audience=jfrog-github');
+                    configCmd.push(`--oidc-audience=${oidcAudience || Utils.DEFAULT_OIDC_AUDIENCE}`);
                     break;
                 case !!accessToken:
                     if (accessToken) {
@@ -921,14 +920,18 @@ export class Utils {
     1. Manually call the REST API from this codebase.
     2. Use the new OIDC token ID feature in the CLI (2.75.0+).
 
-    To support backward compatibility, we retain the old manual code.
-    However, it should not be maintained and should be removed in the future.
+    If the CLI version supports it and the user is not using an artifactory download repository,
+    we use the new CLI native OIDC token ID flow.
+    Otherwise, we fall back to manual OIDC exchange for compatibility.
+
+    Note: The manual logic should be deprecated and removed once CLI remote supports native OIDC.
     */
     public static async handleOidcAuth(jfrogCredentials: JfrogCredentials): Promise<JfrogCredentials> {
         const version: string = core.getInput(Utils.CLI_VERSION_ARG);
 
-        // Use CLI OIDC exchange if supported
-        if (version === Utils.LATEST_CLI_VERSION || gte(version, Utils.MIN_CLI_OIDC_VERSION)) {
+        // Version should be more than min version
+        // If CLI_REMOTE_ARG specified, we have to fetch token before we can download the CLI.
+        if ((version === Utils.LATEST_CLI_VERSION || gte(version, Utils.MIN_CLI_OIDC_VERSION)) && !core.getInput(this.CLI_REMOTE_ARG)) {
             return this.setOidcTokenID(jfrogCredentials);
         }
 
@@ -937,7 +940,7 @@ export class Utils {
     }
 
     /*
-    This function manually exchanges oidc token and updates the cretials object with an access token retrived
+    This function manually exchanges oidc token and updates the credentials object with an access token retrieved
      */
     public static async manualOIDCExchange(jfrogCredentials: JfrogCredentials) {
         if (!jfrogCredentials.jfrogUrl) {
@@ -981,6 +984,7 @@ export class Utils {
         core.debug('Successfully obtained an access token through OpenID Connect');
         return jfrogCredentials;
     }
+
     /**
      * Retrieves the application key from .jfrog/config file.
      *

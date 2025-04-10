@@ -640,6 +640,12 @@ describe('handleOidcAuth', () => {
         jest.restoreAllMocks();
     });
 
+    it('should throw if GitHub fails to return ID token', async () => {
+        jest.spyOn(core, 'getIDToken').mockRejectedValue(new Error('mock failure'));
+        const creds: any = { ...credentials };
+        await expect(Utils.handleOidcAuth(creds)).rejects.toThrow('Getting openID Connect JSON web token failed');
+    });
+
     it('should call setOidcTokenID when CLI version is >= 2.75.0', async () => {
         jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
             if (name === Utils.CLI_VERSION_ARG) return '2.75.0';
@@ -673,5 +679,24 @@ describe('handleOidcAuth', () => {
         const result: JfrogCredentials = await (Utils as any).handleOidcAuth(credentials);
 
         expect(result.accessToken).toBe('legacy-token');
+    });
+
+    it('should fallback to manualOIDCExchange when download repository is set even if CLI is >= 2.75.0', async () => {
+        jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
+            if (name === Utils.CLI_VERSION_ARG) return '2.75.0';
+            if (name === Utils.CLI_REMOTE_ARG) return 'jfrog-cli-remote'; // Simulate presence of remote arg
+            if (name === 'oidc-audience') return 'aud';
+            return '';
+        });
+        jest.spyOn(semver, 'gte').mockReturnValue(true);
+        jest.spyOn(core, 'getIDToken').mockResolvedValue('dummy-jwt');
+        jest.spyOn(Utils as any, 'getApplicationKey').mockResolvedValue('dummy-app-key');
+        jest.spyOn(Utils as any, 'exchangeOidcAndSetAsAccessToken').mockResolvedValue({
+            ...credentials,
+            accessToken: 'forced-manual-token',
+        });
+
+        const result: JfrogCredentials = await (Utils as any).handleOidcAuth(credentials);
+        expect(result.accessToken).toBe('forced-manual-token');
     });
 });
