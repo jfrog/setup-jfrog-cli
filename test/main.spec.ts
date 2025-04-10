@@ -528,46 +528,6 @@ describe('getApplicationKey', () => {
     });
 });
 
-describe('setUsageEnvVars', () => {
-    beforeEach(() => {
-        // Clear environment variables before each test
-        delete process.env.GITHUB_REPOSITORY;
-        delete process.env.GITHUB_WORKFLOW;
-        delete process.env.GITHUB_RUN_ID;
-        delete process.env.JF_GIT_TOKEN;
-
-        jest.clearAllMocks();
-    });
-
-    it('should export the correct environment variables when all inputs are set', () => {
-        // Mock environment variables
-        process.env.GITHUB_REPOSITORY = 'owner/repo';
-        process.env.GITHUB_WORKFLOW = 'test-workflow';
-        process.env.GITHUB_RUN_ID = '12345';
-        process.env.JF_GIT_TOKEN = 'dummy-token';
-
-        // Call the function
-        Utils.setUsageEnvVars();
-
-        // Verify exported variables
-        expect(core.exportVariable).toHaveBeenCalledWith('JFROG_CLI_USAGE_JOB_ID', 'test-workflow');
-        expect(core.exportVariable).toHaveBeenCalledWith('JFROG_CLI_USAGE_RUN_ID', '12345');
-        expect(core.exportVariable).toHaveBeenCalledWith('JFROG_CLI_USAGE_GIT_REPO', 'owner/repo');
-        expect(core.exportVariable).toHaveBeenCalledWith('JFROG_CLI_USAGE_GH_TOKEN_FOR_CODE_SCANNING_ALERTS_PROVIDED', true);
-    });
-
-    it('should export empty strings for missing environment variables', () => {
-        // Call the function with no environment variables set
-        Utils.setUsageEnvVars();
-
-        // Verify exported variables
-        expect(core.exportVariable).toHaveBeenCalledWith('JFROG_CLI_USAGE_JOB_ID', '');
-        expect(core.exportVariable).toHaveBeenCalledWith('JFROG_CLI_USAGE_RUN_ID', '');
-        expect(core.exportVariable).toHaveBeenCalledWith('JFROG_CLI_USAGE_GIT_REPO', '');
-        expect(core.exportVariable).toHaveBeenCalledWith('JFROG_CLI_USAGE_GH_TOKEN_FOR_CODE_SCANNING_ALERTS_PROVIDED', false);
-    });
-});
-
 describe('Test correct encoding of badge URL', () => {
     describe('getUsageBadge', () => {
         beforeEach(() => {

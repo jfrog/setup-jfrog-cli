@@ -1,5 +1,6 @@
 # This action is an integration test for OIDC workflow
-name: OpenID Connect Test
+# Which uses the manual approach for backwards compliantly
+name: Manual OpenID Exchange Connect Test
 on:
   push:
     branches:
