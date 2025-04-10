@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - "**"
   # Triggers the workflow on labeled PRs only.
   pull_request_target:
     types: [ labeled ]
@@ -40,6 +41,7 @@ jobs:
           "name": "${{ env.OIDC_PROVIDER_NAME }}",
           "issuer_url": "https://token.actions.githubusercontent.com",
           "provider_type": "GitHub",
+          "oidc_setting": "",
           "description": "This is a test configuration created for OIDC-Access integration test" }'
 
       - name: Create OIDC integration Identity Mapping
