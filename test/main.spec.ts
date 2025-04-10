@@ -572,3 +572,106 @@ describe('Test correct encoding of badge URL', () => {
         });
     });
 });
+
+describe('getSeparateEnvConfigArgs', () => {
+    beforeEach(() => {
+        jest.spyOn(core, 'getInput').mockReturnValue('');
+        jest.spyOn(core, 'setSecret').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
+    it('should return undefined if URL is not set', () => {
+        const creds: JfrogCredentials = {} as JfrogCredentials;
+        expect(Utils.getSeparateEnvConfigArgs(creds)).toBeUndefined();
+    });
+
+    it('should use access token if provided', () => {
+        const creds: JfrogCredentials = {
+            jfrogUrl: 'https://example.jfrog.io',
+            accessToken: 'abc',
+        } as JfrogCredentials;
+        const args: string[] | undefined = Utils.getSeparateEnvConfigArgs(creds);
+        expect(args).toContain('--access-token');
+        expect(args).toContain('abc');
+    });
+
+    it('should use username and password if provided and access token is not', () => {
+        const creds: JfrogCredentials = {
+            jfrogUrl: 'https://example.jfrog.io',
+            username: 'admin',
+            password: '1234',
+        } as JfrogCredentials;
+        const args: string[] | undefined = Utils.getSeparateEnvConfigArgs(creds);
+        expect(args).toContain('--user');
+        expect(args).toContain('admin');
+        expect(args).toContain('--password');
+        expect(args).toContain('1234');
+    });
+
+    it('should use OIDC provider if specified', () => {
+        const creds: JfrogCredentials = {
+            jfrogUrl: 'https://example.jfrog.io',
+            oidcProviderName: 'setup-jfrog-cli',
+            oidcTokenId: 'abc-123',
+        } as JfrogCredentials;
+        const args: string[] | undefined = Utils.getSeparateEnvConfigArgs(creds);
+        expect(args).toContain('--oidc-provider-name=setup-jfrog-cli');
+        expect(args).toContain('--oidc-provider-type=Github');
+        expect(args).toContain('--oidc-token-id=abc-123');
+        expect(args).toContain('--oidc-audience=jfrog-github');
+    });
+});
+
+describe('handleOidcAuth', () => {
+    const credentials: JfrogCredentials = {
+        jfrogUrl: 'https://test.jfrog.io',
+        username: undefined,
+        password: undefined,
+        accessToken: undefined,
+        oidcProviderName: 'test-provider',
+        oidcAudience: 'jfrog-github',
+        oidcTokenId: undefined,
+    };
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
+    it('should call setOidcTokenID when CLI version is >= 2.75.0', async () => {
+        jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
+            if (name === Utils.CLI_VERSION_ARG) return '2.75.0';
+            return '';
+        });
+        jest.spyOn(semver, 'gte').mockReturnValue(true);
+        jest.spyOn(Utils as any, 'setOidcTokenID').mockResolvedValue({
+            ...credentials,
+            oidcTokenId: 'mock-token-id',
+        });
+
+        const result: JfrogCredentials = await (Utils as any).handleOidcAuth(credentials);
+        expect(result.oidcTokenId).toBe('mock-token-id');
+    });
+
+    it('should call manualOIDCExchange when CLI version is < 2.75.0', async () => {
+        jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
+            if (name === Utils.CLI_VERSION_ARG) return '2.74.0';
+            if (name === 'oidc-audience') return 'aud';
+            return '';
+        });
+        jest.spyOn(semver, 'gte').mockReturnValue(false);
+        jest.spyOn(core, 'getIDToken').mockResolvedValue('dummy-jwt');
+        jest.spyOn(Utils as any, 'getApplicationKey').mockResolvedValue('dummy-app-key');
+
+        jest.spyOn(Utils as any, 'exchangeOidcAndSetAsAccessToken').mockResolvedValue({
+            ...credentials,
+            accessToken: 'legacy-token',
+        });
+
+        const result: JfrogCredentials = await (Utils as any).handleOidcAuth(credentials);
+
+        expect(result.accessToken).toBe('legacy-token');
+    });
+});

@@ -362,13 +362,13 @@ export class Utils {
      * @param jfrogCredentials existing JFrog credentials - url, access token, username + password
      */
     public static getSeparateEnvConfigArgs(jfrogCredentials: JfrogCredentials): string[] | undefined {
-    /**
-      * @name url - JFrog Platform URL
-      * @name  user&password - JFrog Platform basic authentication
-      * @name accessToken - Jfrog Platform access token
-      * @name oidcProviderName - OpenID Connect provider name defined in the JFrog Platform
-      * @name oidcAudience - JFrog Platform OpenID Connect audience
-     */
+        /**
+         * @name url - JFrog Platform URL
+         * @name  user&password - JFrog Platform basic authentication
+         * @name accessToken - Jfrog Platform access token
+         * @name oidcProviderName - OpenID Connect provider name defined in the JFrog Platform
+         * @name oidcAudience - JFrog Platform OpenID Connect audience
+         */
         let url: string | undefined = jfrogCredentials.jfrogUrl;
         let user: string | undefined = jfrogCredentials.username;
         let password: string | undefined = jfrogCredentials.password;
@@ -924,7 +924,7 @@ export class Utils {
     To support backward compatibility, we retain the old manual code.
     However, it should not be maintained and should be removed in the future.
     */
-    private static async handleOidcAuth(jfrogCredentials: JfrogCredentials): Promise<JfrogCredentials> {
+    public static async handleOidcAuth(jfrogCredentials: JfrogCredentials): Promise<JfrogCredentials> {
         const version: string = core.getInput(Utils.CLI_VERSION_ARG);
 
         // Use CLI OIDC exchange if supported
@@ -939,7 +939,7 @@ export class Utils {
     /*
     This function manually exchanges oidc token and updates the cretials object with an access token retrived
      */
-    private static async manualOIDCExchange(jfrogCredentials: JfrogCredentials) {
+    public static async manualOIDCExchange(jfrogCredentials: JfrogCredentials) {
         if (!jfrogCredentials.jfrogUrl) {
             throw new Error(`JF_URL must be provided when oidc-provider-name is specified`);
         }
