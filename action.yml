@@ -15,6 +15,10 @@ inputs:
     oidc-audience:
         description: "By default, this is the URL of the GitHub repository owner, such as the organization that owns the repository."
         required: false
+    oidc-only:
+        description: "Set to true to only authenticate using OIDC and not set up JFrog CLI."
+        default: "false"
+        required: false
     disable-job-summary:
         description: "Set to true to disable the generation of Job Summaries."
         default: "false"
