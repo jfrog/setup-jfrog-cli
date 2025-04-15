@@ -384,7 +384,7 @@ export class Utils {
                     if (oidcTokenId) {
                         configCmd.push(`--oidc-token-id=${oidcTokenId}`);
                     }
-                    configCmd.push(`--oidc-audience=${oidcAudience || Utils.DEFAULT_OIDC_AUDIENCE}`);
+                    configCmd.push(`--oidc-audience=${oidcAudience}`);
                     break;
                 case !!accessToken:
                     if (accessToken) {
@@ -927,13 +927,17 @@ export class Utils {
     Note: The manual logic should be deprecated and removed once CLI remote supports native OIDC.
     */
     public static async handleOidcAuth(jfrogCredentials: JfrogCredentials): Promise<JfrogCredentials> {
-        const version: string = core.getInput(Utils.CLI_VERSION_ARG);
+        if (!jfrogCredentials.jfrogUrl) {
+            throw new Error(`JF_URL must be provided when oidc-provider-name is specified`);
+        }
 
+        const version: string = core.getInput(Utils.CLI_VERSION_ARG);
         // Version should be more than min version
         // If CLI_REMOTE_ARG specified, we have to fetch token before we can download the CLI.
         if ((version === Utils.LATEST_CLI_VERSION || gte(version, Utils.MIN_CLI_OIDC_VERSION)) && !core.getInput(this.CLI_REMOTE_ARG)) {
             core.debug('Using CLI Config OIDC Auth Method..');
-            return this.setOidcTokenID(jfrogCredentials);
+            jfrogCredentials.oidcTokenId = await Utils.getIdToken(jfrogCredentials.oidcAudience);
+            return jfrogCredentials;
         }
 
         // Fallback to manual OIDC exchange for backward compatibility
@@ -945,19 +949,10 @@ export class Utils {
     This function manually exchanges oidc token and updates the credentials object with an access token retrieved
      */
     public static async manualOIDCExchange(jfrogCredentials: JfrogCredentials) {
-        if (!jfrogCredentials.jfrogUrl) {
-            throw new Error(`JF_URL must be provided when oidc-provider-name is specified`);
-        }
         // Get ID token from GitHub
-        core.info('Obtaining an access token through OpenID Connect...');
         const audience: string = core.getInput(Utils.OIDC_AUDIENCE_ARG);
-        let jsonWebToken: string | undefined;
-        try {
-            core.debug('Fetching JSON web token');
-            jsonWebToken = await core.getIDToken(audience);
-        } catch (error: any) {
-            throw new Error(`Getting openID Connect JSON web token failed: ${error.message}`);
-        }
+        let jsonWebToken: string = await Utils.getIdToken(audience);
+
         // Exchanges the token and set as access token in the credential's object
         const applicationKey: string = await this.getApplicationKey();
         try {
@@ -965,26 +960,6 @@ export class Utils {
         } catch (error: any) {
             throw new Error(`Exchanging JSON web token with an access token failed: ${error.message}`);
         }
-    }
-
-    /**
-     * @param jfrogCredentials - The existing JFrog credentials
-     * @returns The updated JfrogCredentials with the OIDC tokenID
-     * @throws Error if JF_URL is not provided or if fetching the JSON web token fails
-     */
-    private static async setOidcTokenID(jfrogCredentials: JfrogCredentials) {
-        if (!jfrogCredentials.jfrogUrl) {
-            throw new Error(`JF_URL must be provided when oidc-provider-name is specified`);
-        }
-        core.info('Obtaining an access token through OpenID Connect...');
-        try {
-            core.debug('Fetching JSON web token');
-            jfrogCredentials.oidcTokenId = await core.getIDToken(jfrogCredentials.oidcAudience);
-        } catch (error: any) {
-            throw new Error(`Getting OpenID Connect JSON web token failed: ${error.message}`);
-        }
-        core.debug('Successfully obtained an access token through OpenID Connect');
-        return jfrogCredentials;
     }
 
     /**
@@ -1044,6 +1019,21 @@ export class Utils {
         core.debug(`config.yml found in ${configRelativePath}`);
         return await fs.readFile(configRelativePath, 'utf-8');
     }
+
+    /**
+     * Fetches a JSON Web Token (JWT) ID token from GitHub's OIDC provider.
+     * @param audience - The intended audience for the token.
+     * @returns A promise that resolves to the JWT ID token as a string.
+     * @throws An error if fetching the token fails.
+     */
+    private static async getIdToken(audience: string): Promise<string> {
+        core.debug('Attempting to fetch JSON Web Token (JWT) ID token...');
+        try {
+            return await core.getIDToken(audience);
+        } catch (error: any) {
+            throw new Error(`Failed to fetch OpenID Connect JSON Web Token: ${error.message}`);
+        }
+    }
 }
 
 export interface DownloadDetails {
@@ -1058,7 +1048,7 @@ export interface JfrogCredentials {
     password: string | undefined;
     accessToken: string | undefined;
     oidcProviderName: string | undefined;
-    oidcAudience: string | undefined;
+    oidcAudience: string;
     oidcTokenId: string | undefined;
 }
 

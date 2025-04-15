@@ -616,6 +616,7 @@ describe('getSeparateEnvConfigArgs', () => {
             jfrogUrl: 'https://example.jfrog.io',
             oidcProviderName: 'setup-jfrog-cli',
             oidcTokenId: 'abc-123',
+            oidcAudience: 'jfrog-github',
         } as JfrogCredentials;
         const args: string[] | undefined = Utils.getSeparateEnvConfigArgs(creds);
         expect(args).toContain('--oidc-provider-name=setup-jfrog-cli');
@@ -643,7 +644,7 @@ describe('handleOidcAuth', () => {
     it('should throw if GitHub fails to return ID token', async () => {
         jest.spyOn(core, 'getIDToken').mockRejectedValue(new Error('mock failure'));
         const creds: any = { ...credentials };
-        await expect(Utils.handleOidcAuth(creds)).rejects.toThrow('Getting openID Connect JSON web token failed');
+        await expect(Utils.handleOidcAuth(creds)).rejects.toThrow('Failed to fetch OpenID Connect JSON Web Token');
     });
 
     it('should call setOidcTokenID when CLI version is >= 2.75.0', async () => {
@@ -652,10 +653,7 @@ describe('handleOidcAuth', () => {
             return '';
         });
         jest.spyOn(semver, 'gte').mockReturnValue(true);
-        jest.spyOn(Utils as any, 'setOidcTokenID').mockResolvedValue({
-            ...credentials,
-            oidcTokenId: 'mock-token-id',
-        });
+        jest.spyOn(Utils as any, 'getIdToken').mockResolvedValue('mock-token-id');
 
         const result: JfrogCredentials = await (Utils as any).handleOidcAuth(credentials);
         expect(result.oidcTokenId).toBe('mock-token-id');
