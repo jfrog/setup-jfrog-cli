@@ -528,46 +528,6 @@ describe('getApplicationKey', () => {
     });
 });
 
-describe('setUsageEnvVars', () => {
-    beforeEach(() => {
-        // Clear environment variables before each test
-        delete process.env.GITHUB_REPOSITORY;
-        delete process.env.GITHUB_WORKFLOW;
-        delete process.env.GITHUB_RUN_ID;
-        delete process.env.JF_GIT_TOKEN;
-
-        jest.clearAllMocks();
-    });
-
-    it('should export the correct environment variables when all inputs are set', () => {
-        // Mock environment variables
-        process.env.GITHUB_REPOSITORY = 'owner/repo';
-        process.env.GITHUB_WORKFLOW = 'test-workflow';
-        process.env.GITHUB_RUN_ID = '12345';
-        process.env.JF_GIT_TOKEN = 'dummy-token';
-
-        // Call the function
-        Utils.setUsageEnvVars();
-
-        // Verify exported variables
-        expect(core.exportVariable).toHaveBeenCalledWith('JFROG_CLI_USAGE_JOB_ID', 'test-workflow');
-        expect(core.exportVariable).toHaveBeenCalledWith('JFROG_CLI_USAGE_RUN_ID', '12345');
-        expect(core.exportVariable).toHaveBeenCalledWith('JFROG_CLI_USAGE_GIT_REPO', 'owner/repo');
-        expect(core.exportVariable).toHaveBeenCalledWith('JFROG_CLI_USAGE_GH_TOKEN_FOR_CODE_SCANNING_ALERTS_PROVIDED', true);
-    });
-
-    it('should export empty strings for missing environment variables', () => {
-        // Call the function with no environment variables set
-        Utils.setUsageEnvVars();
-
-        // Verify exported variables
-        expect(core.exportVariable).toHaveBeenCalledWith('JFROG_CLI_USAGE_JOB_ID', '');
-        expect(core.exportVariable).toHaveBeenCalledWith('JFROG_CLI_USAGE_RUN_ID', '');
-        expect(core.exportVariable).toHaveBeenCalledWith('JFROG_CLI_USAGE_GIT_REPO', '');
-        expect(core.exportVariable).toHaveBeenCalledWith('JFROG_CLI_USAGE_GH_TOKEN_FOR_CODE_SCANNING_ALERTS_PROVIDED', false);
-    });
-});
-
 describe('Test correct encoding of badge URL', () => {
     describe('getUsageBadge', () => {
         beforeEach(() => {
@@ -610,5 +570,131 @@ describe('Test correct encoding of badge URL', () => {
             const expectedBadge: string = '![](https://example.jfrog.io/ui/api/v1/u?s=1&m=1&job_id=&run_id=123&git_repo=)';
             expect(Utils.getUsageBadge()).toBe(expectedBadge);
         });
+    });
+});
+
+describe('getSeparateEnvConfigArgs', () => {
+    beforeEach(() => {
+        jest.spyOn(core, 'getInput').mockReturnValue('');
+        jest.spyOn(core, 'setSecret').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
+    it('should return undefined if URL is not set', () => {
+        const creds: JfrogCredentials = {} as JfrogCredentials;
+        expect(Utils.getSeparateEnvConfigArgs(creds)).toBeUndefined();
+    });
+
+    it('should use access token if provided', () => {
+        const creds: JfrogCredentials = {
+            jfrogUrl: 'https://example.jfrog.io',
+            accessToken: 'abc',
+        } as JfrogCredentials;
+        const args: string[] | undefined = Utils.getSeparateEnvConfigArgs(creds);
+        expect(args).toContain('--access-token');
+        expect(args).toContain('abc');
+    });
+
+    it('should use username and password if provided and access token is not', () => {
+        const creds: JfrogCredentials = {
+            jfrogUrl: 'https://example.jfrog.io',
+            username: 'admin',
+            password: '1234',
+        } as JfrogCredentials;
+        const args: string[] | undefined = Utils.getSeparateEnvConfigArgs(creds);
+        expect(args).toContain('--user');
+        expect(args).toContain('admin');
+        expect(args).toContain('--password');
+        expect(args).toContain('1234');
+    });
+
+    it('should use OIDC provider if specified', () => {
+        const creds: JfrogCredentials = {
+            jfrogUrl: 'https://example.jfrog.io',
+            oidcProviderName: 'setup-jfrog-cli',
+            oidcTokenId: 'abc-123',
+            oidcAudience: 'jfrog-github',
+        } as JfrogCredentials;
+        const args: string[] | undefined = Utils.getSeparateEnvConfigArgs(creds);
+        expect(args).toContain('--oidc-provider-name=setup-jfrog-cli');
+        expect(args).toContain('--oidc-provider-type=Github');
+        expect(args).toContain('--oidc-token-id=abc-123');
+        expect(args).toContain('--oidc-audience=jfrog-github');
+    });
+});
+
+describe('handleOidcAuth', () => {
+    const credentials: JfrogCredentials = {
+        jfrogUrl: 'https://test.jfrog.io',
+        username: undefined,
+        password: undefined,
+        accessToken: undefined,
+        oidcProviderName: 'test-provider',
+        oidcAudience: 'jfrog-github',
+        oidcTokenId: undefined,
+    };
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
+    it('should throw if GitHub fails to return ID token', async () => {
+        jest.spyOn(core, 'getIDToken').mockRejectedValue(new Error('mock failure'));
+        const creds: any = { ...credentials };
+        await expect(Utils.handleOidcAuth(creds)).rejects.toThrow('Failed to fetch OpenID Connect JSON Web Token');
+    });
+
+    it('should call setOidcTokenID when CLI version is >= 2.75.0', async () => {
+        jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
+            if (name === Utils.CLI_VERSION_ARG) return '2.75.0';
+            return '';
+        });
+        jest.spyOn(semver, 'gte').mockReturnValue(true);
+        jest.spyOn(Utils as any, 'getIdToken').mockResolvedValue('mock-token-id');
+
+        const result: JfrogCredentials = await (Utils as any).handleOidcAuth(credentials);
+        expect(result.oidcTokenId).toBe('mock-token-id');
+    });
+
+    it('should call manualOIDCExchange when CLI version is < 2.75.0', async () => {
+        jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
+            if (name === Utils.CLI_VERSION_ARG) return '2.74.0';
+            if (name === 'oidc-audience') return 'aud';
+            return '';
+        });
+        jest.spyOn(semver, 'gte').mockReturnValue(false);
+        jest.spyOn(core, 'getIDToken').mockResolvedValue('dummy-jwt');
+        jest.spyOn(Utils as any, 'getApplicationKey').mockResolvedValue('dummy-app-key');
+
+        jest.spyOn(Utils as any, 'exchangeOidcAndSetAsAccessToken').mockResolvedValue({
+            ...credentials,
+            accessToken: 'legacy-token',
+        });
+
+        const result: JfrogCredentials = await (Utils as any).handleOidcAuth(credentials);
+
+        expect(result.accessToken).toBe('legacy-token');
+    });
+
+    it('should fallback to manualOIDCExchange when download repository is set even if CLI is >= 2.75.0', async () => {
+        jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
+            if (name === Utils.CLI_VERSION_ARG) return '2.75.0';
+            if (name === Utils.CLI_REMOTE_ARG) return 'jfrog-cli-remote'; // Simulate presence of remote arg
+            if (name === 'oidc-audience') return 'aud';
+            return '';
+        });
+        jest.spyOn(semver, 'gte').mockReturnValue(true);
+        jest.spyOn(core, 'getIDToken').mockResolvedValue('dummy-jwt');
+        jest.spyOn(Utils as any, 'getApplicationKey').mockResolvedValue('dummy-app-key');
+        jest.spyOn(Utils as any, 'exchangeOidcAndSetAsAccessToken').mockResolvedValue({
+            ...credentials,
+            accessToken: 'forced-manual-token',
+        });
+
+        const result: JfrogCredentials = await (Utils as any).handleOidcAuth(credentials);
+        expect(result.accessToken).toBe('forced-manual-token');
     });
 });
