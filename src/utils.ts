@@ -362,7 +362,8 @@ export class Utils {
     public static getSeparateEnvConfigArgs(jfrogCredentials: JfrogCredentials): string[] | undefined {
         /**
          * @name url - JFrog Platform URL
-         * @name  user&password - JFrog Platform basic authentication
+         * @name user - JFrog Platform basic authentication
+         * @name password - JFrog Platform basic authentication
          * @name accessToken - Jfrog Platform access token
          * @name oidcProviderName - OpenID Connect provider name defined in the JFrog Platform
          * @name oidcAudience - JFrog Platform OpenID Connect audience
@@ -375,30 +376,28 @@ export class Utils {
         let oidcTokenId: string | undefined = jfrogCredentials.oidcTokenId;
         let oidcAudience: string | undefined = jfrogCredentials.oidcAudience;
 
-        if (url) {
-            let configCmd: string[] = [Utils.getServerIdForConfig(), '--url', url, '--interactive=false', '--overwrite=true'];
-            switch (true) {
-                case !!oidcProviderName:
-                    configCmd.push(`--oidc-provider-name=${oidcProviderName}`);
-                    configCmd.push('--oidc-provider-type=Github');
-                    if (oidcTokenId) {
-                        configCmd.push(`--oidc-token-id=${oidcTokenId}`);
-                    }
-                    configCmd.push(`--oidc-audience=${oidcAudience}`);
-                    break;
-                case !!accessToken:
-                    if (accessToken) {
-                        configCmd.push('--access-token', accessToken);
-                    }
-                    break;
-                case !!user && !!password:
-                    if (user && password) {
-                        configCmd.push('--user', user, '--password', password);
-                    }
-                    break;
-            }
-            return configCmd;
+        // Url is mandatory for JFrog CLI configuration
+        if (!url) {
+            return;
         }
+
+        const configCmd: string[] = [Utils.getServerIdForConfig(), '--url', url, '--interactive=false', '--overwrite=true'];
+        // OIDC auth
+        if (oidcProviderName) {
+            configCmd.push(`--oidc-provider-name=${oidcProviderName}`);
+            configCmd.push('--oidc-provider-type=Github');
+            configCmd.push(`--oidc-token-id=${oidcTokenId}`);
+            configCmd.push(`--oidc-audience=${oidcAudience}`);
+        }
+        // Access Token auth
+        if (accessToken) {
+            configCmd.push('--access-token', accessToken);
+        }
+        // Basic Auth
+        if (user && password) {
+            configCmd.push('--user', user, '--password', password);
+        }
+        return configCmd;
     }
 
     /**
