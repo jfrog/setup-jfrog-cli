@@ -383,7 +383,7 @@ export class Utils {
 
         const configCmd: string[] = [Utils.getServerIdForConfig(), '--url', url, '--interactive=false', '--overwrite=true'];
         // OIDC auth
-        if (oidcProviderName) {
+        if (!!oidcProviderName) {
             configCmd.push(`--oidc-provider-name=${oidcProviderName}`);
             configCmd.push('--oidc-provider-type=Github');
             configCmd.push(`--oidc-token-id=${oidcTokenId}`);
@@ -391,15 +391,16 @@ export class Utils {
             return configCmd;
         }
         // Access Token auth
-        if (accessToken) {
+        if (!!accessToken) {
             configCmd.push('--access-token', accessToken);
             return configCmd;
         }
         // Basic Auth
-        if (user && password) {
+        if (!!user && !!password) {
             configCmd.push('--user', user, '--password', password);
             return configCmd;
         }
+        return configCmd;
     }
 
     /**
