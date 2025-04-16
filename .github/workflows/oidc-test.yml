@@ -67,6 +67,8 @@ jobs:
           JF_URL: ${{ secrets.JFROG_PLATFORM_URL }}
         with:
           oidc-provider-name: ${{ env.OIDC_PROVIDER_NAME }}
+          # Use the latest version before the new OIDC feature
+          version: '2.74.1'
 
       - name: Test JFrog CLI
         run: |
