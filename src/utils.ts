@@ -383,7 +383,7 @@ export class Utils {
 
         const configCmd: string[] = [Utils.getServerIdForConfig(), '--url', url, '--interactive=false', '--overwrite=true'];
         // OIDC auth
-        if (oidcProviderName) {
+        if (this.isCLIVersionOidcSupported() && !!oidcProviderName) {
             configCmd.push(`--oidc-provider-name=${oidcProviderName}`);
             configCmd.push('--oidc-provider-type=Github');
             configCmd.push(`--oidc-token-id=${oidcTokenId}`);
@@ -660,6 +660,15 @@ export class Utils {
         return version === Utils.LATEST_CLI_VERSION || gte(version, Utils.MIN_CLI_VERSION_JOB_SUMMARY);
     }
 
+    public static isCLIVersionOidcSupported(): boolean {
+        const version: string = core.getInput(Utils.CLI_VERSION_ARG) || '';
+        if (version === '') {
+            // No input meaning default version which is supported
+            return true;
+        }
+        return version === Utils.LATEST_CLI_VERSION || gte(version, Utils.MIN_CLI_OIDC_VERSION);
+    }
+
     /**
      * Generates GitHub workflow unified Summary report.
      * This function runs as part of post-workflow cleanup function,
@@ -927,11 +936,9 @@ export class Utils {
         if (!jfrogCredentials.jfrogUrl) {
             throw new Error(`JF_URL must be provided when oidc-provider-name is specified`);
         }
-
-        const version: string = core.getInput(Utils.CLI_VERSION_ARG);
         // Version should be more than min version
         // If CLI_REMOTE_ARG specified, we have to fetch token before we can download the CLI.
-        if ((version === Utils.LATEST_CLI_VERSION || gte(version, Utils.MIN_CLI_OIDC_VERSION)) && !core.getInput(this.CLI_REMOTE_ARG)) {
+        if (this.isCLIVersionOidcSupported() && !core.getInput(this.CLI_REMOTE_ARG)) {
             core.debug('Using CLI Config OIDC Auth Method..');
             jfrogCredentials.oidcTokenId = await Utils.getIdToken(jfrogCredentials.oidcAudience);
             return jfrogCredentials;

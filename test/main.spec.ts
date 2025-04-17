@@ -9,7 +9,6 @@ import semver = require('semver/preload');
 
 jest.mock('os');
 jest.mock('@actions/core');
-jest.mock('semver');
 jest.mock('@actions/core');
 jest.mock('fs', () => ({
     promises: {
@@ -183,7 +182,12 @@ describe('JFrog CLI Configuration', () => {
 
         // Expect the custom server ID to be used.
         let customServerId: string = 'custom-server-id';
-        jest.spyOn(core, 'getInput').mockReturnValue(customServerId);
+        jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
+            if (name === customServerId) {
+                return 'custom-server-id'; // Return this value for the specific argument
+            }
+            return ''; // Default return value for other arguments
+        });
         testConfigCommand(customServerId);
 
         // Expect the servers env var to include both servers.
@@ -409,7 +413,6 @@ describe('Job Summaries', () => {
 });
 
 describe('isJobSummarySupported', () => {
-    const MIN_CLI_VERSION_JOB_SUMMARY: string = '2.66.0';
     const LATEST_CLI_VERSION: string = 'latest';
 
     beforeEach(() => {
@@ -424,17 +427,13 @@ describe('isJobSummarySupported', () => {
     it('should return true if the version is greater than or equal to the minimum supported version', () => {
         const version: string = '2.66.0';
         jest.spyOn(core, 'getInput').mockReturnValue(version);
-        (semver.gte as jest.Mock).mockReturnValue(true);
         expect(Utils.isJobSummarySupported()).toBe(true);
-        expect(semver.gte).toHaveBeenCalledWith(version, MIN_CLI_VERSION_JOB_SUMMARY);
     });
 
     it('should return false if the version is less than the minimum supported version', () => {
         const version: string = '2.65.0';
         jest.spyOn(core, 'getInput').mockReturnValue(version);
-        (semver.gte as jest.Mock).mockReturnValue(false);
         expect(Utils.isJobSummarySupported()).toBe(false);
-        expect(semver.gte).toHaveBeenCalledWith(version, MIN_CLI_VERSION_JOB_SUMMARY);
     });
 });
 
@@ -739,5 +738,44 @@ describe('handleOidcAuth', () => {
 
         const result: JfrogCredentials = await (Utils as any).handleOidcAuth(credentials);
         expect(result.accessToken).toBe('forced-manual-token');
+    });
+    it('should include OIDC flags only for supported versions', () => {
+        const creds: JfrogCredentials = {
+            jfrogUrl: 'https://example.jfrog.io',
+            oidcProviderName: 'setup-jfrog-cli',
+            oidcTokenId: 'abc-123',
+            oidcAudience: 'jfrog-github',
+        } as JfrogCredentials;
+
+        jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
+            if (name === Utils.CLI_VERSION_ARG) return '2.75.0'; // Supported version
+            return '';
+        });
+
+        const args: string[] | undefined = Utils.getSeparateEnvConfigArgs(creds);
+        expect(args).toContain('--oidc-provider-name=setup-jfrog-cli');
+        expect(args).toContain('--oidc-provider-type=Github');
+        expect(args).toContain('--oidc-token-id=abc-123');
+        expect(args).toContain('--oidc-audience=jfrog-github');
+    });
+
+    it('should not include OIDC flags for unsupported versions', () => {
+        const creds: JfrogCredentials = {
+            jfrogUrl: 'https://example.jfrog.io',
+            oidcProviderName: 'setup-jfrog-cli',
+            oidcTokenId: 'abc-123',
+            oidcAudience: 'jfrog-github',
+        } as JfrogCredentials;
+
+        jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
+            if (name === Utils.CLI_VERSION_ARG) return '2.74.0'; // Unsupported version
+            return '';
+        });
+
+        const args: string[] | undefined = Utils.getSeparateEnvConfigArgs(creds);
+        expect(args).not.toContain('--oidc-provider-name=setup-jfrog-cli');
+        expect(args).not.toContain('--oidc-provider-type=Github');
+        expect(args).not.toContain('--oidc-token-id=abc-123');
+        expect(args).not.toContain('--oidc-audience=jfrog-github');
     });
 });
