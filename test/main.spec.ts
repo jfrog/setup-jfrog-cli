@@ -624,6 +624,49 @@ describe('getSeparateEnvConfigArgs', () => {
         expect(args).toContain('--oidc-token-id=abc-123');
         expect(args).toContain('--oidc-audience=jfrog-github');
     });
+    it('should not include conflicting or duplicate arguments in the config command', () => {
+        const jfrogCredentials: JfrogCredentials = {
+            jfrogUrl: 'https://example.jfrog.io',
+            username: 'test-user',
+            password: 'test-password',
+            accessToken: 'test-access-token',
+            oidcProviderName: 'oidc-integration-test-provider',
+            oidcAudience: 'jfrog-github',
+            oidcTokenId: '',
+        };
+
+        const configArgs: string[] | undefined = Utils.getSeparateEnvConfigArgs(jfrogCredentials);
+
+        // Ensure the command does not include conflicting or duplicate arguments
+        const configString: string = configArgs?.join(' ') || '';
+        expect(configString).toContain('--url https://example.jfrog.io');
+        expect(configString).toContain('--interactive=false');
+        expect(configString).toContain('--overwrite=true');
+        expect(configString).toContain('--oidc-provider-name=oidc-integration-test-provider');
+        expect(configString).toContain('--oidc-audience=jfrog-github');
+        expect(configString).not.toContain('--access-token test-access-token --username test-user'); // Ensure no conflicting auth methods
+    });
+    it('Access Token Auth should be prioritized over basic auth', () => {
+        const jfrogCredentials: JfrogCredentials = {
+            jfrogUrl: 'https://example.jfrog.io',
+            username: 'test-user',
+            password: 'test-password',
+            accessToken: 'test-access-token',
+            oidcProviderName: '',
+            oidcAudience: '',
+            oidcTokenId: '',
+        };
+
+        const configArgs: string[] | undefined = Utils.getSeparateEnvConfigArgs(jfrogCredentials);
+
+        // Ensure the command does not include conflicting or duplicate arguments
+        const configString: string = configArgs?.join(' ') || '';
+        expect(configString).toContain('--url https://example.jfrog.io');
+        expect(configString).toContain('--interactive=false');
+        expect(configString).toContain('--overwrite=true');
+        expect(configString).toContain('--access-token test-access-token');
+        expect(configString).not.toContain('--username test-user');
+    });
 });
 
 describe('handleOidcAuth', () => {

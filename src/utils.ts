@@ -388,13 +388,11 @@ export class Utils {
             configCmd.push('--oidc-provider-type=Github');
             configCmd.push(`--oidc-token-id=${oidcTokenId}`);
             configCmd.push(`--oidc-audience=${oidcAudience}`);
-        }
-        // Access Token auth
-        if (accessToken) {
+            // Access Token
+        } else if (!!accessToken) {
             configCmd.push('--access-token', accessToken);
-        }
-        // Basic Auth
-        if (user && password) {
+            // Basic Auth
+        } else if (!!user && !!password) {
             configCmd.push('--user', user, '--password', password);
         }
         return configCmd;
