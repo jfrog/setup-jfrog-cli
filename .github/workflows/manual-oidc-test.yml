@@ -1,5 +1,6 @@
 # This action is an integration test for OIDC workflow
-name: OpenID Connect Test
+# Which uses the manual approach for backwards compliantly
+name: Manual OpenID Exchange Connect Test
 on:
   push:
     branches:
@@ -40,6 +41,8 @@ jobs:
           "name": "${{ env.OIDC_PROVIDER_NAME }}",
           "issuer_url": "https://token.actions.githubusercontent.com",
           "provider_type": "GitHub",
+          "enable_permissive_configuration": "true",
+          "token_issuer" : "",
           "description": "This is a test configuration created for OIDC-Access integration test" }'
 
       - name: Create OIDC integration Identity Mapping
@@ -67,6 +70,8 @@ jobs:
           JF_URL: ${{ secrets.JFROG_PLATFORM_URL }}
         with:
           oidc-provider-name: ${{ env.OIDC_PROVIDER_NAME }}
+          # The last version which outputs OIDC params as step outputs
+          version: '2.74.1'
 
       - name: Test JFrog CLI
         run: |

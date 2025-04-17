@@ -1,0 +1,45 @@
+# This action is an integration test for OIDC workflow
+name: CLI OpenID Connect Test
+on:
+  push:
+    branches:
+      - master
+
+  # Triggers the workflow on labeled PRs only.
+  pull_request_target:
+    types: [ labeled ]
+
+
+# Ensures that only the latest commit is running for each PR at a time.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}-${{ github.ref }}
+  cancel-in-progress: true
+permissions:
+  id-token: write
+jobs:
+  OIDC-Test:
+    if: contains(github.event.pull_request.labels.*.name, 'safe to test') || github.event_name == 'push'
+    name: OIDC-Access integration test (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu, windows, macos ]
+    runs-on: ${{ matrix.os }}-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          ref:
+            ${{ github.event.pull_request.head.ref || github.sha }}
+
+      - name: Setup JFrog CLI
+        id: setup-jfrog-cli
+        uses: ./
+        env:
+          JF_URL: ${{ secrets.JFROG_PLATFORM_URL }}
+        with:
+          oidc-provider-name: setup-jfrog-cli-test
+
+      - name: Test JFrog CLI
+        run: |
+          jf rt ping
