@@ -26,9 +26,6 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-        with:
-          ref:
-            ${{ github.event.pull_request.head.ref || github.sha }}
 
       - name: Setup JFrog CLI
         id: setup-jfrog-cli
