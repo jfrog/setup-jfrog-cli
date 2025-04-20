@@ -28,6 +28,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
 
       # Generating a unique name for the Integration Configuration that will be created in the following step
       - name: Generate unique OIDC config name

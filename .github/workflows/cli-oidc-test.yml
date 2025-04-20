@@ -4,11 +4,9 @@ on:
   push:
     branches:
       - master
-
   # Triggers the workflow on labeled PRs only.
   pull_request_target:
     types: [ labeled ]
-
 
 # Ensures that only the latest commit is running for each PR at a time.
 concurrency:
@@ -29,8 +27,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          ref:
-            ${{ github.event.pull_request.head.ref || github.sha }}
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Setup JFrog CLI
         id: setup-jfrog-cli
