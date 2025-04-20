@@ -36,6 +36,8 @@ jobs:
           JF_URL: ${{ secrets.JFROG_PLATFORM_URL }}
         with:
           oidc-provider-name: setup-jfrog-cli-test
+          # This can be removed after the default CLI version will be updated
+          version: 2.75.0
 
       - name: Test JFrog CLI
         run: |
