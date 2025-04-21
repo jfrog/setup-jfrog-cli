@@ -384,18 +384,17 @@ export class Utils {
         // OIDC
         if (!!oidcProviderName && !!oidcTokenId) {
             core.info('calling EOT ! ');
-            let res: string = await Utils.runCliAndGetOutput(['eot', oidcProviderName, oidcTokenId, '--url', url, '--oidc-audience', oidcAudience]);
+            let output: ExecOutput = await getExecOutput('jf', ['eot', oidcProviderName, oidcTokenId, '--url', url, '--oidc-audience', oidcAudience]);
             /** @type {{ oidcToken?: string }} */
-            const body: any = JSON.parse(res);
-            core.info(body.username);
-            core.info(body.accessToken);
+            const body: any = JSON.parse(output.stdout);
             // Sets the OIDC token as access token to be used in config.
-            accessToken = body.accessToken;
             core.info('setting as secret');
             core.setSecret('oidc-token');
-            core.setOutput('oidc-token', body.accessToken);
+            core.setOutput('oidc-token', body.Username);
             core.setSecret('oidc-user');
-            core.setOutput('oidc-user', body.username);
+            core.setOutput('oidc-user', body.AccessToken);
+            // To be used in the config command
+            accessToken = body.AccessToken;
         }
 
         const configCmd: string[] = [Utils.getServerIdForConfig(), '--url', url, '--interactive=false', '--overwrite=true'];
