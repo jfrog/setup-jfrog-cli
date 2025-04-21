@@ -389,16 +389,13 @@ export class Utils {
                 ['eot', oidcProviderName, oidcTokenId, '--url', url, '--oidc-audience', oidcAudience],
                 { silent: true, ignoreReturnCode: true },
             );
-            let body: any;
-            body = Utils.parseInvalidObject(output);
+            const { accessToken, username }: { accessToken: string; username: string } = Utils.extractValues(output.stdout);
             // Sets the OIDC token as access token to be used in config.
             core.info('setting as secret');
             core.setSecret('oidc-token');
-            core.setOutput('oidc-token', body.Username);
+            core.setOutput('oidc-token', username);
             core.setSecret('oidc-user');
-            core.setOutput('oidc-user', body.AccessToken);
-            // To be used in the config command
-            accessToken = body.AccessToken;
+            core.setOutput('oidc-user', accessToken);
         }
 
         const configCmd: string[] = [Utils.getServerIdForConfig(), '--url', url, '--interactive=false', '--overwrite=true'];
@@ -412,19 +409,19 @@ export class Utils {
         return configCmd;
     }
 
-    private static parseInvalidObject(input: any): any {
-        // Add double quotes around keys and string values
-        const validJson:string = input
-            .replace(/(\w+)\s*:/g, '"$1":') // Add quotes around keys
-            .replace(/:\s*([\w]+)/g, ': "$1"'); // Add quotes around string values
+    private static extractValues(input: string): { accessToken: string; username: string } {
+        const regex: RegExp = /AccessToken:\s*([\w-]+)\s*Username:\s*([\w-]+)/;
+        const match: RegExpMatchArray | null = regex.exec(input);
 
-        try {
-            return JSON.parse(validJson);
-        } catch (error) {
-            throw new Error(`Failed to parse object: ${error}`);
+        if (!match) {
+            throw new Error('Failed to extract values. Input format is invalid.');
         }
-    }
 
+        return {
+            accessToken: match[1],
+            username: match[2],
+        };
+    }
     /**
      * Get server ID for JFrog CLI configuration. Save the server ID in the servers env var if it doesn't already exist.
      */
