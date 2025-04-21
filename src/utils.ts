@@ -384,17 +384,7 @@ export class Utils {
         // OIDC
         if (!!oidcProviderName && !!oidcTokenId) {
             core.info('calling EOT ! ');
-            let res: string = await Utils.runCliAndGetOutput([
-                'eot',
-                '--url',
-                url,
-                '--oidc-provider-name',
-                oidcProviderName,
-                '--oidc-token-id',
-                oidcTokenId,
-                '--oidc-audience',
-                oidcAudience,
-            ]);
+            let res: string = await Utils.runCliAndGetOutput(['eot', oidcProviderName, oidcTokenId, '--url', url, '--oidc-audience', oidcAudience]);
             /** @type {{ oidcToken?: string }} */
             const body: any = JSON.parse(res);
             core.info(body.username);
