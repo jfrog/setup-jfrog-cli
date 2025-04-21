@@ -390,13 +390,7 @@ export class Utils {
                 { silent: true, ignoreReturnCode: true },
             );
             let body: any;
-            try {
-                core.info('Attempting to decode JSON response...');
-                core.info(output.stdout);
-                body = JSON.parse(output.stdout);
-            } catch (error) {
-                throw new Error(`Failed to decode JSON response: ${error}`);
-            }
+            body = Utils.parseInvalidObject(output);
             // Sets the OIDC token as access token to be used in config.
             core.info('setting as secret');
             core.setSecret('oidc-token');
@@ -416,6 +410,19 @@ export class Utils {
             configCmd.push('--user', user, '--password', password);
         }
         return configCmd;
+    }
+
+    private static parseInvalidObject(input: any): any {
+        // Add double quotes around keys and string values
+        const validJson:string = input
+            .replace(/(\w+)\s*:/g, '"$1":') // Add quotes around keys
+            .replace(/:\s*([\w]+)/g, ': "$1"'); // Add quotes around string values
+
+        try {
+            return JSON.parse(validJson);
+        } catch (error) {
+            throw new Error(`Failed to parse object: ${error}`);
+        }
     }
 
     /**
