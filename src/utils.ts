@@ -391,7 +391,8 @@ export class Utils {
             );
             let body: any;
             try {
-                core.debug('Attempting to decode JSON response...');
+                core.info('Attempting to decode JSON response...');
+                core.info(output.stdout);
                 body = JSON.parse(output.stdout);
             } catch (error) {
                 throw new Error(`Failed to decode JSON response: ${error}`);
