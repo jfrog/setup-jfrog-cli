@@ -194,6 +194,9 @@ export class Utils {
         if (responseJson.errors) {
             throw new Error(`${JSON.stringify(responseJson.errors)}`);
         }
+        // Set environment variable to track OIDC usage.
+        core.exportVariable('JFROG_CLI_USAGE_CONFIG_OIDC', 'TRUE');
+        core.exportVariable('JFROG_CLI_USAGE_OIDC_USED', 'TRUE');
         return jfrogCredentials;
     }
 
@@ -381,17 +384,22 @@ export class Utils {
             return;
         }
 
-        // If OIDC params provided, exchange token.
+        // In OIDC auth, we exchange token and export username and accessToken as step output
+        // users use This to authenticate to third party tools.
         if (!!oidcProviderName && !!oidcTokenId) {
-            accessToken = await this.exchangeOIDCToken(oidcProviderName, oidcTokenId, url, oidcAudience);
+            // If the access token is already set, no need to exchange the token
+            // It could happen when the exchange is done manually
+            if (accessToken == '' || accessToken == undefined) {
+                accessToken = await this.exchangeOIDCTokenAndExportStepOutputs(oidcProviderName, oidcTokenId, url, oidcAudience);
+            }
         }
 
         const configCmd: string[] = [Utils.getServerIdForConfig(), '--url', url, '--interactive=false', '--overwrite=true'];
-        // Access Token
         if (!!accessToken) {
+            // Access Token
             configCmd.push('--access-token', accessToken);
-            // Basic Auth
         } else if (!!user && !!password) {
+            // Basic Auth
             configCmd.push('--user', user, '--password', password);
         }
         return configCmd;
@@ -407,7 +415,7 @@ export class Utils {
      * @throws Error if the CLI command fails, or parsing of the CLI outputs fails
      * @private
      */
-    public static async exchangeOIDCToken(
+    public static async exchangeOIDCTokenAndExportStepOutputs(
         oidcProviderName: string,
         oidcTokenId: string,
         url: string,

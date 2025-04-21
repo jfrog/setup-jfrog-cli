@@ -577,14 +577,10 @@ describe('getSeparateEnvConfigArgs', () => {
     beforeEach(() => {
         jest.spyOn(core, 'getInput').mockReturnValue('');
         jest.spyOn(core, 'setSecret').mockImplementation(() => {});
-        (getExecOutput as jest.Mock).mockResolvedValueOnce({
-            exitCode: 0,
-            stdout: '{"AccessToken":"test-access-token","Username":"test-user"}',
-            stderr: '',
-        });
     });
 
     afterEach(() => {
+        jest.clearAllMocks();
         jest.restoreAllMocks();
     });
 
@@ -638,7 +634,6 @@ describe('getSeparateEnvConfigArgs', () => {
         expect(configString).not.toContain('--oidc-provider-name=oidc-integration-test-provider');
         expect(configString).not.toContain('--username test-user');
         expect(configString).not.toContain('--oidc-audience=jfrog-github');
-
     });
     it('Access Token Auth should be prioritized over basic auth', async () => {
         const jfrogCredentials: JfrogCredentials = {
@@ -675,6 +670,7 @@ describe('handleOidcAuth', () => {
     };
 
     afterEach(() => {
+        jest.clearAllMocks();
         jest.restoreAllMocks();
     });
 
@@ -747,6 +743,11 @@ describe('handleOidcAuth', () => {
             if (name === Utils.CLI_VERSION_ARG) return '2.74.0'; // Unsupported version
             return '';
         });
+        (getExecOutput as jest.Mock).mockResolvedValueOnce({
+            exitCode: 0,
+            stdout: '{"AccessToken":"test-access-token","Username":"test-user"}',
+            stderr: '',
+        });
 
         const args: string[] | undefined = await Utils.getSeparateEnvConfigArgs(creds);
         expect(args).not.toContain('--oidc-provider-name=setup-jfrog-cli');
@@ -757,6 +758,10 @@ describe('handleOidcAuth', () => {
 });
 
 describe('getAccessTokenFromCliOutput', () => {
+    afterEach(() => {
+        jest.clearAllMocks();
+        jest.restoreAllMocks();
+    });
     it('should parse valid JSON input', () => {
         const input: string = '{"AccessToken":"test-access-token","Username":"test-user"}';
         const result: { accessToken: string; username: string } = getAccessTokenFromCliOutput(input);
@@ -788,7 +793,7 @@ describe('getAccessTokenFromCliOutput', () => {
     });
 });
 
-describe('exchangeOIDCToken', () => {
+describe('exchangeOIDCTokenAndExportStepOutputs', () => {
     afterEach(() => {
         jest.clearAllMocks();
         jest.restoreAllMocks();
@@ -801,7 +806,7 @@ describe('exchangeOIDCToken', () => {
         };
         (getExecOutput as jest.Mock).mockResolvedValue(mockOutput);
 
-        const result: string | undefined = await Utils.exchangeOIDCToken(
+        const result: string | undefined = await Utils.exchangeOIDCTokenAndExportStepOutputs(
             'test-provider',
             'test-token-id',
             'https://example.jfrog.io',
@@ -823,16 +828,16 @@ describe('exchangeOIDCToken', () => {
         };
         (getExecOutput as jest.Mock).mockResolvedValue(mockOutput);
 
-        await expect(Utils.exchangeOIDCToken('test-provider', 'test-token-id', 'https://example.jfrog.io', 'test-audience')).rejects.toThrow(
-            'CLI command failed with exit code 1: Error occurred',
-        );
+        await expect(
+            Utils.exchangeOIDCTokenAndExportStepOutputs('test-provider', 'test-token-id', 'https://example.jfrog.io', 'test-audience'),
+        ).rejects.toThrow('CLI command failed with exit code 1: Error occurred');
     });
 
     it('should throw an error if CLI execution throws an exception', async () => {
         (getExecOutput as jest.Mock).mockRejectedValue(new Error('Execution failed'));
 
-        await expect(Utils.exchangeOIDCToken('test-provider', 'test-token-id', 'https://example.jfrog.io', 'test-audience')).rejects.toThrow(
-            'Failed to exchange OIDC token with an access token: Execution failed',
-        );
+        await expect(
+            Utils.exchangeOIDCTokenAndExportStepOutputs('test-provider', 'test-token-id', 'https://example.jfrog.io', 'test-audience'),
+        ).rejects.toThrow('Failed to exchange OIDC token with an access token: Execution failed');
     });
 });
