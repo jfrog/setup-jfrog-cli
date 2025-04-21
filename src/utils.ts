@@ -381,21 +381,9 @@ export class Utils {
             return;
         }
 
-        // OIDC
+        // If OIDC params provided, exchange token.
         if (!!oidcProviderName && !!oidcTokenId) {
-            core.info('calling EOT ! ');
-            let output: ExecOutput = await getExecOutput(
-                'jf',
-                ['eot', oidcProviderName, oidcTokenId, '--url', url, '--oidc-audience', oidcAudience],
-                { silent: true, ignoreReturnCode: true },
-            );
-            const { accessToken, username }: { accessToken: string; username: string } = parseInput(output.stdout);
-            // Sets the OIDC token as access token to be used in config.
-            core.info('setting as secret');
-            core.setSecret('oidc-token');
-            core.setOutput('oidc-token', username);
-            core.setSecret('oidc-user');
-            core.setOutput('oidc-user', accessToken);
+            accessToken = await this.exchangeOIDCToken(oidcProviderName, oidcTokenId, url, oidcAudience);
         }
 
         const configCmd: string[] = [Utils.getServerIdForConfig(), '--url', url, '--interactive=false', '--overwrite=true'];
@@ -407,6 +395,51 @@ export class Utils {
             configCmd.push('--user', user, '--password', password);
         }
         return configCmd;
+    }
+
+    /**
+     * Exchange OIDC token with an access token using JFrog CLI.
+     * @param oidcProviderName - OIDC provider name defined in the JFrog Platform
+     * @param oidcTokenId - OIDC token ID
+     * @param url - JFrog Platform URL
+     * @param oidcAudience - JFrog Platform OpenID Connect audience
+     * @return Access token
+     * @throws Error if the CLI command fails, or parsing of the CLI outputs fails
+     * @private
+     */
+    public static async exchangeOIDCToken(
+        oidcProviderName: string,
+        oidcTokenId: string,
+        url: string,
+        oidcAudience: string,
+    ): Promise<string | undefined> {
+        let output: ExecOutput;
+        try {
+            output = await getExecOutput('jf', ['eot', oidcProviderName, oidcTokenId, '--url', url, '--oidc-audience', oidcAudience], {
+                silent: true,
+                ignoreReturnCode: true,
+            });
+        } catch (error: any) {
+            // Catch any error
+            core.error(`Failed to exchange OIDC token: ${error.message}`);
+            throw new Error(`Failed to exchange OIDC token with an access token: ${error.message}`);
+        }
+        // If the CLI execution failed, throw an error
+        if (output.exitCode !== 0) {
+            throw new Error(`CLI command failed with exit code ${output.exitCode}: ${output.stderr}`);
+        }
+
+        // Extract username and access token from command output
+        const { accessToken, username }: { accessToken: string; username: string } = getAccessTokenFromCliOutput(output.stdout);
+
+        // Sets the OIDC token as access token to be used in config.
+        core.info('Setting OIDC token and user as secrets');
+        core.setSecret(accessToken);
+        core.setOutput('oidc-token', accessToken);
+        core.setSecret(username);
+        core.setOutput('oidc-user', username);
+
+        return accessToken;
     }
 
     /**
@@ -1051,9 +1084,12 @@ export class Utils {
     }
 }
 
-export function parseInput(input: string): { accessToken: string; username: string } {
+export function getAccessTokenFromCliOutput(input: string): { accessToken: string; username: string } {
+    if (input === '') {
+        throw new Error('Input is empty. Cannot extract values.');
+    }
+    // Attempt to parse as JSON
     try {
-        // Attempt to parse as JSON
         const parsed: { AccessToken?: string; Username?: string } = JSON.parse(input);
         if (parsed.AccessToken && parsed.Username) {
             return {
@@ -1061,21 +1097,20 @@ export function parseInput(input: string): { accessToken: string; username: stri
                 username: parsed.Username,
             };
         }
-        throw new Error('JSON does not contain required fields.');
-    } catch {
-        // Fallback to regex extraction
-        const regex: RegExp = /AccessToken:\s*(\S+)\s*Username:\s*(\S+)/;
-        const match: RegExpMatchArray | null = regex.exec(input);
-
-        if (!match) {
-            throw new Error('Failed to extract values. Input format is invalid.');
-        }
-
-        return {
-            accessToken: match[1],
-            username: match[2],
-        };
+    } catch (error: any) {
+        core.debug(`Failed to parse JSON: ${error},trying with regex`);
     }
+
+    // Fallback to regex extraction
+    const regex: RegExp = /AccessToken:\s*(\S+)\s*Username:\s*(\S+)/;
+    const match: RegExpMatchArray | null = regex.exec(input);
+    if (!match) {
+        throw new Error('Failed to extract values. Input format is invalid.');
+    }
+    return {
+        accessToken: match[1],
+        username: match[2],
+    };
 }
 
 export interface DownloadDetails {

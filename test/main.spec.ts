@@ -1,15 +1,16 @@
 import * as os from 'os';
 import * as core from '@actions/core';
 
-import { DownloadDetails, JfrogCredentials, JWTTokenData, parseInput, Utils } from '../src/utils';
+import { DownloadDetails, JfrogCredentials, JWTTokenData, getAccessTokenFromCliOutput, Utils } from '../src/utils';
 import * as jsYaml from 'js-yaml';
 import * as fs from 'fs';
 import * as path from 'path';
 import semver = require('semver/preload');
+import { getExecOutput, ExecOutput } from '@actions/exec';
 
 jest.mock('os');
 jest.mock('@actions/core');
-jest.mock('@actions/core');
+jest.mock('@actions/exec');
 jest.mock('fs', () => ({
     promises: {
         readFile: jest.fn(),
@@ -780,26 +781,79 @@ describe('handleOidcAuth', () => {
     });
 });
 
-describe('parseInput', () => {
+describe('getAccessTokenFromCliOutput', () => {
     it('should parse valid JSON input', () => {
-        const input: string = '{"AccessToken": "abc123", "Username": "user456"}';
-        const result: { accessToken: string; username: string } = parseInput(input);
-        expect(result).toEqual({ accessToken: 'abc123', username: 'user456' });
+        const input: string = '{"AccessToken":"test-access-token","Username":"test-user"}';
+        const result: { accessToken: string; username: string } = getAccessTokenFromCliOutput(input);
+
+        expect(result).toEqual({
+            accessToken: 'test-access-token',
+            username: 'test-user',
+        });
     });
 
-    it('should fallback to regex for non-JSON input', () => {
-        const input: string = '{ AccessToken: abc123 Username: user456 }';
-        const result: { accessToken: string; username: string } = parseInput(input);
-        expect(result).toEqual({ accessToken: 'abc123', username: 'user456' });
+    it('should parse valid regex input', () => {
+        const input: string = '{ AccessToken: test Username: test-user }';
+        const result: { accessToken: string; username: string } = getAccessTokenFromCliOutput(input);
+
+        expect(result).toEqual({
+            accessToken: 'test',
+            username: 'test-user',
+        });
     });
 
     it('should throw an error for invalid input format', () => {
-        const input: string = 'Invalid input';
-        expect(() => parseInput(input)).toThrow('Failed to extract values. Input format is invalid.');
+        const input: string = 'Invalid format';
+        expect(() => getAccessTokenFromCliOutput(input)).toThrow('Failed to extract values. Input format is invalid.');
     });
 
-    it('should throw an error for JSON without required fields', () => {
-        const input: string = '{"key": "value"}';
-        expect(() => parseInput(input)).toThrow('Failed to extract values. Input format is invalid.');
+    it('should throw an error for empty input', () => {
+        const input: string = '';
+        expect(() => getAccessTokenFromCliOutput(input)).toThrow('Input is empty. Cannot extract values.');
+    });
+});
+
+describe('exchangeOIDCToken', () => {
+    it('should return access token when CLI command succeeds', async () => {
+        const mockOutput: ExecOutput = {
+            exitCode: 0,
+            stdout: '{"AccessToken":"test-access-token","Username":"test-user"}',
+            stderr: '',
+        };
+        (getExecOutput as jest.Mock).mockResolvedValue(mockOutput);
+
+        const result: string | undefined = await Utils.exchangeOIDCToken(
+            'test-provider',
+            'test-token-id',
+            'https://example.jfrog.io',
+            'test-audience',
+        );
+
+        expect(result).toBe('test-access-token');
+        expect(core.setSecret).toHaveBeenCalledWith('test-access-token');
+        expect(core.setOutput).toHaveBeenCalledWith('oidc-token', 'test-access-token');
+        expect(core.setSecret).toHaveBeenCalledWith('test-user');
+        expect(core.setOutput).toHaveBeenCalledWith('oidc-user', 'test-user');
+    });
+
+    it('should throw an error if CLI command fails', async () => {
+        const mockOutput: ExecOutput = {
+            exitCode: 1,
+            stdout: '',
+            stderr: 'Error occurred',
+        };
+        (getExecOutput as jest.Mock).mockResolvedValue(mockOutput);
+
+        await expect(Utils.exchangeOIDCToken('test-provider', 'test-token-id', 'https://example.jfrog.io', 'test-audience')).rejects.toThrow(
+            'CLI command failed with exit code 1: Error occurred',
+        );
+    });
+
+    it('should throw an error if CLI execution throws an exception', async () => {
+        (getExecOutput as jest.Mock).mockRejectedValue(new Error('Execution failed'));
+
+        await expect(Utils.exchangeOIDCToken('test-provider', 'test-token-id', 'https://example.jfrog.io', 'test-audience')).rejects.toThrow(
+            'Failed to exchange OIDC token with an access token: Execution failed',
+        );
     });
 });
