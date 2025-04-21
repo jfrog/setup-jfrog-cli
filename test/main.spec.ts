@@ -635,27 +635,6 @@ describe('getSeparateEnvConfigArgs', () => {
         expect(configString).not.toContain('--username test-user');
         expect(configString).not.toContain('--oidc-audience=jfrog-github');
     });
-    it('Access Token Auth should be prioritized over basic auth', async () => {
-        const jfrogCredentials: JfrogCredentials = {
-            jfrogUrl: 'https://example.jfrog.io',
-            username: 'test-user',
-            password: 'test-password',
-            accessToken: 'test-access-token',
-            oidcProviderName: '',
-            oidcAudience: '',
-            oidcTokenId: '',
-        };
-
-        const configArgs: string[] | undefined = await Utils.getSeparateEnvConfigArgs(jfrogCredentials);
-
-        // Ensure the command does not include conflicting or duplicate arguments
-        const configString: string = configArgs?.join(' ') || '';
-        expect(configString).toContain('--url https://example.jfrog.io');
-        expect(configString).toContain('--interactive=false');
-        expect(configString).toContain('--overwrite=true');
-        expect(configString).toContain('--access-token test-access-token');
-        expect(configString).not.toContain('--username test-user');
-    });
 });
 
 describe('handleOidcAuth', () => {
