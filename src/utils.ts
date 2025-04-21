@@ -384,9 +384,18 @@ export class Utils {
         // OIDC
         if (!!oidcProviderName && !!oidcTokenId) {
             core.info('calling EOT ! ');
-            let output: ExecOutput = await getExecOutput('jf', ['eot', oidcProviderName, oidcTokenId, '--url', url, '--oidc-audience', oidcAudience]);
-            /** @type {{ oidcToken?: string }} */
-            const body: any = JSON.parse(output.stdout);
+            let output: ExecOutput = await getExecOutput(
+                'jf',
+                ['eot', oidcProviderName, oidcTokenId, '--url', url, '--oidc-audience', oidcAudience],
+                { silent: true, ignoreReturnCode: true },
+            );
+            let body: any;
+            try {
+                core.debug('Attempting to decode JSON response...');
+                body = JSON.parse(output.stdout);
+            } catch (error) {
+                throw new Error(`Failed to decode JSON response: ${error}`);
+            }
             // Sets the OIDC token as access token to be used in config.
             core.info('setting as secret');
             core.setSecret('oidc-token');
