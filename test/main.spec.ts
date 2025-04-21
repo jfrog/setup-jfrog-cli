@@ -1,7 +1,7 @@
 import * as os from 'os';
 import * as core from '@actions/core';
 
-import { DownloadDetails, JfrogCredentials, JWTTokenData, Utils } from '../src/utils';
+import { DownloadDetails, JfrogCredentials, JWTTokenData, parseInput, Utils } from '../src/utils';
 import * as jsYaml from 'js-yaml';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -122,22 +122,22 @@ describe('Collect JFrog Credentials from env vars exceptions', () => {
     });
 });
 
-function testConfigCommand(expectedServerId: string) {
+async function testConfigCommand(expectedServerId: string) {
     // No url
-    let configCommand: string[] | undefined = Utils.getSeparateEnvConfigArgs({} as JfrogCredentials);
+    let configCommand: string[] | undefined = await Utils.getSeparateEnvConfigArgs({} as JfrogCredentials);
     expect(configCommand).toBe(undefined);
 
     let jfrogCredentials: JfrogCredentials = {} as JfrogCredentials;
     jfrogCredentials.jfrogUrl = DEFAULT_CLI_URL;
 
     // No credentials
-    configCommand = Utils.getSeparateEnvConfigArgs(jfrogCredentials);
+    configCommand = await Utils.getSeparateEnvConfigArgs(jfrogCredentials);
     expect(configCommand).toStrictEqual([expectedServerId, '--url', DEFAULT_CLI_URL, '--interactive=false', '--overwrite=true']);
 
     // Basic authentication
     jfrogCredentials.username = 'user';
     jfrogCredentials.password = 'password';
-    configCommand = Utils.getSeparateEnvConfigArgs(jfrogCredentials);
+    configCommand = await Utils.getSeparateEnvConfigArgs(jfrogCredentials);
     expect(configCommand).toStrictEqual([
         expectedServerId,
         '--url',
@@ -154,7 +154,7 @@ function testConfigCommand(expectedServerId: string) {
     jfrogCredentials.username = '';
     jfrogCredentials.password = '';
     jfrogCredentials.accessToken = 'accessToken';
-    configCommand = Utils.getSeparateEnvConfigArgs(jfrogCredentials);
+    configCommand = await Utils.getSeparateEnvConfigArgs(jfrogCredentials);
     expect(configCommand).toStrictEqual([
         expectedServerId,
         '--url',
@@ -178,7 +178,7 @@ describe('JFrog CLI Configuration', () => {
         });
 
         // Before setting a custom server ID, expect the default server ID to be used.
-        testConfigCommand(Utils.getRunDefaultServerId());
+        await testConfigCommand(Utils.getRunDefaultServerId());
 
         // Expect the custom server ID to be used.
         let customServerId: string = 'custom-server-id';
@@ -188,7 +188,7 @@ describe('JFrog CLI Configuration', () => {
             }
             return ''; // Default return value for other arguments
         });
-        testConfigCommand(customServerId);
+        await testConfigCommand(customServerId);
 
         // Expect the servers env var to include both servers.
         const servers: string[] = Utils.getConfiguredJFrogServers();
@@ -582,48 +582,48 @@ describe('getSeparateEnvConfigArgs', () => {
         jest.restoreAllMocks();
     });
 
-    it('should return undefined if URL is not set', () => {
+    it('should return undefined if URL is not set', async () => {
         const creds: JfrogCredentials = {} as JfrogCredentials;
-        expect(Utils.getSeparateEnvConfigArgs(creds)).toBeUndefined();
+        expect(await Utils.getSeparateEnvConfigArgs(creds)).toBeUndefined();
     });
 
-    it('should use access token if provided', () => {
+    it('should use access token if provided', async () => {
         const creds: JfrogCredentials = {
             jfrogUrl: 'https://example.jfrog.io',
             accessToken: 'abc',
         } as JfrogCredentials;
-        const args: string[] | undefined = Utils.getSeparateEnvConfigArgs(creds);
+        const args: string[] | undefined = await Utils.getSeparateEnvConfigArgs(creds);
         expect(args).toContain('--access-token');
         expect(args).toContain('abc');
     });
 
-    it('should use username and password if provided and access token is not', () => {
+    it('should use username and password if provided and access token is not', async () => {
         const creds: JfrogCredentials = {
             jfrogUrl: 'https://example.jfrog.io',
             username: 'admin',
             password: '1234',
         } as JfrogCredentials;
-        const args: string[] | undefined = Utils.getSeparateEnvConfigArgs(creds);
+        const args: string[] | undefined = await Utils.getSeparateEnvConfigArgs(creds);
         expect(args).toContain('--user');
         expect(args).toContain('admin');
         expect(args).toContain('--password');
         expect(args).toContain('1234');
     });
 
-    it('should use OIDC provider if specified', () => {
+    it('should use OIDC provider if specified', async () => {
         const creds: JfrogCredentials = {
             jfrogUrl: 'https://example.jfrog.io',
             oidcProviderName: 'setup-jfrog-cli',
             oidcTokenId: 'abc-123',
             oidcAudience: 'jfrog-github',
         } as JfrogCredentials;
-        const args: string[] | undefined = Utils.getSeparateEnvConfigArgs(creds);
+        const args: string[] | undefined = await Utils.getSeparateEnvConfigArgs(creds);
         expect(args).toContain('--oidc-provider-name=setup-jfrog-cli');
         expect(args).toContain('--oidc-provider-type=Github');
         expect(args).toContain('--oidc-token-id=abc-123');
         expect(args).toContain('--oidc-audience=jfrog-github');
     });
-    it('should not include conflicting or duplicate arguments in the config command', () => {
+    it('should not include conflicting or duplicate arguments in the config command', async () => {
         const jfrogCredentials: JfrogCredentials = {
             jfrogUrl: 'https://example.jfrog.io',
             username: 'test-user',
@@ -634,7 +634,7 @@ describe('getSeparateEnvConfigArgs', () => {
             oidcTokenId: '',
         };
 
-        const configArgs: string[] | undefined = Utils.getSeparateEnvConfigArgs(jfrogCredentials);
+        const configArgs: string[] | undefined = await Utils.getSeparateEnvConfigArgs(jfrogCredentials);
 
         // Ensure the command does not include conflicting or duplicate arguments
         const configString: string = configArgs?.join(' ') || '';
@@ -645,7 +645,7 @@ describe('getSeparateEnvConfigArgs', () => {
         expect(configString).toContain('--oidc-audience=jfrog-github');
         expect(configString).not.toContain('--access-token test-access-token --username test-user'); // Ensure no conflicting auth methods
     });
-    it('Access Token Auth should be prioritized over basic auth', () => {
+    it('Access Token Auth should be prioritized over basic auth', async () => {
         const jfrogCredentials: JfrogCredentials = {
             jfrogUrl: 'https://example.jfrog.io',
             username: 'test-user',
@@ -656,7 +656,7 @@ describe('getSeparateEnvConfigArgs', () => {
             oidcTokenId: '',
         };
 
-        const configArgs: string[] | undefined = Utils.getSeparateEnvConfigArgs(jfrogCredentials);
+        const configArgs: string[] | undefined = await Utils.getSeparateEnvConfigArgs(jfrogCredentials);
 
         // Ensure the command does not include conflicting or duplicate arguments
         const configString: string = configArgs?.join(' ') || '';
@@ -739,7 +739,7 @@ describe('handleOidcAuth', () => {
         const result: JfrogCredentials = await (Utils as any).handleOidcAuth(credentials);
         expect(result.accessToken).toBe('forced-manual-token');
     });
-    it('should include OIDC flags only for supported versions', () => {
+    it('should include OIDC flags only for supported versions', async () => {
         const creds: JfrogCredentials = {
             jfrogUrl: 'https://example.jfrog.io',
             oidcProviderName: 'setup-jfrog-cli',
@@ -752,14 +752,14 @@ describe('handleOidcAuth', () => {
             return '';
         });
 
-        const args: string[] | undefined = Utils.getSeparateEnvConfigArgs(creds);
+        const args: string[] | undefined = await Utils.getSeparateEnvConfigArgs(creds);
         expect(args).toContain('--oidc-provider-name=setup-jfrog-cli');
         expect(args).toContain('--oidc-provider-type=Github');
         expect(args).toContain('--oidc-token-id=abc-123');
         expect(args).toContain('--oidc-audience=jfrog-github');
     });
 
-    it('should not include OIDC flags for unsupported versions', () => {
+    it('should not include OIDC flags for unsupported versions', async () => {
         const creds: JfrogCredentials = {
             jfrogUrl: 'https://example.jfrog.io',
             oidcProviderName: 'setup-jfrog-cli',
@@ -772,10 +772,34 @@ describe('handleOidcAuth', () => {
             return '';
         });
 
-        const args: string[] | undefined = Utils.getSeparateEnvConfigArgs(creds);
+        const args: string[] | undefined = await Utils.getSeparateEnvConfigArgs(creds);
         expect(args).not.toContain('--oidc-provider-name=setup-jfrog-cli');
         expect(args).not.toContain('--oidc-provider-type=Github');
         expect(args).not.toContain('--oidc-token-id=abc-123');
         expect(args).not.toContain('--oidc-audience=jfrog-github');
+    });
+});
+
+describe('parseInput', () => {
+    it('should parse valid JSON input', () => {
+        const input: string = '{"AccessToken": "abc123", "Username": "user456"}';
+        const result: { accessToken: string; username: string } = parseInput(input);
+        expect(result).toEqual({ accessToken: 'abc123', username: 'user456' });
+    });
+
+    it('should fallback to regex for non-JSON input', () => {
+        const input: string = '{ AccessToken: abc123 Username: user456 }';
+        const result: { accessToken: string; username: string } = parseInput(input);
+        expect(result).toEqual({ accessToken: 'abc123', username: 'user456' });
+    });
+
+    it('should throw an error for invalid input format', () => {
+        const input: string = 'Invalid input';
+        expect(() => parseInput(input)).toThrow('Failed to extract values. Input format is invalid.');
+    });
+
+    it('should throw an error for JSON without required fields', () => {
+        const input: string = '{"key": "value"}';
+        expect(() => parseInput(input)).toThrow('Failed to extract values. Input format is invalid.');
     });
 });

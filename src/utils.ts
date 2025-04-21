@@ -389,7 +389,7 @@ export class Utils {
                 ['eot', oidcProviderName, oidcTokenId, '--url', url, '--oidc-audience', oidcAudience],
                 { silent: true, ignoreReturnCode: true },
             );
-            const { accessToken, username }: { accessToken: string; username: string } = Utils.extractValues(output.stdout);
+            const { accessToken, username }: { accessToken: string; username: string } = parseInput(output.stdout);
             // Sets the OIDC token as access token to be used in config.
             core.info('setting as secret');
             core.setSecret('oidc-token');
@@ -409,19 +409,6 @@ export class Utils {
         return configCmd;
     }
 
-    private static extractValues(input: string): { accessToken: string; username: string } {
-        const regex: RegExp = /AccessToken:\s*([\w-]+)\s*Username:\s*([\w-]+)/;
-        const match: RegExpMatchArray | null = regex.exec(input);
-
-        if (!match) {
-            throw new Error('Failed to extract values. Input format is invalid.');
-        }
-
-        return {
-            accessToken: match[1],
-            username: match[2],
-        };
-    }
     /**
      * Get server ID for JFrog CLI configuration. Save the server ID in the servers env var if it doesn't already exist.
      */
@@ -1061,6 +1048,33 @@ export class Utils {
         } catch (error: any) {
             throw new Error(`Failed to fetch OpenID Connect JSON Web Token: ${error.message}`);
         }
+    }
+}
+
+export function parseInput(input: string): { accessToken: string; username: string } {
+    try {
+        // Attempt to parse as JSON
+        const parsed: { AccessToken?: string; Username?: string } = JSON.parse(input);
+        if (parsed.AccessToken && parsed.Username) {
+            return {
+                accessToken: parsed.AccessToken,
+                username: parsed.Username,
+            };
+        }
+        throw new Error('JSON does not contain required fields.');
+    } catch {
+        // Fallback to regex extraction
+        const regex: RegExp = /AccessToken:\s*(\S+)\s*Username:\s*(\S+)/;
+        const match: RegExpMatchArray | null = regex.exec(input);
+
+        if (!match) {
+            throw new Error('Failed to extract values. Input format is invalid.');
+        }
+
+        return {
+            accessToken: match[1],
+            username: match[2],
+        };
     }
 }
 
