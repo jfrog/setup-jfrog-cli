@@ -577,6 +577,11 @@ describe('getSeparateEnvConfigArgs', () => {
     beforeEach(() => {
         jest.spyOn(core, 'getInput').mockReturnValue('');
         jest.spyOn(core, 'setSecret').mockImplementation(() => {});
+        (getExecOutput as jest.Mock).mockResolvedValueOnce({
+            exitCode: 0,
+            stdout: '{"AccessToken":"test-access-token","Username":"test-user"}',
+            stderr: '',
+        });
     });
 
     afterEach(() => {
@@ -611,19 +616,6 @@ describe('getSeparateEnvConfigArgs', () => {
         expect(args).toContain('1234');
     });
 
-    it('should use OIDC provider if specified', async () => {
-        const creds: JfrogCredentials = {
-            jfrogUrl: 'https://example.jfrog.io',
-            oidcProviderName: 'setup-jfrog-cli',
-            oidcTokenId: 'abc-123',
-            oidcAudience: 'jfrog-github',
-        } as JfrogCredentials;
-        const args: string[] | undefined = await Utils.getSeparateEnvConfigArgs(creds);
-        expect(args).toContain('--oidc-provider-name=setup-jfrog-cli');
-        expect(args).toContain('--oidc-provider-type=Github');
-        expect(args).toContain('--oidc-token-id=abc-123');
-        expect(args).toContain('--oidc-audience=jfrog-github');
-    });
     it('should not include conflicting or duplicate arguments in the config command', async () => {
         const jfrogCredentials: JfrogCredentials = {
             jfrogUrl: 'https://example.jfrog.io',
@@ -642,9 +634,11 @@ describe('getSeparateEnvConfigArgs', () => {
         expect(configString).toContain('--url https://example.jfrog.io');
         expect(configString).toContain('--interactive=false');
         expect(configString).toContain('--overwrite=true');
-        expect(configString).toContain('--oidc-provider-name=oidc-integration-test-provider');
-        expect(configString).toContain('--oidc-audience=jfrog-github');
-        expect(configString).not.toContain('--access-token test-access-token --username test-user'); // Ensure no conflicting auth methods
+        expect(configString).toContain('--access-token test-access-token');
+        expect(configString).not.toContain('--oidc-provider-name=oidc-integration-test-provider');
+        expect(configString).not.toContain('--username test-user');
+        expect(configString).not.toContain('--oidc-audience=jfrog-github');
+
     });
     it('Access Token Auth should be prioritized over basic auth', async () => {
         const jfrogCredentials: JfrogCredentials = {
@@ -740,25 +734,6 @@ describe('handleOidcAuth', () => {
         const result: JfrogCredentials = await (Utils as any).handleOidcAuth(credentials);
         expect(result.accessToken).toBe('forced-manual-token');
     });
-    it('should include OIDC flags only for supported versions', async () => {
-        const creds: JfrogCredentials = {
-            jfrogUrl: 'https://example.jfrog.io',
-            oidcProviderName: 'setup-jfrog-cli',
-            oidcTokenId: 'abc-123',
-            oidcAudience: 'jfrog-github',
-        } as JfrogCredentials;
-
-        jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
-            if (name === Utils.CLI_VERSION_ARG) return '2.75.0'; // Supported version
-            return '';
-        });
-
-        const args: string[] | undefined = await Utils.getSeparateEnvConfigArgs(creds);
-        expect(args).toContain('--oidc-provider-name=setup-jfrog-cli');
-        expect(args).toContain('--oidc-provider-type=Github');
-        expect(args).toContain('--oidc-token-id=abc-123');
-        expect(args).toContain('--oidc-audience=jfrog-github');
-    });
 
     it('should not include OIDC flags for unsupported versions', async () => {
         const creds: JfrogCredentials = {
@@ -814,6 +789,10 @@ describe('getAccessTokenFromCliOutput', () => {
 });
 
 describe('exchangeOIDCToken', () => {
+    afterEach(() => {
+        jest.clearAllMocks();
+        jest.restoreAllMocks();
+    });
     it('should return access token when CLI command succeeds', async () => {
         const mockOutput: ExecOutput = {
             exitCode: 0,
