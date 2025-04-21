@@ -42,3 +42,11 @@ jobs:
       - name: Test JFrog CLI
         run: |
           jf rt ping
+
+      - name: Test User Output
+        shell: bash
+        run: test -n "${{ steps.setup-jfrog-cli.outputs.oidc-user }}"
+
+      - name: Test Token Output
+        shell: bash
+        run: test -n "${{ steps.setup-jfrog-cli.outputs.oidc-token }}"

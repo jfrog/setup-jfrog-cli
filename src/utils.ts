@@ -359,7 +359,7 @@ export class Utils {
      * Get separate env config for the URL and connection details and return args to add to the config add command
      * @param jfrogCredentials existing JFrog credentials - url, access token, username + password
      */
-    public static getSeparateEnvConfigArgs(jfrogCredentials: JfrogCredentials): string[] | undefined {
+    public static async getSeparateEnvConfigArgs(jfrogCredentials: JfrogCredentials): Promise<string[] | undefined> {
         /**
          * @name url - JFrog Platform URL
          * @name user - JFrog Platform basic authentication
@@ -381,15 +381,36 @@ export class Utils {
             return;
         }
 
+        // OIDC
+        if (!!oidcProviderName && !!oidcTokenId) {
+            core.info('calling EOT ! ');
+            let res: string = await Utils.runCliAndGetOutput([
+                'eot',
+                '--url',
+                url,
+                '--oidc-provider-name',
+                oidcProviderName,
+                '--oidc-token-id',
+                oidcTokenId,
+                '--oidc-audience',
+                oidcAudience,
+            ]);
+            /** @type {{ oidcToken?: string }} */
+            const body: any = JSON.parse(res);
+            core.info(body.username);
+            core.info(body.accessToken);
+            // Sets the OIDC token as access token to be used in config.
+            accessToken = body.accessToken;
+            core.info('setting as secret');
+            core.setSecret('oidc-token');
+            core.setOutput('oidc-token', body.accessToken);
+            core.setSecret('oidc-user');
+            core.setOutput('oidc-user', body.username);
+        }
+
         const configCmd: string[] = [Utils.getServerIdForConfig(), '--url', url, '--interactive=false', '--overwrite=true'];
-        // OIDC auth
-        if (this.isCLIVersionOidcSupported() && !!oidcProviderName) {
-            configCmd.push(`--oidc-provider-name=${oidcProviderName}`);
-            configCmd.push('--oidc-provider-type=Github');
-            configCmd.push(`--oidc-token-id=${oidcTokenId}`);
-            configCmd.push(`--oidc-audience=${oidcAudience}`);
-            // Access Token
-        } else if (!!accessToken) {
+        // Access Token
+        if (!!accessToken) {
             configCmd.push('--access-token', accessToken);
             // Basic Auth
         } else if (!!user && !!password) {
@@ -500,7 +521,7 @@ export class Utils {
             await Utils.runCli(cliConfigCmd.concat('import', configToken));
         }
 
-        let configArgs: string[] | undefined = Utils.getSeparateEnvConfigArgs(jfrogCredentials);
+        let configArgs: string[] | undefined = await Utils.getSeparateEnvConfigArgs(jfrogCredentials);
         if (configArgs) {
             await Utils.runCli(cliConfigCmd.concat('add', ...configArgs));
         }
