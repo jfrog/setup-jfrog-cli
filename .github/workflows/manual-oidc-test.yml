@@ -72,8 +72,6 @@ jobs:
           JF_URL: ${{ secrets.JFROG_PLATFORM_URL }}
         with:
           oidc-provider-name: ${{ env.OIDC_PROVIDER_NAME }}
-          # The last version which outputs OIDC params as step outputs
-          version: '2.74.1'
 
       - name: Test JFrog CLI
         run: |
