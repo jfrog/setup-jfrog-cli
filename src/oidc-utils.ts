@@ -162,6 +162,13 @@ export class OidcUtils {
         return responseJson.access_token;
     }
 
+    /**
+     * Extracts the access token and username from the CLI output.
+     * Attempts to parse the input as JSON first, then falls back to regex.
+     * Currently, in the CLI 2.75.0 version, the output is not a valid JSON.
+     * This will be fixed in the next versions, but for now we need to support both.
+     * @param input
+     */
     public static getAccessTokenFromCliOutput(input: string): { accessToken: string; username: string } {
         if (!input) {
             throw new Error('Input is empty. Cannot extract values.');
