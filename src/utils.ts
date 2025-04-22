@@ -97,21 +97,9 @@ export class Utils {
     private static readonly METRIC_PARAM_VALUE: string = '1';
     private static MIN_CLI_OIDC_VERSION: string = '2.75.0';
     private static DEFAULT_OIDC_AUDIENCE: string = 'jfrog-github';
-
-    /**
-     * Retrieves server credentials for accessing JFrog's server
-     * searching for existing environment variables such as JF_ACCESS_TOKEN or the combination of JF_USER and JF_PASSWORD.
-     * If the 'oidc-provider-name' argument was provided, it will use OIDC auth.
-     * @returns JfrogCredentials struct filled with collected credentials
-     */
-    public static async getJfrogCredentials(): Promise<JfrogCredentials> {
-        let jfrogCredentials: JfrogCredentials = this.collectJfrogCredentialsFromEnvVars();
-        jfrogCredentials.oidcProviderName = core.getInput(Utils.OIDC_INTEGRATION_PROVIDER_NAME)?.trim();
-        if (jfrogCredentials.oidcProviderName) {
-            return this.handleOidcAuth(jfrogCredentials);
-        }
-        return jfrogCredentials;
-    }
+    // OIDC output params names
+    private static OIDC_TOKEN_STEP_OUTPUT_PARAM_NAME: string = 'oidc-token';
+    private static OIDC_USER_STEP_OUTPUT_PARAM_NAME: string = 'oidc-user';
 
     /**
      * Gathers JFrog's credentials from environment variables and delivers them in a JfrogCredentials structure
@@ -147,57 +135,80 @@ export class Utils {
     }
 
     /**
-     * Exchanges GitHub JWT with a valid JFrog access token
-     * @param jfrogCredentials existing JFrog credentials - url, access token, username + password
-     * @param jsonWebToken JWT achieved from GitHub JWT provider
-     * @param applicationKey
-     * @returns an access token for the requested Artifactory server
+     * Exchanges a GitHub OIDC JWT for a JFrog access token using the JFrog platform's REST API.
+     *
+     * This function is referred to as "manual" because it performs the exchange
+     * via a direct HTTP request to the JFrog token exchange API (`/access/api/v1/oidc/token`),
+     * instead of using the JFrog CLI (`jf eot`).
+     *
+     * This approach ensures backward compatibility with CLI versions
+     *
+     * @param jfrogCredentials JFrog credentials including URL and OIDC provider info
+     * @param jsonWebToken JWT from GitHub OIDC identity token
+     * @param applicationKey Key to identify GitHub app in the JFrog platform
+     * @returns access token if successful, throws otherwise
      */
-    private static async exchangeOidcAndSetAsAccessToken(
+    private static async manualExchangeOidcAndSetAsAccessToken(
         jfrogCredentials: JfrogCredentials,
         jsonWebToken: string,
         applicationKey: string,
-    ): Promise<JfrogCredentials> {
-        // If we've reached this stage, the jfrogCredentials.jfrogUrl field should hold a non-empty value obtained from process.env.JF_URL
-        const exchangeUrl: string = jfrogCredentials.jfrogUrl!.replace(/\/$/, '') + '/access/api/v1/oidc/token';
-        core.debug('Exchanging GitHub JSON web token with a JFrog access token...');
+    ): Promise<string | undefined> {
+        const url: string | undefined = jfrogCredentials.jfrogUrl;
+        const providerName: string | undefined = jfrogCredentials.oidcProviderName;
 
-        let projectKey: string = process.env.JF_PROJECT || '';
-        let jobId: string = this.getGithubJobId();
-        let runId: string = process.env.GITHUB_RUN_ID || '';
-        let githubRepository: string = process.env.GITHUB_REPOSITORY || '';
+        if (!url || !providerName) {
+            throw new Error('Missing required JFrog URL or OIDC provider name.');
+        }
 
+        const exchangeUrl: string = url.replace(/\/$/, '') + '/access/api/v1/oidc/token';
+        core.debug('Exchanging GitHub JWT for a JFrog access token...');
+
+        const payload: Record<string, string> = this.buildOidcTokenExchangePayload(jsonWebToken, providerName, applicationKey);
         const httpClient: HttpClient = new HttpClient();
-        const data: string = `{
-            "grant_type": "urn:ietf:params:oauth:grant-type:token-exchange",
-            "subject_token_type": "urn:ietf:params:oauth:token-type:id_token",
-            "subject_token": "${jsonWebToken}",
-            "provider_name": "${jfrogCredentials.oidcProviderName}",
-            "project_key": "${projectKey}",
-            "gh_job_id": "${jobId}",
-            "gh_run_id": "${runId}",
-            "gh_repo": "${githubRepository}",
-            "application_key": "${applicationKey}"
-        }`;
+        const headers: OutgoingHttpHeaders = { 'Content-Type': 'application/json' };
 
-        const additionalHeaders: OutgoingHttpHeaders = {
-            'Content-Type': 'application/json',
-        };
+        const response: HttpClientResponse = await httpClient.post(exchangeUrl, JSON.stringify(payload), headers);
+        const responseBody: string = await response.readBody();
+        const responseJson: TokenExchangeResponseData = JSON.parse(responseBody);
 
-        const response: HttpClientResponse = await httpClient.post(exchangeUrl, data, additionalHeaders);
-        const responseString: string = await response.readBody();
-        const responseJson: TokenExchangeResponseData = JSON.parse(responseString);
-        jfrogCredentials.accessToken = responseJson.access_token;
-        if (jfrogCredentials.accessToken) {
-            this.outputOidcTokenAndUsername(jfrogCredentials.accessToken);
-        }
         if (responseJson.errors) {
-            throw new Error(`${JSON.stringify(responseJson.errors)}`);
+            throw new Error(`OIDC token exchange failed: ${JSON.stringify(responseJson.errors)}`);
         }
-        // Set environment variable to track OIDC usage.
+
+        if (!responseJson.access_token) {
+            throw new Error('Access token not found in the response');
+        }
+
+        this.outputOidcTokenAndUsernameFromToken(responseJson.access_token);
+        this.trackOldOidcUsage();
+
+        return responseJson.access_token;
+    }
+
+    /**
+     * Builds the payload for the OIDC token exchange request.
+     * This had been replaced by the CLI itself, but we still need to support older versions of the CLI.
+     */
+    private static buildOidcTokenExchangePayload(jsonWebToken: string, providerName: string, applicationKey: string): Record<string, string> {
+        return {
+            grant_type: 'urn:ietf:params:oauth:grant-type:token-exchange',
+            subject_token_type: 'urn:ietf:params:oauth:token-type:id_token',
+            subject_token: jsonWebToken,
+            provider_name: providerName,
+            project_key: process.env.JF_PROJECT || '',
+            gh_job_id: this.getGithubJobId(),
+            gh_run_id: process.env.GITHUB_RUN_ID || '',
+            gh_repo: process.env.GITHUB_REPOSITORY || '',
+            application_key: applicationKey,
+        };
+    }
+
+    /**
+     * Those environment variables are used to track OIDC usage in older versions ofJFrog CLI
+     */
+    private static trackOldOidcUsage(): void {
         core.exportVariable('JFROG_CLI_USAGE_CONFIG_OIDC', 'TRUE');
         core.exportVariable('JFROG_CLI_USAGE_OIDC_USED', 'TRUE');
-        return jfrogCredentials;
     }
 
     /**
@@ -205,19 +216,30 @@ export class Utils {
      * Both are set as secrets to prevent them from being printed in the logs or exported to other workflows.
      * @param oidcToken access token received from the JFrog platform during OIDC token exchange
      */
-    private static outputOidcTokenAndUsername(oidcToken: string): void {
-        // Making sure the token is treated as a secret
-        core.setSecret(oidcToken);
-        // Output the oidc access token as a secret
-        core.setOutput('oidc-token', oidcToken);
-
-        // Output the user from the oidc access token subject as a secret
+    private static outputOidcTokenAndUsernameFromToken(oidcToken: string): void {
         let payload: JWTTokenData = this.decodeOidcToken(oidcToken);
         let tokenUser: string = this.extractTokenUser(payload.sub);
+        this.outputOidcStepOutputs(tokenUser, oidcToken);
+    }
+
+    /**
+     * Output the OIDC access token and the user from the OIDC access token subject as step outputs.
+     * @param username
+     * @param accessToken
+     * @private
+     */
+    private static outputOidcStepOutputs(username: string, accessToken: string): void {
+        // Making sure the token is treated as a secret
+        core.setSecret(accessToken);
+        // Output the oidc access token as a secret
+        core.setOutput(this.OIDC_TOKEN_STEP_OUTPUT_PARAM_NAME, accessToken);
+
+        // Output the user from the oidc access token subject as a secret
         // Mark the user as a secret
-        core.setSecret(tokenUser);
+        core.setSecret(username);
         // Output the user from the oidc access token subject extracted from the last section of the subject
-        core.setOutput('oidc-user', tokenUser);
+        core.setOutput(this.OIDC_USER_STEP_OUTPUT_PARAM_NAME, username);
+        core.debug('Successfully outputted OIDC step outputs params');
     }
 
     /**
@@ -362,7 +384,7 @@ export class Utils {
      * Get separate env config for the URL and connection details and return args to add to the config add command
      * @param jfrogCredentials existing JFrog credentials - url, access token, username + password
      */
-    public static async getSeparateEnvConfigArgs(jfrogCredentials: JfrogCredentials): Promise<string[] | undefined> {
+    public static async getJfrogCliConfigArgs(jfrogCredentials: JfrogCredentials): Promise<string[] | undefined> {
         /**
          * @name url - JFrog Platform URL
          * @name user - JFrog Platform basic authentication
@@ -376,22 +398,15 @@ export class Utils {
         let password: string | undefined = jfrogCredentials.password;
         let accessToken: string | undefined = jfrogCredentials.accessToken;
         let oidcProviderName: string | undefined = jfrogCredentials.oidcProviderName;
-        let oidcTokenId: string | undefined = jfrogCredentials.oidcTokenId;
-        let oidcAudience: string | undefined = jfrogCredentials.oidcAudience;
 
         // Url is mandatory for JFrog CLI configuration
         if (!url) {
             return;
         }
 
-        // In OIDC auth, we exchange token and export username and accessToken as step output
-        // users use This to authenticate to third party tools.
-        if (!!oidcProviderName && !!oidcTokenId) {
-            // If the access token is already set, no need to exchange the token
-            // It could happen when the exchange is done manually
-            if (accessToken == '' || accessToken == undefined) {
-                accessToken = await this.exchangeOIDCTokenAndExportStepOutputs(oidcProviderName, oidcTokenId, url, oidcAudience);
-            }
+        // Check for OIDC authentication
+        if (!!oidcProviderName) {
+            accessToken = await this.handleOidcAuth(jfrogCredentials);
         }
 
         const configCmd: string[] = [Utils.getServerIdForConfig(), '--url', url, '--interactive=false', '--overwrite=true'];
@@ -407,26 +422,27 @@ export class Utils {
 
     /**
      * Exchange OIDC token with an access token using JFrog CLI.
-     * @param oidcProviderName - OIDC provider name defined in the JFrog Platform
-     * @param oidcTokenId - OIDC token ID
-     * @param url - JFrog Platform URL
-     * @param oidcAudience - JFrog Platform OpenID Connect audience
      * @return Access token
      * @throws Error if the CLI command fails, or parsing of the CLI outputs fails
      * @private
+     * @param creds
      */
-    public static async exchangeOIDCTokenAndExportStepOutputs(
-        oidcProviderName: string,
-        oidcTokenId: string,
-        url: string,
-        oidcAudience: string,
-    ): Promise<string | undefined> {
+    public static async exchangeOIDCTokenAndExportStepOutputs(creds: JfrogCredentials): Promise<string | undefined> {
         let output: ExecOutput;
+        // Validate the credentials
+        if (!creds.oidcProviderName || !creds.oidcTokenId || !creds.jfrogUrl) {
+            throw new Error('One or more required credentials are undefined. Please ensure all values are provided.');
+        }
+        // Run the CLI command to exchange the OIDC token
         try {
-            output = await getExecOutput('jf', ['eot', oidcProviderName, oidcTokenId, '--url', url, '--oidc-audience', oidcAudience], {
-                silent: true,
-                ignoreReturnCode: true,
-            });
+            output = await getExecOutput(
+                'jf',
+                ['eot', creds.oidcProviderName, creds.oidcTokenId, '--url', creds.jfrogUrl, '--oidc-audience', creds.oidcAudience],
+                {
+                    silent: true,
+                    ignoreReturnCode: true,
+                },
+            );
         } catch (error: any) {
             // Catch any error
             core.error(`Failed to exchange OIDC token: ${error.message}`);
@@ -438,14 +454,10 @@ export class Utils {
         }
 
         // Extract username and access token from command output
-        const { accessToken, username }: { accessToken: string; username: string } = getAccessTokenFromCliOutput(output.stdout);
+        const { accessToken, username }: { accessToken: string; username: string } = getOIDCAccessTokenFromCliOutput(output.stdout);
 
-        // Sets the OIDC token as access token to be used in config.
-        core.info('Setting OIDC token and user as secrets');
-        core.setSecret(accessToken);
-        core.setOutput('oidc-token', accessToken);
-        core.setSecret(username);
-        core.setOutput('oidc-user', username);
+        // Sets the OIDC step output params
+        Utils.outputOidcStepOutputs(username, accessToken);
 
         return accessToken;
     }
@@ -552,7 +564,7 @@ export class Utils {
             await Utils.runCli(cliConfigCmd.concat('import', configToken));
         }
 
-        let configArgs: string[] | undefined = await Utils.getSeparateEnvConfigArgs(jfrogCredentials);
+        let configArgs: string[] | undefined = await Utils.getJfrogCliConfigArgs(jfrogCredentials);
         if (configArgs) {
             await Utils.runCli(cliConfigCmd.concat('add', ...configArgs));
         }
@@ -984,16 +996,18 @@ export class Utils {
 
     Note: The manual logic should be deprecated and removed once CLI remote supports native OIDC.
     */
-    public static async handleOidcAuth(jfrogCredentials: JfrogCredentials): Promise<JfrogCredentials> {
+    public static async handleOidcAuth(jfrogCredentials: JfrogCredentials): Promise<string | undefined> {
         if (!jfrogCredentials.jfrogUrl) {
             throw new Error(`JF_URL must be provided when oidc-provider-name is specified`);
         }
+        // Get OIDC token ID from GitHub
+        jfrogCredentials.oidcTokenId = await Utils.getIdToken(jfrogCredentials.oidcAudience);
+
         // Version should be more than min version
         // If CLI_REMOTE_ARG specified, we have to fetch token before we can download the CLI.
         if (this.isCLIVersionOidcSupported() && !core.getInput(this.CLI_REMOTE_ARG)) {
             core.debug('Using CLI Config OIDC Auth Method..');
-            jfrogCredentials.oidcTokenId = await Utils.getIdToken(jfrogCredentials.oidcAudience);
-            return jfrogCredentials;
+            return await this.exchangeOIDCTokenAndExportStepOutputs(jfrogCredentials);
         }
 
         // Fallback to manual OIDC exchange for backward compatibility
@@ -1004,7 +1018,7 @@ export class Utils {
     /*
     This function manually exchanges oidc token and updates the credentials object with an access token retrieved
      */
-    public static async manualOIDCExchange(jfrogCredentials: JfrogCredentials) {
+    public static async manualOIDCExchange(jfrogCredentials: JfrogCredentials): Promise<string | undefined> {
         // Get ID token from GitHub
         const audience: string = core.getInput(Utils.OIDC_AUDIENCE_ARG);
         let jsonWebToken: string = await Utils.getIdToken(audience);
@@ -1012,7 +1026,7 @@ export class Utils {
         // Exchanges the token and set as access token in the credential's object
         const applicationKey: string = await this.getApplicationKey();
         try {
-            return await this.exchangeOidcAndSetAsAccessToken(jfrogCredentials, jsonWebToken, applicationKey);
+            return await this.manualExchangeOidcAndSetAsAccessToken(jfrogCredentials, jsonWebToken, applicationKey);
         } catch (error: any) {
             throw new Error(`Exchanging JSON web token with an access token failed: ${error.message}`);
         }
@@ -1092,7 +1106,7 @@ export class Utils {
     }
 }
 
-export function getAccessTokenFromCliOutput(input: string): { accessToken: string; username: string } {
+export function getOIDCAccessTokenFromCliOutput(input: string): { accessToken: string; username: string } {
     if (input === '') {
         throw new Error('Input is empty. Cannot extract values.');
     }

@@ -5,7 +5,7 @@ async function main() {
     try {
         core.startGroup('Setup JFrog CLI');
         Utils.setCliEnv();
-        let jfrogCredentials: JfrogCredentials = await Utils.getJfrogCredentials();
+        let jfrogCredentials: JfrogCredentials = Utils.collectJfrogCredentialsFromEnvVars();
         await Utils.getAndAddCliToPath(jfrogCredentials);
         await Utils.configJFrogServers(jfrogCredentials);
     } catch (error) {
