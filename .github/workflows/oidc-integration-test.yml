@@ -34,7 +34,9 @@ jobs:
       - name: Generate unique OIDC provider name
         id: gen-oidc
         shell: bash
-        run: echo "oidc_provider_name=oidc-integration-${{ matrix.cli-version }}-${{ matrix.os }}-$(date +%s)" >> "$GITHUB_OUTPUT"
+        run: |
+          safe_version="${{ matrix.cli-version }}" && safe_version="${safe_version//./-}"
+          echo "oidc_provider_name=oidc-integration-${safe_version}-${{ matrix.os }}-$(date +%s)" >> "$GITHUB_OUTPUT"
 
       - name: Create OpenID Connect integration
         shell: bash
