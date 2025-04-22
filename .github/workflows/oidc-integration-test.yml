@@ -1,0 +1,103 @@
+name: OIDC Integration Test
+
+on:
+  push:
+    branches:
+      - '**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  oidc-test:
+    if: contains(github.event.pull_request.labels.*.name, 'safe to test') || github.event_name == 'push'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu, macos, windows]
+        cli-version: ['2.74.1', '2.75.0', 'latest']
+    name: OIDC Test - ${{ matrix.cli-version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      # Setup Local Artifactory
+      - name: Setup Go with cache
+        uses: jfrog/.github/actions/install-go-with-cache@main
+
+      - name: Install local Artifactory
+        uses: jfrog/.github/actions/install-local-artifactory@main
+        with:
+          RTLIC: ${{ secrets.RTLIC }}
+
+      - name: Generate unique OIDC provider name
+        shell: bash
+        run: echo "OIDC_PROVIDER_NAME=oidc-integration-${{ matrix.cli-version }}-${{ matrix.os }}-$(date +%s)" >> $GITHUB_ENV
+
+      # Prepare local Artifactory with OIDC integration
+      - name: Create OpenID Connect integration
+        shell: bash
+        run: |
+          curl -X POST "${{ secrets.JFROG_PLATFORM_URL }}/access/api/v1/oidc" -H "Content-Type: application/json" -H "Authorization: Bearer ${{ secrets.JFROG_PLATFORM_RT_TOKEN }}" -d '{
+            "name": "${{ env.OIDC_PROVIDER_NAME }}",
+            "issuer_url": "https://token.actions.githubusercontent.com",
+            "provider_type": "GitHub",
+            "enable_permissive_configuration": "true",
+            "description": "Test configuration for CLI version ${{ matrix.cli-version }}"
+          }'
+
+      - name: Create OIDC Identity Mapping
+        shell: bash
+        run: |
+          curl -X POST "${{ secrets.JFROG_PLATFORM_URL }}/access/api/v1/oidc/${{ env.OIDC_PROVIDER_NAME }}/identity_mappings" \
+          -H 'Content-Type: application/json' \
+          -H 'Authorization: Bearer ${{ secrets.JFROG_PLATFORM_RT_TOKEN }}' \
+          -d '{
+            "name": "oidc-test-mapping",
+            "priority": "1",
+            "claims": {
+              "repository": "${{ github.repository_owner }}/setup-jfrog-cli"
+            },
+            "token_spec": {
+              "scope": "applied-permissions/groups:readers",
+              "expires_in": 30
+            }
+          }'
+      # Run Action
+      - name: Setup JFrog CLI
+        id: setup-jfrog-cli
+        uses: ./
+        env:
+          JF_URL: http://localhost:8081/
+        with:
+          version: ${{ matrix.cli-version }}
+          oidc-provider-name: ${{ env.OIDC_PROVIDER_NAME }}
+
+      # Test successful OIDC auth connection
+      - name: Test JFrog CLI connectivity
+        run: jf rt ping
+
+      # Validate step outputs
+      - name: Validate user output
+        shell: bash
+        run: test -n "${{ steps.setup-jfrog-cli.outputs.oidc-user }}"
+
+      - name: Validate token output
+        shell: bash
+        run: test -n "${{ steps.setup-jfrog-cli.outputs.oidc-token }}"
+
+      # Cleanup
+      - name: Delete OIDC integration
+        shell: bash
+        if: always()
+        run: |
+          curl -X DELETE "${{ secrets.JFROG_PLATFORM_URL }}/access/api/v1/oidc/${{ env.OIDC_PROVIDER_NAME }}" \
+          -H 'Authorization: Bearer ${{ secrets.JFROG_PLATFORM_RT_TOKEN }}'
