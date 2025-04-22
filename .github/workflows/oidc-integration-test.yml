@@ -1,10 +1,19 @@
 name: OIDC Integration Test
+# This workflow tests the setup-jfrog-cli GitHub Action's OpenID Connect integration across OSes and CLI versions.
+# It ensures backward compatibility with older CLI versions and validates step outputs and connectivity.
+# CLI versions used:
+# - 2.74.1: Does not support `jf eot` command, validates manual fallback logic.
+# - 2.75.0: Introduced native OIDC token exchange.
+# - Latest: Ensures ongoing compatibility with the most recent CLI build.
 
 on:
   push:
     branches:
-      - '**'
-
+      - master
+  # Triggers the workflow on labeled PRs only.
+  pull_request_target:
+    types: [ labeled ]
+# Ensures that only the latest commit is running for each PR at a time.
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}-${{ github.ref }}
   cancel-in-progress: true
@@ -18,8 +27,8 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        os: [ubuntu, macos, windows]
-        cli-version: ['2.74.1', '2.75.0']
+        os: [ ubuntu, macos, windows ]
+        cli-version: [ '2.74.1', '2.75.0','latest' ]
     runs-on: ${{ matrix.os }}-latest
     name: OIDC Test - ${{ matrix.cli-version }} on ${{ matrix.os }}
     env:
@@ -31,6 +40,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
+      # Setup OIDC platform integration
       - name: Generate unique OIDC provider name
         id: gen-oidc
         shell: bash
@@ -70,6 +80,7 @@ jobs:
               }
             }'
 
+      # Setup
       - name: Setup JFrog CLI
         id: setup-jfrog-cli
         uses: ./
@@ -79,9 +90,11 @@ jobs:
           version: ${{ matrix.cli-version }}
           oidc-provider-name: ${{ steps.gen-oidc.outputs.oidc_provider_name }}
 
+      # validate successful OIDC configuration
       - name: Test JFrog CLI connectivity
         run: jf rt ping
 
+      # Validate step outputs
       - name: Validate user output
         shell: bash
         run: test -n "${{ steps.setup-jfrog-cli.outputs.oidc-user }}"
@@ -90,6 +103,7 @@ jobs:
         shell: bash
         run: test -n "${{ steps.setup-jfrog-cli.outputs.oidc-token }}"
 
+      # Cleanup
       - name: Delete OIDC integration
         shell: bash
         if: always()
