@@ -1,5 +1,6 @@
 import * as core from '@actions/core';
-import { JfrogCredentials, Utils } from './utils';
+import { JfrogCredentials } from './types';
+import { Utils } from './utils';
 
 async function main() {
     try {

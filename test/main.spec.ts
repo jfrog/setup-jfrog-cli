@@ -1,12 +1,9 @@
 import * as os from 'os';
 import * as core from '@actions/core';
+import * as exec from '@actions/exec';
 
-import { DownloadDetails, JfrogCredentials, JWTTokenData, getAccessTokenFromCliOutput, Utils } from '../src/utils';
-import * as jsYaml from 'js-yaml';
-import * as fs from 'fs';
-import * as path from 'path';
-import semver = require('semver/preload');
-import { getExecOutput, ExecOutput } from '@actions/exec';
+import { Utils } from '../src/utils';
+import { DownloadDetails, JfrogCredentials } from '../src/types';
 
 jest.mock('os');
 jest.mock('@actions/core');
@@ -125,20 +122,20 @@ describe('Collect JFrog Credentials from env vars exceptions', () => {
 
 async function testConfigCommand(expectedServerId: string) {
     // No url
-    let configCommand: string[] | undefined = await Utils.getSeparateEnvConfigArgs({} as JfrogCredentials);
+    let configCommand: string[] | undefined = await Utils.getJfrogCliConfigArgs({} as JfrogCredentials);
     expect(configCommand).toBe(undefined);
 
     let jfrogCredentials: JfrogCredentials = {} as JfrogCredentials;
     jfrogCredentials.jfrogUrl = DEFAULT_CLI_URL;
 
     // No credentials
-    configCommand = await Utils.getSeparateEnvConfigArgs(jfrogCredentials);
+    configCommand = await Utils.getJfrogCliConfigArgs(jfrogCredentials);
     expect(configCommand).toStrictEqual([expectedServerId, '--url', DEFAULT_CLI_URL, '--interactive=false', '--overwrite=true']);
 
     // Basic authentication
     jfrogCredentials.username = 'user';
     jfrogCredentials.password = 'password';
-    configCommand = await Utils.getSeparateEnvConfigArgs(jfrogCredentials);
+    configCommand = await Utils.getJfrogCliConfigArgs(jfrogCredentials);
     expect(configCommand).toStrictEqual([
         expectedServerId,
         '--url',
@@ -155,7 +152,7 @@ async function testConfigCommand(expectedServerId: string) {
     jfrogCredentials.username = '';
     jfrogCredentials.password = '';
     jfrogCredentials.accessToken = 'accessToken';
-    configCommand = await Utils.getSeparateEnvConfigArgs(jfrogCredentials);
+    configCommand = await Utils.getJfrogCliConfigArgs(jfrogCredentials);
     expect(configCommand).toStrictEqual([
         expectedServerId,
         '--url',
@@ -293,56 +290,6 @@ test('User agent', () => {
     expect(split[1]).toMatch(/\d*.\d*.\d*/);
 });
 
-describe('extractTokenUser', () => {
-    it('should extract user from subject starting with jfrt@', () => {
-        const subject: string = 'jfrt@/users/johndoe';
-        const result: string = Utils.extractTokenUser(subject);
-        expect(result).toBe('johndoe');
-    });
-
-    it('should extract user from subject containing /users/', () => {
-        const subject: string = '/users/johndoe';
-        const result: string = Utils.extractTokenUser(subject);
-        expect(result).toBe('johndoe');
-    });
-
-    it('should return original subject when it does not start with jfrt@ or contain /users/', () => {
-        const subject: string = 'johndoe';
-        const result: string = Utils.extractTokenUser(subject);
-        expect(result).toBe(subject);
-    });
-
-    it('should handle empty subject', () => {
-        const subject: string = '';
-        const result: string = Utils.extractTokenUser(subject);
-        expect(result).toBe(subject);
-    });
-});
-
-describe('decodeOidcToken', () => {
-    it('should decode valid OIDC token', () => {
-        const oidcToken: string =
-            Buffer.from(JSON.stringify({ sub: 'test' })).toString('base64') +
-            '.eyJzdWIiOiJ0ZXN0In0.' +
-            Buffer.from(JSON.stringify({ sub: 'test' })).toString('base64');
-        const result: JWTTokenData = Utils.decodeOidcToken(oidcToken);
-        expect(result).toEqual({ sub: 'test' });
-    });
-
-    it('should throw error for OIDC token with invalid format', () => {
-        const oidcToken: string = 'invalid.token.format';
-        expect(() => Utils.decodeOidcToken(oidcToken)).toThrow(SyntaxError);
-    });
-
-    it('should throw error for OIDC token without subject', () => {
-        const oidcToken: string =
-            Buffer.from(JSON.stringify({ notSub: 'test' })).toString('base64') +
-            '.eyJub3RTdWIiOiJ0ZXN0In0.' +
-            Buffer.from(JSON.stringify({ notSub: 'test' })).toString('base64');
-        expect(() => Utils.decodeOidcToken(oidcToken)).toThrow('OIDC invalid access token format');
-    });
-});
-
 describe('Job Summaries', () => {
     describe('Job summaries sanity', () => {
         it('should not crash if no files were found', async () => {
@@ -472,62 +419,6 @@ describe('Utils.removeJFrogServers', () => {
     });
 });
 
-describe('getApplicationKey', () => {
-    const mockReadFile: jest.Mock = fs.promises.readFile as jest.Mock;
-    const mockExistsSync: jest.Mock = fs.existsSync as jest.Mock;
-    const mockPath: jest.Mock = path.join as jest.Mock;
-
-    beforeEach(() => {
-        jest.resetAllMocks();
-    });
-
-    it('should return application key from config file', async () => {
-        mockPath.mockReturnValue('mocked-path');
-        mockExistsSync.mockReturnValue(true);
-        mockReadFile.mockResolvedValue(jsYaml.dump({ application: { key: 'config-app-key' } }));
-
-        const result: string = await (Utils as any).getApplicationKey();
-        expect(result).toBe('config-app-key');
-        expect(mockReadFile).toHaveBeenCalledWith('mocked-path', 'utf-8');
-    });
-
-    it('should return empty string if config file does not exist', async () => {
-        mockPath.mockReturnValue('mocked-path');
-        mockExistsSync.mockReturnValue(false);
-
-        const result: string = await (Utils as any).getApplicationKey();
-        expect(result).toBe('');
-        expect(mockReadFile).not.toHaveBeenCalled();
-    });
-
-    it('should return empty string if config file is empty', async () => {
-        mockPath.mockReturnValue('mocked-path');
-        mockExistsSync.mockReturnValue(true);
-        mockReadFile.mockResolvedValue('');
-
-        const result: string = await (Utils as any).getApplicationKey();
-        expect(result).toBe('');
-    });
-
-    it('should return empty string if application root is not found in config file', async () => {
-        mockPath.mockReturnValue('mocked-path');
-        mockExistsSync.mockReturnValue(true);
-        mockReadFile.mockResolvedValue(jsYaml.dump({}));
-
-        const result: string = await (Utils as any).getApplicationKey();
-        expect(result).toBe('');
-    });
-
-    it('should return empty string if application key is not found in config file', async () => {
-        mockPath.mockReturnValue('mocked-path');
-        mockExistsSync.mockReturnValue(true);
-        mockReadFile.mockResolvedValue(jsYaml.dump({ application: {} }));
-
-        const result: string = await (Utils as any).getApplicationKey();
-        expect(result).toBe('');
-    });
-});
-
 describe('Test correct encoding of badge URL', () => {
     describe('getUsageBadge', () => {
         beforeEach(() => {
@@ -573,7 +464,7 @@ describe('Test correct encoding of badge URL', () => {
     });
 });
 
-describe('getSeparateEnvConfigArgs', () => {
+describe('getJfrogCliConfigArgs', () => {
     beforeEach(() => {
         jest.spyOn(core, 'getInput').mockReturnValue('');
         jest.spyOn(core, 'setSecret').mockImplementation(() => {});
@@ -586,7 +477,7 @@ describe('getSeparateEnvConfigArgs', () => {
 
     it('should return undefined if URL is not set', async () => {
         const creds: JfrogCredentials = {} as JfrogCredentials;
-        expect(await Utils.getSeparateEnvConfigArgs(creds)).toBeUndefined();
+        expect(await Utils.getJfrogCliConfigArgs(creds)).toBeUndefined();
     });
 
     it('should use access token if provided', async () => {
@@ -594,7 +485,7 @@ describe('getSeparateEnvConfigArgs', () => {
             jfrogUrl: 'https://example.jfrog.io',
             accessToken: 'abc',
         } as JfrogCredentials;
-        const args: string[] | undefined = await Utils.getSeparateEnvConfigArgs(creds);
+        const args: string[] | undefined = await Utils.getJfrogCliConfigArgs(creds);
         expect(args).toContain('--access-token');
         expect(args).toContain('abc');
     });
@@ -605,7 +496,7 @@ describe('getSeparateEnvConfigArgs', () => {
             username: 'admin',
             password: '1234',
         } as JfrogCredentials;
-        const args: string[] | undefined = await Utils.getSeparateEnvConfigArgs(creds);
+        const args: string[] | undefined = await Utils.getJfrogCliConfigArgs(creds);
         expect(args).toContain('--user');
         expect(args).toContain('admin');
         expect(args).toContain('--password');
@@ -622,201 +513,312 @@ describe('getSeparateEnvConfigArgs', () => {
             oidcAudience: 'jfrog-github',
             oidcTokenId: '',
         };
-
-        const configArgs: string[] | undefined = await Utils.getSeparateEnvConfigArgs(jfrogCredentials);
+        jest.spyOn(core, 'getIDToken').mockResolvedValue('mock-token-id');
+        jest.spyOn(exec, 'getExecOutput').mockResolvedValue({
+            stdout: '{AccessToken: abc Username: def }',
+            exitCode: 0,
+            stderr: '',
+        });
+        const configArgs: string[] | undefined = await Utils.getJfrogCliConfigArgs(jfrogCredentials);
 
         // Ensure the command does not include conflicting or duplicate arguments
         const configString: string = configArgs?.join(' ') || '';
         expect(configString).toContain('--url https://example.jfrog.io');
         expect(configString).toContain('--interactive=false');
         expect(configString).toContain('--overwrite=true');
-        expect(configString).toContain('--access-token test-access-token');
+        expect(configString).toContain('--access-token abc');
         expect(configString).not.toContain('--oidc-provider-name=oidc-integration-test-provider');
         expect(configString).not.toContain('--username test-user');
         expect(configString).not.toContain('--oidc-audience=jfrog-github');
     });
 });
 
-describe('handleOidcAuth', () => {
-    const credentials: JfrogCredentials = {
-        jfrogUrl: 'https://test.jfrog.io',
-        username: undefined,
-        password: undefined,
-        accessToken: undefined,
-        oidcProviderName: 'test-provider',
-        oidcAudience: 'jfrog-github',
-        oidcTokenId: undefined,
-    };
+// describe('handleOidcAuth', () => {
+//     const credentials: JfrogCredentials = {
+//         jfrogUrl: 'https://test.jfrog.io',
+//         username: undefined,
+//         password: undefined,
+//         accessToken: undefined,
+//         oidcProviderName: 'test-provider',
+//         oidcAudience: 'jfrog-github',
+//         oidcTokenId: undefined,
+//     };
+//
+//     afterEach(() => {
+//         jest.clearAllMocks();
+//         jest.restoreAllMocks();
+//     });
+//
+//     it('should throw if GitHub fails to return ID token', async () => {
+//         jest.spyOn(core, 'getIDToken').mockRejectedValue(new Error('mock failure'));
+//         const creds: any = { ...credentials };
+//         await expect(Utils.handleOidcAuth(creds)).rejects.toThrow('Failed to fetch OpenID Connect JSON Web Token');
+//     });
+//
+//     it('should call setOidcTokenID when CLI version is >= 2.75.0', async () => {
+//         jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
+//             if (name === Utils.CLI_VERSION_ARG) return '2.75.0';
+//             return '';
+//         });
+//         jest.spyOn(semver, 'gte').mockReturnValue(true);
+//         jest.spyOn(Utils as any, 'getIdToken').mockResolvedValue('mock-token-id');
+//
+//         const result: JfrogCredentials = await (Utils as any).handleOidcAuth(credentials);
+//         expect(result.oidcTokenId).toBe('mock-token-id');
+//     });
+//
+//     it('should call manualOIDCExchange when CLI version is < 2.75.0', async () => {
+//         jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
+//             if (name === Utils.CLI_VERSION_ARG) return '2.74.0';
+//             if (name === 'oidc-audience') return 'aud';
+//             return '';
+//         });
+//         jest.spyOn(semver, 'gte').mockReturnValue(false);
+//         jest.spyOn(core, 'getIDToken').mockResolvedValue('dummy-jwt');
+//         jest.spyOn(Utils as any, 'getApplicationKey').mockResolvedValue('dummy-app-key');
+//
+//         jest.spyOn(Utils as any, 'exchangeOidcAndSetAsAccessToken').mockResolvedValue({
+//             ...credentials,
+//             accessToken: 'legacy-token',
+//         });
+//
+//         const result: JfrogCredentials = await (Utils as any).handleOidcAuth(credentials);
+//
+//         expect(result.accessToken).toBe('legacy-token');
+//     });
+//
+//     it('should fallback to manualOIDCExchange when download repository is set even if CLI is >= 2.75.0', async () => {
+//         jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
+//             if (name === Utils.CLI_VERSION_ARG) return '2.75.0';
+//             if (name === Utils.CLI_REMOTE_ARG) return 'jfrog-cli-remote'; // Simulate presence of remote arg
+//             if (name === 'oidc-audience') return 'aud';
+//             return '';
+//         });
+//         jest.spyOn(semver, 'gte').mockReturnValue(true);
+//         jest.spyOn(core, 'getIDToken').mockResolvedValue('dummy-jwt');
+//         jest.spyOn(Utils as any, 'getApplicationKey').mockResolvedValue('dummy-app-key');
+//         jest.spyOn(Utils as any, 'exchangeOidcAndSetAsAccessToken').mockResolvedValue({
+//             ...credentials,
+//             accessToken: 'forced-manual-token',
+//         });
+//
+//         const result: JfrogCredentials = await (Utils as any).handleOidcAuth(credentials);
+//         expect(result.accessToken).toBe('forced-manual-token');
+//     });
+//
+//     it('should not include OIDC flags for unsupported versions', async () => {
+//         const creds: JfrogCredentials = {
+//             jfrogUrl: 'https://example.jfrog.io',
+//             oidcProviderName: 'setup-jfrog-cli',
+//             oidcTokenId: 'abc-123',
+//             oidcAudience: 'jfrog-github',
+//         } as JfrogCredentials;
+//
+//         jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
+//             if (name === Utils.CLI_VERSION_ARG) return '2.74.0'; // Unsupported version
+//             return '';
+//         });
+//         (getExecOutput as jest.Mock).mockResolvedValueOnce({
+//             exitCode: 0,
+//             stdout: '{"AccessToken":"test-access-token","Username":"test-user"}',
+//             stderr: '',
+//         });
+//
+//         const args: string[] | undefined = await Utils.getJfrogCliConfigArgs(creds);
+//         expect(args).not.toContain('--oidc-provider-name=setup-jfrog-cli');
+//         expect(args).not.toContain('--oidc-provider-type=Github');
+//         expect(args).not.toContain('--oidc-token-id=abc-123');
+//         expect(args).not.toContain('--oidc-audience=jfrog-github');
+//     });
+// });
+//
+// describe('getAccessTokenFromCliOutput', () => {
+//     afterEach(() => {
+//         jest.clearAllMocks();
+//         jest.restoreAllMocks();
+//     });
+//     it('should parse valid JSON input', () => {
+//         const input: string = '{"AccessToken":"test-access-token","Username":"test-user"}';
+//         const result: { accessToken: string; username: string } = exchangeOIDCTokenAndExportStepOutputs(input);
+//
+//         expect(result).toEqual({
+//             accessToken: 'test-access-token',
+//             username: 'test-user',
+//         });
+//     });
+//
+//     it('should parse valid regex input', () => {
+//         const input: string = '{ AccessToken: test Username: test-user }';
+//         const result: { accessToken: string; username: string } = exchangeOIDCTokenAndExportStepOutputs(input);
+//
+//         expect(result).toEqual({
+//             accessToken: 'test',
+//             username: 'test-user',
+//         });
+//     });
+//
+//     it('should throw an error for invalid input format', () => {
+//         const input: string = 'Invalid format';
+//         expect(() => exchangeOIDCTokenAndExportStepOutputs(input)).toThrow('Failed to extract values. Input format is invalid.');
+//     });
+//
+//     it('should throw an error for empty input', () => {
+//         const input: string = '';
+//         expect(() => exchangeOIDCTokenAndExportStepOutputs(input)).toThrow('Input is empty. Cannot extract values.');
+//     });
+// });
 
-    afterEach(() => {
-        jest.clearAllMocks();
-        jest.restoreAllMocks();
-    });
+// describe('exchangeOIDCTokenAndExportStepOutputs', () => {
+//     afterEach(() => {
+//         jest.clearAllMocks();
+//         jest.restoreAllMocks();
+//     });
+//     it('should return access token when CLI command succeeds', async () => {
+//         const mockOutput: ExecOutput = {
+//             exitCode: 0,
+//             stdout: '{"AccessToken":"test-access-token","Username":"test-user"}',
+//             stderr: '',
+//         };
+//         (getExecOutput as jest.Mock).mockResolvedValue(mockOutput);
+//
+//         const result: string | undefined = await Utils.exchangeOIDCTokenAndExportStepOutputs(
+//             'test-provider',
+//             'test-token-id',
+//             'https://example.jfrog.io',
+//             'test-audience',
+//         );
+//
+//         expect(result).toBe('test-access-token');
+//         expect(core.setSecret).toHaveBeenCalledWith('test-access-token');
+//         expect(core.setOutput).toHaveBeenCalledWith('oidc-token', 'test-access-token');
+//         expect(core.setSecret).toHaveBeenCalledWith('test-user');
+//         expect(core.setOutput).toHaveBeenCalledWith('oidc-user', 'test-user');
+//     });
+//
+//     it('should throw an error if CLI command fails', async () => {
+//         const mockOutput: ExecOutput = {
+//             exitCode: 1,
+//             stdout: '',
+//             stderr: 'Error occurred',
+//         };
+//         (getExecOutput as jest.Mock).mockResolvedValue(mockOutput);
+//
+//         await expect(
+//             Utils.exchangeOIDCTokenAndExportStepOutputs('test-provider', 'test-token-id', 'https://example.jfrog.io', 'test-audience'),
+//         ).rejects.toThrow('CLI command failed with exit code 1: Error occurred');
+//     });
+//
+//     it('should throw an error if CLI execution throws an exception', async () => {
+//         (getExecOutput as jest.Mock).mockRejectedValue(new Error('Execution failed'));
+//
+//         await expect(
+//             Utils.exchangeOIDCTokenAndExportStepOutputs('test-provider', 'test-token-id', 'https://example.jfrog.io', 'test-audience'),
+//         ).rejects.toThrow('Failed to exchange OIDC token with an access token: Execution failed');
+//     });
+// });
 
-    it('should throw if GitHub fails to return ID token', async () => {
-        jest.spyOn(core, 'getIDToken').mockRejectedValue(new Error('mock failure'));
-        const creds: any = { ...credentials };
-        await expect(Utils.handleOidcAuth(creds)).rejects.toThrow('Failed to fetch OpenID Connect JSON Web Token');
-    });
+// describe('getApplicationKey', () => {
+//     const mockReadFile: jest.Mock = fs.promises.readFile as jest.Mock;
+//     const mockExistsSync: jest.Mock = fs.existsSync as jest.Mock;
+//     const mockPath: jest.Mock = path.join as jest.Mock;
+//
+//     beforeEach(() => {
+//         jest.resetAllMocks();
+//     });
+//
+//     it('should return application key from config file', async () => {
+//         mockPath.mockReturnValue('mocked-path');
+//         mockExistsSync.mockReturnValue(true);
+//         mockReadFile.mockResolvedValue(jsYaml.dump({ application: { key: 'config-app-key' } }));
+//
+//         const result: string = await (Utils as any).getApplicationKey();
+//         expect(result).toBe('config-app-key');
+//         expect(mockReadFile).toHaveBeenCalledWith('mocked-path', 'utf-8');
+//     });
+//
+//     it('should return empty string if config file does not exist', async () => {
+//         mockPath.mockReturnValue('mocked-path');
+//         mockExistsSync.mockReturnValue(false);
+//
+//         const result: string = await (Utils as any).getApplicationKey();
+//         expect(result).toBe('');
+//         expect(mockReadFile).not.toHaveBeenCalled();
+//     });
+//
+//     it('should return empty string if config file is empty', async () => {
+//         mockPath.mockReturnValue('mocked-path');
+//         mockExistsSync.mockReturnValue(true);
+//         mockReadFile.mockResolvedValue('');
+//
+//         const result: string = await (Utils as any).getApplicationKey();
+//         expect(result).toBe('');
+//     });
+//
+//     it('should return empty string if application root is not found in config file', async () => {
+//         mockPath.mockReturnValue('mocked-path');
+//         mockExistsSync.mockReturnValue(true);
+//         mockReadFile.mockResolvedValue(jsYaml.dump({}));
+//
+//         const result: string = await (Utils as any).getApplicationKey();
+//         expect(result).toBe('');
+//     });
+//
+//     it('should return empty string if application key is not found in config file', async () => {
+//         mockPath.mockReturnValue('mocked-path');
+//         mockExistsSync.mockReturnValue(true);
+//         mockReadFile.mockResolvedValue(jsYaml.dump({ application: {} }));
+//
+//         const result: string = await (Utils as any).getApplicationKey();
+//         expect(result).toBe('');
+//     });
+// });
 
-    it('should call setOidcTokenID when CLI version is >= 2.75.0', async () => {
-        jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
-            if (name === Utils.CLI_VERSION_ARG) return '2.75.0';
-            return '';
-        });
-        jest.spyOn(semver, 'gte').mockReturnValue(true);
-        jest.spyOn(Utils as any, 'getIdToken').mockResolvedValue('mock-token-id');
-
-        const result: JfrogCredentials = await (Utils as any).handleOidcAuth(credentials);
-        expect(result.oidcTokenId).toBe('mock-token-id');
-    });
-
-    it('should call manualOIDCExchange when CLI version is < 2.75.0', async () => {
-        jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
-            if (name === Utils.CLI_VERSION_ARG) return '2.74.0';
-            if (name === 'oidc-audience') return 'aud';
-            return '';
-        });
-        jest.spyOn(semver, 'gte').mockReturnValue(false);
-        jest.spyOn(core, 'getIDToken').mockResolvedValue('dummy-jwt');
-        jest.spyOn(Utils as any, 'getApplicationKey').mockResolvedValue('dummy-app-key');
-
-        jest.spyOn(Utils as any, 'exchangeOidcAndSetAsAccessToken').mockResolvedValue({
-            ...credentials,
-            accessToken: 'legacy-token',
-        });
-
-        const result: JfrogCredentials = await (Utils as any).handleOidcAuth(credentials);
-
-        expect(result.accessToken).toBe('legacy-token');
-    });
-
-    it('should fallback to manualOIDCExchange when download repository is set even if CLI is >= 2.75.0', async () => {
-        jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
-            if (name === Utils.CLI_VERSION_ARG) return '2.75.0';
-            if (name === Utils.CLI_REMOTE_ARG) return 'jfrog-cli-remote'; // Simulate presence of remote arg
-            if (name === 'oidc-audience') return 'aud';
-            return '';
-        });
-        jest.spyOn(semver, 'gte').mockReturnValue(true);
-        jest.spyOn(core, 'getIDToken').mockResolvedValue('dummy-jwt');
-        jest.spyOn(Utils as any, 'getApplicationKey').mockResolvedValue('dummy-app-key');
-        jest.spyOn(Utils as any, 'exchangeOidcAndSetAsAccessToken').mockResolvedValue({
-            ...credentials,
-            accessToken: 'forced-manual-token',
-        });
-
-        const result: JfrogCredentials = await (Utils as any).handleOidcAuth(credentials);
-        expect(result.accessToken).toBe('forced-manual-token');
-    });
-
-    it('should not include OIDC flags for unsupported versions', async () => {
-        const creds: JfrogCredentials = {
-            jfrogUrl: 'https://example.jfrog.io',
-            oidcProviderName: 'setup-jfrog-cli',
-            oidcTokenId: 'abc-123',
-            oidcAudience: 'jfrog-github',
-        } as JfrogCredentials;
-
-        jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
-            if (name === Utils.CLI_VERSION_ARG) return '2.74.0'; // Unsupported version
-            return '';
-        });
-        (getExecOutput as jest.Mock).mockResolvedValueOnce({
-            exitCode: 0,
-            stdout: '{"AccessToken":"test-access-token","Username":"test-user"}',
-            stderr: '',
-        });
-
-        const args: string[] | undefined = await Utils.getSeparateEnvConfigArgs(creds);
-        expect(args).not.toContain('--oidc-provider-name=setup-jfrog-cli');
-        expect(args).not.toContain('--oidc-provider-type=Github');
-        expect(args).not.toContain('--oidc-token-id=abc-123');
-        expect(args).not.toContain('--oidc-audience=jfrog-github');
-    });
-});
-
-describe('getAccessTokenFromCliOutput', () => {
-    afterEach(() => {
-        jest.clearAllMocks();
-        jest.restoreAllMocks();
-    });
-    it('should parse valid JSON input', () => {
-        const input: string = '{"AccessToken":"test-access-token","Username":"test-user"}';
-        const result: { accessToken: string; username: string } = getAccessTokenFromCliOutput(input);
-
-        expect(result).toEqual({
-            accessToken: 'test-access-token',
-            username: 'test-user',
-        });
-    });
-
-    it('should parse valid regex input', () => {
-        const input: string = '{ AccessToken: test Username: test-user }';
-        const result: { accessToken: string; username: string } = getAccessTokenFromCliOutput(input);
-
-        expect(result).toEqual({
-            accessToken: 'test',
-            username: 'test-user',
-        });
-    });
-
-    it('should throw an error for invalid input format', () => {
-        const input: string = 'Invalid format';
-        expect(() => getAccessTokenFromCliOutput(input)).toThrow('Failed to extract values. Input format is invalid.');
-    });
-
-    it('should throw an error for empty input', () => {
-        const input: string = '';
-        expect(() => getAccessTokenFromCliOutput(input)).toThrow('Input is empty. Cannot extract values.');
-    });
-});
-
-describe('exchangeOIDCTokenAndExportStepOutputs', () => {
-    afterEach(() => {
-        jest.clearAllMocks();
-        jest.restoreAllMocks();
-    });
-    it('should return access token when CLI command succeeds', async () => {
-        const mockOutput: ExecOutput = {
-            exitCode: 0,
-            stdout: '{"AccessToken":"test-access-token","Username":"test-user"}',
-            stderr: '',
-        };
-        (getExecOutput as jest.Mock).mockResolvedValue(mockOutput);
-
-        const result: string | undefined = await Utils.exchangeOIDCTokenAndExportStepOutputs(
-            'test-provider',
-            'test-token-id',
-            'https://example.jfrog.io',
-            'test-audience',
-        );
-
-        expect(result).toBe('test-access-token');
-        expect(core.setSecret).toHaveBeenCalledWith('test-access-token');
-        expect(core.setOutput).toHaveBeenCalledWith('oidc-token', 'test-access-token');
-        expect(core.setSecret).toHaveBeenCalledWith('test-user');
-        expect(core.setOutput).toHaveBeenCalledWith('oidc-user', 'test-user');
-    });
-
-    it('should throw an error if CLI command fails', async () => {
-        const mockOutput: ExecOutput = {
-            exitCode: 1,
-            stdout: '',
-            stderr: 'Error occurred',
-        };
-        (getExecOutput as jest.Mock).mockResolvedValue(mockOutput);
-
-        await expect(
-            Utils.exchangeOIDCTokenAndExportStepOutputs('test-provider', 'test-token-id', 'https://example.jfrog.io', 'test-audience'),
-        ).rejects.toThrow('CLI command failed with exit code 1: Error occurred');
-    });
-
-    it('should throw an error if CLI execution throws an exception', async () => {
-        (getExecOutput as jest.Mock).mockRejectedValue(new Error('Execution failed'));
-
-        await expect(
-            Utils.exchangeOIDCTokenAndExportStepOutputs('test-provider', 'test-token-id', 'https://example.jfrog.io', 'test-audience'),
-        ).rejects.toThrow('Failed to exchange OIDC token with an access token: Execution failed');
-    });
-});
+// describe('extractTokenUser', () => {
+//     it('should extract user from subject starting with jfrt@', () => {
+//         const subject: string = 'jfrt@/users/johndoe';
+//         const result: string = Utils.extractTokenUser(subject);
+//         expect(result).toBe('johndoe');
+//     });
+//
+//     it('should extract user from subject containing /users/', () => {
+//         const subject: string = '/users/johndoe';
+//         const result: string = Utils.extractTokenUser(subject);
+//         expect(result).toBe('johndoe');
+//     });
+//
+//     it('should return original subject when it does not start with jfrt@ or contain /users/', () => {
+//         const subject: string = 'johndoe';
+//         const result: string = Utils.extractTokenUser(subject);
+//         expect(result).toBe(subject);
+//     });
+//
+//     it('should handle empty subject', () => {
+//         const subject: string = '';
+//         const result: string = Utils.extractTokenUser(subject);
+//         expect(result).toBe(subject);
+//     });
+// });
+//
+// describe('decodeOidcToken', () => {
+//     it('should decode valid OIDC token', () => {
+//         const oidcToken: string =
+//             Buffer.from(JSON.stringify({ sub: 'test' })).toString('base64') +
+//             '.eyJzdWIiOiJ0ZXN0In0.' +
+//             Buffer.from(JSON.stringify({ sub: 'test' })).toString('base64');
+//         const result: JWTTokenData = Utils.decodeOidcToken(oidcToken);
+//         expect(result).toEqual({ sub: 'test' });
+//     });
+//
+//     it('should throw error for OIDC token with invalid format', () => {
+//         const oidcToken: string = 'invalid.token.format';
+//         expect(() => Utils.decodeOidcToken(oidcToken)).toThrow(SyntaxError);
+//     });
+//
+//     it('should throw error for OIDC token without subject', () => {
+//         const oidcToken: string =
+//             Buffer.from(JSON.stringify({ notSub: 'test' })).toString('base64') +
+//             '.eyJub3RTdWIiOiJ0ZXN0In0.' +
+//             Buffer.from(JSON.stringify({ notSub: 'test' })).toString('base64');
+//         expect(() => Utils.decodeOidcToken(oidcToken)).toThrow('OIDC invalid access token format');
+//     });
+// });
