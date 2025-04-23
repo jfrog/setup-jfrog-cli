@@ -95,6 +95,9 @@ export class Utils {
         if (!isLatestVer && lt(version, this.MIN_CLI_VERSION)) {
             throw new Error('Requested to download JFrog CLI version ' + version + ' but must be at least ' + this.MIN_CLI_VERSION);
         }
+        if (jfrogCredentials.oidcProviderName && cliRemote != '') {
+            throw new Error('OIDC credentials are not supported for CLI remote downloads, please use an access token instead.');
+        }
         if (!isLatestVer && this.loadFromCache(version)) {
             core.info('Found JFrog CLI in cache. No need to download');
             return;
@@ -138,7 +141,7 @@ export class Utils {
      * @param downloadedExecutable - Path to the downloaded JFrog CLI executable
      * @param version              - JFrog CLI version
      */
-    private static async cacheAndAddPath(downloadedExecutable: string, version: string) {
+    public static async cacheAndAddPath(downloadedExecutable: string, version: string) {
         if (version === Utils.LATEST_CLI_VERSION) {
             // If the version is 'latest', we keep it on cache as 100.100.100 as GitHub actions cache supports only semver versions
             version = Utils.LATEST_SEMVER;

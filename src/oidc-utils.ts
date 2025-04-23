@@ -31,13 +31,12 @@ export class OidcUtils {
     /*
     Currently, OIDC authentication can be handled in two ways due to CLI version limitations:
     1. Manually call the REST API from this codebase.
-    2. Use the new OIDC token ID feature in the CLI (2.75.0+).
+    2. Use the new OIDC token ID exchange command in the CLI (2.75.0+).
 
-    If the CLI version supports it and the user is not using an artifactory download repository,
-    we use the new CLI native OIDC token ID flow.
-    Otherwise, we fall back to manual OIDC exchange for compatibility.
+    Note: Why not use config command with OIDC params?
+    Because the username and access token should output as a step output
+    for further use by the users, this cannot be done in secure why using jf config add command.
 
-    Note: The manual logic should be deprecated and removed once CLI remote supports native OIDC.
     */
     public static async handleOidcAuth(jfrogCredentials: JfrogCredentials): Promise<string | undefined> {
         if (!jfrogCredentials.jfrogUrl) {
