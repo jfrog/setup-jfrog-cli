@@ -7,6 +7,7 @@ import { DownloadDetails, JfrogCredentials } from '../src/types';
 
 jest.mock('os');
 jest.mock('@actions/exec');
+jest.mock('@actions/core');
 jest.mock('fs', () => ({
     promises: {
         readFile: jest.fn(),
