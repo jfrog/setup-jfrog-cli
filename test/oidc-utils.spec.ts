@@ -5,13 +5,6 @@ import { Utils } from '../src/utils';
 
 jest.mock('@actions/core');
 jest.mock('@actions/exec');
-jest.mock('fs', () => ({
-    promises: {
-        readFile: jest.fn(),
-    },
-    existsSync: jest.fn(() => true), // Mock `existsSync` as a Jest mock function
-}));
-jest.mock('path');
 
 describe('OidcUtils', (): void => {
     afterEach((): void => {
