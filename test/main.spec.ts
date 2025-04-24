@@ -8,13 +8,6 @@ import { DownloadDetails, JfrogCredentials } from '../src/types';
 jest.mock('os');
 jest.mock('@actions/exec');
 jest.mock('@actions/core');
-jest.mock('fs', () => ({
-    promises: {
-        readFile: jest.fn(),
-    },
-    existsSync: jest.fn(),
-}));
-jest.mock('path');
 
 const DEFAULT_CLI_URL: string = 'https://releases.jfrog.io/artifactory/jfrog-cli/';
 const CUSTOM_CLI_URL: string = 'http://127.0.0.1:8081/artifactory/jfrog-cli-remote/';
