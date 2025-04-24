@@ -47,3 +47,8 @@ export interface JWTTokenData {
     iat: bigint;
     jti: string;
 }
+
+export interface CliExchangeTokenResponse {
+    accessToken: string;
+    username: string;
+}

@@ -324,6 +324,7 @@ describe('Utils.removeJFrogServers', () => {
     });
 });
 
+// TODO add test for access token vs basic auth alone
 describe('getJfrogCliConfigArgs', () => {
     beforeEach(() => {
         jest.spyOn(core, 'getInput').mockReturnValue('');
@@ -368,6 +369,7 @@ describe('getJfrogCliConfigArgs', () => {
             jfrogUrl: 'https://example.jfrog.io',
             username: 'test-user',
             password: 'test-password',
+            // Notice this isn't the access token expected, expected OIDC exchanged token
             accessToken: 'test-access-token',
             oidcProviderName: 'oidc-integration-test-provider',
             oidcAudience: 'jfrog-github',
@@ -381,7 +383,7 @@ describe('getJfrogCliConfigArgs', () => {
         });
         const configArgs: string[] | undefined = await Utils.getJfrogCliConfigArgs(jfrogCredentials);
 
-        // Ensure the command does not include conflicting or duplicate arguments
+        // Ensure we generate a config command with access token auth after exchanging OIDC token
         const configString: string = configArgs?.join(' ') || '';
         expect(configString).toContain('--url https://example.jfrog.io');
         expect(configString).toContain('--interactive=false');

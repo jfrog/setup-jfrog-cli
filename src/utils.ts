@@ -11,7 +11,7 @@ import { lt } from 'semver';
 
 import { DownloadDetails, JfrogCredentials } from './types';
 import { OidcUtils } from './oidc-utils';
-import { jobSummaryUtils } from './jobsummary-utils';
+import { JobSummaryUtils } from './job-summary-utils';
 
 export class Utils {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -216,12 +216,12 @@ export class Utils {
 
         // Check for OIDC authentication
         if (!!oidcProviderName) {
-            accessToken = await OidcUtils.handleOidcAuth(jfrogCredentials);
+            accessToken = await OidcUtils.exchangeOidcToken(jfrogCredentials);
         }
 
         const configCmd: string[] = [Utils.getServerIdForConfig(), '--url', url, '--interactive=false', '--overwrite=true'];
         if (!!accessToken) {
-            // Access Token
+            // Access Token / OIDC Token
             configCmd.push('--access-token', accessToken);
         } else if (!!user && !!password) {
             // Basic Auth
@@ -302,7 +302,7 @@ export class Utils {
 
         // Enable job summaries if disable was not requested.
         if (!core.getBooleanInput(Utils.JOB_SUMMARY_DISABLE)) {
-            jobSummaryUtils.enableJobSummaries();
+            JobSummaryUtils.enableJobSummaries();
         }
 
         // Indicate if JF_GIT_TOKEN is provided as an environment variable, used by Xray usage.

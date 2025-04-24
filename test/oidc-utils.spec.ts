@@ -1,7 +1,10 @@
 import { OidcUtils } from '../src/oidc-utils';
 import * as core from '@actions/core';
-import { getExecOutput, ExecOutput } from '@actions/exec';
 import { JfrogCredentials } from '../src/types';
+import * as jsYaml from 'js-yaml';
+import path from 'path';
+import * as fs from 'node:fs';
+import { Utils } from '../src/utils';
 
 jest.mock('@actions/core');
 jest.mock('@actions/exec');
@@ -12,41 +15,6 @@ describe('OidcUtils', (): void => {
         jest.restoreAllMocks();
     });
 
-    describe('resolveAccessToken', (): void => {
-        const baseCreds: JfrogCredentials = {
-            jfrogUrl: 'https://example.jfrog.io',
-            oidcProviderName: 'provider',
-            oidcTokenId: 'token-id',
-            username: 'tester',
-        };
-
-        it('should use CLI exchange when version is >= 2.75.0', async (): Promise<void> => {
-            const mockOutput: ExecOutput = {
-                exitCode: 0,
-                stdout: '{"AccessToken":"abc","Username":"tester"}',
-                stderr: '',
-            };
-            (getExecOutput as jest.Mock).mockResolvedValueOnce(mockOutput);
-
-            const result: string | undefined = await OidcUtils.resolveAccessToken(baseCreds, '2.75.0');
-            expect(result).toBe('abc');
-            expect(core.setOutput).toHaveBeenCalledWith('oidc-token', 'abc');
-            expect(core.setOutput).toHaveBeenCalledWith('oidc-user', 'tester');
-        });
-
-        it('should return accessToken directly if already set', async (): Promise<void> => {
-            const creds: JfrogCredentials = { ...baseCreds, accessToken: 'static-token' };
-            const result: string | undefined = await OidcUtils.resolveAccessToken(creds, '2.75.0');
-            expect(result).toBe('static-token');
-        });
-
-        it('should return undefined if no OIDC info provided', async (): Promise<void> => {
-            const creds: JfrogCredentials = { jfrogUrl: 'https://example.jfrog.io' };
-            const result: string | undefined = await OidcUtils.resolveAccessToken(creds, '2.75.0');
-            expect(result).toBeUndefined();
-        });
-    });
-
     describe('exchangeOIDCTokenAndExportStepOutputs', (): void => {
         const creds: JfrogCredentials = {
             jfrogUrl: 'https://example.jfrog.io',
@@ -55,36 +23,57 @@ describe('OidcUtils', (): void => {
             oidcAudience: 'aud',
         };
 
+        afterEach((): void => {
+            jest.restoreAllMocks();
+        });
+
         it('should export step outputs when CLI succeeds', async (): Promise<void> => {
-            const mockOutput: ExecOutput = {
-                exitCode: 0,
-                stdout: '{"AccessToken":"abc","Username":"tester"}',
-                stderr: '',
-            };
-            (getExecOutput as jest.Mock).mockResolvedValueOnce(mockOutput);
+            const mockOutput: string = 'AccessToken: abc Username: tester';
+
+            const mockRunCli: any = jest.spyOn(Utils, 'runCliAndGetOutput').mockResolvedValueOnce(mockOutput);
 
             const result: string | undefined = await OidcUtils.exchangeOIDCTokenAndExportStepOutputs(creds);
 
             expect(result).toBe('abc');
             expect(core.setOutput).toHaveBeenCalledWith('oidc-token', 'abc');
             expect(core.setOutput).toHaveBeenCalledWith('oidc-user', 'tester');
+
+            mockRunCli.mockRestore();
         });
 
-        it('should throw if CLI command fails', async (): Promise<void> => {
-            const mockOutput: ExecOutput = {
-                exitCode: 1,
-                stdout: '',
-                stderr: 'boom',
-            };
-            (getExecOutput as jest.Mock).mockResolvedValueOnce(mockOutput);
+        it('should correctly set step outputs for CLI token exchange', async (): Promise<void> => {
+            const mockOutput: string = 'AccessToken: cli-token Username: cli-user';
 
-            await expect(OidcUtils.exchangeOIDCTokenAndExportStepOutputs(creds)).rejects.toThrow('CLI command failed with exit code 1: boom');
+            const mockRunCli: any = jest.spyOn(Utils, 'runCliAndGetOutput').mockResolvedValueOnce(mockOutput);
+
+            const result: string | undefined = await OidcUtils.exchangeOIDCTokenAndExportStepOutputs(creds);
+
+            expect(result).toBe('cli-token');
+            expect(core.setOutput).toHaveBeenCalledWith('oidc-token', 'cli-token');
+            expect(core.setOutput).toHaveBeenCalledWith('oidc-user', 'cli-user');
+
+            mockRunCli.mockRestore();
         });
 
-        it('should throw if CLI execution throws', async (): Promise<void> => {
-            (getExecOutput as jest.Mock).mockRejectedValueOnce(new Error('exec failed'));
+        it('should correctly set step outputs for manual token exchange', async (): Promise<void> => {
+            // Arrange
+            const dummyToken: any = [
+                Buffer.from(JSON.stringify({ alg: 'none' })).toString('base64'), // Header
+                Buffer.from(JSON.stringify({ sub: 'jfrt@dummy-user' })).toString('base64'), // Payload
+                '', // No signature for testing
+            ].join('.');
+            const mockUsername: string = 'manual-user';
 
-            await expect(OidcUtils.exchangeOIDCTokenAndExportStepOutputs(creds)).rejects.toThrow('Failed to exchange OIDC token: exec failed');
+            jest.spyOn(OidcUtils, 'extractTokenUser').mockReturnValueOnce(mockUsername);
+            jest.spyOn(OidcUtils, 'manualExchangeOidc').mockResolvedValueOnce(dummyToken);
+
+            // Act
+            const result: any = await OidcUtils.manualOIDCExchange(creds);
+
+            // Assert
+            expect(result).toBe(dummyToken);
+            expect(core.setOutput).toHaveBeenCalledWith('oidc-token', dummyToken);
+            expect(core.setOutput).toHaveBeenCalledWith('oidc-user', mockUsername);
         });
 
         it('should throw if creds are missing required fields', async (): Promise<void> => {
@@ -94,7 +83,7 @@ describe('OidcUtils', (): void => {
             };
 
             await expect(OidcUtils.exchangeOIDCTokenAndExportStepOutputs(incompleteCreds)).rejects.toThrow(
-                'Missing required OIDC provider name or token ID.',
+                'Missing one or more required fields: OIDC provider name, token ID, or JFrog Platform URL.',
             );
         });
     });
@@ -102,21 +91,21 @@ describe('OidcUtils', (): void => {
     describe('getAccessTokenFromCliOutput', (): void => {
         it('should parse valid JSON', (): void => {
             const input: string = '{"AccessToken":"abc","Username":"user"}';
-            const { accessToken, username }: { accessToken: string; username: string } = OidcUtils.getAccessTokenFromCliOutput(input);
+            const { accessToken, username }: { accessToken: string; username: string } = OidcUtils.extractValuesFromOIDCToken(input);
             expect(accessToken).toBe('abc');
             expect(username).toBe('user');
         });
 
         it('should fallback to regex parsing', (): void => {
             const input: string = 'AccessToken: abc Username: user';
-            const { accessToken, username }: { accessToken: string; username: string } = OidcUtils.getAccessTokenFromCliOutput(input);
+            const { accessToken, username }: { accessToken: string; username: string } = OidcUtils.extractValuesFromOIDCToken(input);
             expect(accessToken).toBe('abc');
             expect(username).toBe('user');
         });
 
         it('should throw on invalid input', (): void => {
             expect((): void => {
-                OidcUtils.getAccessTokenFromCliOutput('Invalid');
+                OidcUtils.extractValuesFromOIDCToken('Invalid');
             }).toThrow();
         });
     });
@@ -137,5 +126,61 @@ describe('OidcUtils', (): void => {
             expect(core.exportVariable).toHaveBeenCalledWith('JFROG_CLI_USAGE_CONFIG_OIDC', 'TRUE');
             expect(core.exportVariable).toHaveBeenCalledWith('JFROG_CLI_USAGE_OIDC_USED', 'TRUE');
         });
+    });
+});
+
+describe('getApplicationKey', () => {
+    const mockReadFile: jest.Mock = fs.promises.readFile as jest.Mock;
+    const mockExistsSync: jest.Mock = fs.existsSync as jest.Mock;
+    const mockPath: jest.Mock = path.join as jest.Mock;
+
+    beforeEach(() => {
+        jest.resetAllMocks();
+    });
+
+    it('should return application key from config file', async () => {
+        mockPath.mockReturnValue('mocked-path');
+        mockExistsSync.mockReturnValue(true);
+        mockReadFile.mockResolvedValue(jsYaml.dump({ application: { key: 'config-app-key' } }));
+
+        const result: string = await (OidcUtils as any).getApplicationKey();
+        expect(result).toBe('config-app-key');
+        expect(mockReadFile).toHaveBeenCalledWith('mocked-path', 'utf-8');
+    });
+
+    it('should return empty string if config file does not exist', async () => {
+        mockPath.mockReturnValue('mocked-path');
+        mockExistsSync.mockReturnValue(false);
+
+        const result: string = await (OidcUtils as any).getApplicationKey();
+        expect(result).toBe('');
+        expect(mockReadFile).not.toHaveBeenCalled();
+    });
+
+    it('should return empty string if config file is empty', async () => {
+        mockPath.mockReturnValue('mocked-path');
+        mockExistsSync.mockReturnValue(true);
+        mockReadFile.mockResolvedValue('');
+
+        const result: string = await (OidcUtils as any).getApplicationKey();
+        expect(result).toBe('');
+    });
+
+    it('should return empty string if application root is not found in config file', async () => {
+        mockPath.mockReturnValue('mocked-path');
+        mockExistsSync.mockReturnValue(true);
+        mockReadFile.mockResolvedValue(jsYaml.dump({}));
+
+        const result: string = await (OidcUtils as any).getApplicationKey();
+        expect(result).toBe('');
+    });
+
+    it('should return empty string if application key is not found in config file', async () => {
+        mockPath.mockReturnValue('mocked-path');
+        mockExistsSync.mockReturnValue(true);
+        mockReadFile.mockResolvedValue(jsYaml.dump({ application: {} }));
+
+        const result: string = await (OidcUtils as any).getApplicationKey();
+        expect(result).toBe('');
     });
 });
