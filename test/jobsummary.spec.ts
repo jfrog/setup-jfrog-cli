@@ -1,18 +1,18 @@
 import { Utils } from '../src/utils';
-import { JobSummaryUtils } from '../src/job-summary-utils';
+import { JobSummary } from '../src/job-summary';
 import * as core from '@actions/core';
 import os from 'os';
 
 describe('Job Summaries', () => {
     describe('Job summaries sanity', () => {
         it('should not crash if no files were found', async () => {
-            expect(async () => await JobSummaryUtils.setMarkdownAsJobSummary()).not.toThrow();
+            expect(async () => await JobSummary.setMarkdownAsJobSummary()).not.toThrow();
         });
     });
     describe('Command Summaries Disable Flag', () => {
         const myCore: jest.Mocked<typeof core> = core as any;
         beforeEach(() => {
-            delete process.env[JobSummaryUtils.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV];
+            delete process.env[JobSummary.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV];
             delete process.env.RUNNER_TEMP;
         });
 
@@ -21,7 +21,7 @@ describe('Job Summaries', () => {
                 return true;
             });
             Utils.setCliEnv();
-            expect(process.env[JobSummaryUtils.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV]).toBeUndefined();
+            expect(process.env[JobSummary.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV]).toBeUndefined();
         });
 
         it('should set JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR if disable-job-summary is false', () => {
@@ -33,7 +33,7 @@ describe('Job Summaries', () => {
                 process.env[name] = val;
             });
             Utils.setCliEnv();
-            expect(process.env[JobSummaryUtils.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV]).toBe('/tmp');
+            expect(process.env[JobSummary.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV]).toBe('/tmp');
         });
 
         it('should handle self-hosted machines and set JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR based on OS temp dir', () => {
@@ -50,7 +50,7 @@ describe('Job Summaries', () => {
 
             Utils.setCliEnv();
 
-            expect(process.env[JobSummaryUtils.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV]).toBe(tempDir);
+            expect(process.env[JobSummary.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV]).toBe(tempDir);
         });
 
         it('Should throw error when failing to get temp dir', () => {
@@ -82,19 +82,19 @@ describe('isJobSummarySupported', () => {
 
     it('should return true if the version is the latest', () => {
         jest.spyOn(core, 'getInput').mockReturnValue(LATEST_CLI_VERSION);
-        expect(JobSummaryUtils.isJobSummarySupported()).toBe(true);
+        expect(JobSummary.isJobSummarySupported()).toBe(true);
     });
 
     it('should return true if the version is greater than or equal to the minimum supported version', () => {
         const version: string = '2.66.0';
         jest.spyOn(core, 'getInput').mockReturnValue(version);
-        expect(JobSummaryUtils.isJobSummarySupported()).toBe(true);
+        expect(JobSummary.isJobSummarySupported()).toBe(true);
     });
 
     it('should return false if the version is less than the minimum supported version', () => {
         const version: string = '2.65.0';
         jest.spyOn(core, 'getInput').mockReturnValue(version);
-        expect(JobSummaryUtils.isJobSummarySupported()).toBe(false);
+        expect(JobSummary.isJobSummarySupported()).toBe(false);
     });
 });
 
@@ -116,14 +116,14 @@ describe('Test correct encoding of badge URL', () => {
             process.env.GITHUB_WORKFLOW = 'test-job';
             process.env.GITHUB_REPOSITORY = 'test/repo';
             const expectedBadge: string = '![](https://example.jfrog.io/ui/api/v1/u?s=1&m=1&job_id=test-job&run_id=123&git_repo=test%2Frepo)';
-            expect(JobSummaryUtils.getUsageBadge()).toBe(expectedBadge);
+            expect(JobSummary.getUsageBadge()).toBe(expectedBadge);
         });
 
         it('should URL encode the job ID and repository with spaces', () => {
             process.env.GITHUB_WORKFLOW = 'test job';
             process.env.GITHUB_REPOSITORY = 'test repo';
             const expectedBadge: string = '![](https://example.jfrog.io/ui/api/v1/u?s=1&m=1&job_id=test+job&run_id=123&git_repo=test+repo)';
-            expect(JobSummaryUtils.getUsageBadge()).toBe(expectedBadge);
+            expect(JobSummary.getUsageBadge()).toBe(expectedBadge);
         });
 
         it('should URL encode the job ID and repository with special characters', () => {
@@ -131,14 +131,14 @@ describe('Test correct encoding of badge URL', () => {
             process.env.GITHUB_REPOSITORY = 'test/repo@special';
             const expectedBadge: string =
                 '![](https://example.jfrog.io/ui/api/v1/u?s=1&m=1&job_id=test%2Fjob%40workflow&run_id=123&git_repo=test%2Frepo%40special)';
-            expect(JobSummaryUtils.getUsageBadge()).toBe(expectedBadge);
+            expect(JobSummary.getUsageBadge()).toBe(expectedBadge);
         });
 
         it('should handle missing environment variables gracefully', () => {
             delete process.env.GITHUB_WORKFLOW;
             delete process.env.GITHUB_REPOSITORY;
             const expectedBadge: string = '![](https://example.jfrog.io/ui/api/v1/u?s=1&m=1&job_id=&run_id=123&git_repo=)';
-            expect(JobSummaryUtils.getUsageBadge()).toBe(expectedBadge);
+            expect(JobSummary.getUsageBadge()).toBe(expectedBadge);
         });
     });
 });

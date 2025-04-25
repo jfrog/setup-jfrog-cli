@@ -11,7 +11,7 @@ import { lt } from 'semver';
 
 import { DownloadDetails, JfrogCredentials } from './types';
 import { OidcUtils } from './oidc-utils';
-import { JobSummaryUtils } from './job-summary-utils';
+import { JobSummary } from './job-summary';
 
 export class Utils {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -302,7 +302,7 @@ export class Utils {
 
         // Enable job summaries if disable was not requested.
         if (!core.getBooleanInput(Utils.JOB_SUMMARY_DISABLE)) {
-            JobSummaryUtils.enableJobSummaries();
+            JobSummary.enableJobSummaries();
         }
 
         // Indicate if JF_GIT_TOKEN is provided as an environment variable, used by Xray usage.

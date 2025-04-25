@@ -2,6 +2,7 @@ import { OidcUtils } from '../src/oidc-utils';
 import * as core from '@actions/core';
 import { JfrogCredentials } from '../src/types';
 import { Utils } from '../src/utils';
+import { HttpClient } from '@actions/http-client';
 
 jest.mock('@actions/core');
 jest.mock('@actions/exec');
@@ -19,10 +20,6 @@ describe('OidcUtils', (): void => {
             oidcTokenId: 'token-id',
             oidcAudience: 'aud',
         };
-
-        afterEach((): void => {
-            jest.restoreAllMocks();
-        });
 
         it('should export step outputs when CLI succeeds', async (): Promise<void> => {
             const mockOutput: string = 'AccessToken: abc Username: tester';
@@ -52,25 +49,55 @@ describe('OidcUtils', (): void => {
             mockRunCli.mockRestore();
         });
 
-        it('should correctly set step outputs for manual token exchange', async (): Promise<void> => {
+        it('should perform manual OIDC token exchange and set outputs', async () => {
             // Arrange
-            const dummyToken: any = [
+            const creds: JfrogCredentials = {
+                jfrogUrl: 'https://example.jfrog.io',
+                oidcProviderName: 'provider',
+                oidcTokenId: 'token-id',
+                oidcAudience: '',
+            };
+            const mockAccessToken: any = [
                 Buffer.from(JSON.stringify({ alg: 'none' })).toString('base64'), // Header
                 Buffer.from(JSON.stringify({ sub: 'jfrt@dummy-user' })).toString('base64'), // Payload
                 '', // No signature for testing
             ].join('.');
-            const mockUsername: string = 'manual-user';
+            const mockResponse: any = {
+                readBody: jest.fn().mockResolvedValue(JSON.stringify({ access_token: mockAccessToken })),
+            };
 
-            jest.spyOn(OidcUtils, 'extractTokenUser').mockReturnValueOnce(mockUsername);
-            jest.spyOn(OidcUtils, 'manualExchangeOidc').mockResolvedValueOnce(dummyToken);
+            const mockHttpClientPost: any = jest.spyOn(HttpClient.prototype, 'post').mockResolvedValue(mockResponse as any);
+
+            const mockGetApplicationKey: any = jest.spyOn(OidcUtils, 'getApplicationKey').mockResolvedValue('mock-application-key');
+
+            const mockOutputOidcTokenAndUsernameFromToken: any = jest.spyOn(OidcUtils, 'outputOidcTokenAndUsernameFromToken');
 
             // Act
-            const result: any = await OidcUtils.manualOIDCExchange(creds);
+            const result: any = await OidcUtils.manualExchangeOidc(creds);
 
             // Assert
-            expect(result).toBe(dummyToken);
-            expect(core.setOutput).toHaveBeenCalledWith('oidc-token', dummyToken);
-            expect(core.setOutput).toHaveBeenCalledWith('oidc-user', mockUsername);
+            expect(result).toBe(mockAccessToken);
+            expect(mockHttpClientPost).toHaveBeenCalledWith(
+                'https://example.jfrog.io/access/api/v1/oidc/token',
+                JSON.stringify({
+                    grant_type: 'urn:ietf:params:oauth:grant-type:token-exchange',
+                    subject_token_type: 'urn:ietf:params:oauth:token-type:id_token',
+                    subject_token: 'token-id',
+                    provider_name: 'provider',
+                    project_key: '',
+                    gh_job_id: '',
+                    gh_run_id: '',
+                    gh_repo: '',
+                    application_key: 'mock-application-key',
+                }),
+                { 'Content-Type': 'application/json' },
+            );
+            expect(mockOutputOidcTokenAndUsernameFromToken).toHaveBeenCalledWith(mockAccessToken);
+
+            // Cleanup
+            mockHttpClientPost.mockRestore();
+            mockGetApplicationKey.mockRestore();
+            mockOutputOidcTokenAndUsernameFromToken.mockRestore();
         });
 
         it('should throw if creds are missing required fields', async (): Promise<void> => {

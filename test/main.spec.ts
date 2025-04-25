@@ -317,7 +317,6 @@ describe('Utils.removeJFrogServers', () => {
     });
 });
 
-// TODO add test for access token vs basic auth alone
 describe('getJfrogCliConfigArgs', () => {
     beforeEach(() => {
         jest.spyOn(core, 'getInput').mockReturnValue('');
@@ -385,5 +384,24 @@ describe('getJfrogCliConfigArgs', () => {
         expect(configString).not.toContain('--oidc-provider-name=oidc-integration-test-provider');
         expect(configString).not.toContain('--username test-user');
         expect(configString).not.toContain('--oidc-audience=jfrog-github');
+    });
+
+    it('should use access token when provided with password', async () => {
+        const jfrogCredentials: JfrogCredentials = {
+            jfrogUrl: 'https://example.jfrog.io',
+            username: 'test-user',
+            password: 'test-password',
+            accessToken: 'test-access-token',
+            oidcProviderName: '',
+            oidcAudience: '',
+            oidcTokenId: '',
+        };
+        const configArgs: string[] | undefined = await Utils.getJfrogCliConfigArgs(jfrogCredentials);
+        const configString: string = configArgs?.join(' ') || '';
+        expect(configString).toContain('--url https://example.jfrog.io');
+        expect(configString).toContain('--interactive=false');
+        expect(configString).toContain('--overwrite=true');
+        expect(configString).toContain('--access-token test-access-token');
+        expect(configString).not.toContain('--username test-user');
     });
 });

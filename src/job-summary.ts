@@ -12,7 +12,7 @@ import { OutgoingHttpHeaders } from 'http';
 import { tmpdir } from 'os';
 import { Utils } from './utils';
 
-export class JobSummaryUtils {
+export class JobSummary {
     // Directory name which holds markdown files for the Workflow summary
     private static readonly JOB_SUMMARY_DIR_NAME: string = 'jfrog-command-summary';
     // Directory name which holds security command summary files

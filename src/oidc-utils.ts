@@ -52,20 +52,11 @@ export class OidcUtils {
 
         // Fallback to manual OIDC exchange for backward compatibility
         core.debug('Using Manual OIDC Auth Method..');
-        return this.manualOIDCExchange(jfrogCredentials);
-    }
-
-    /*
-    This function manually exchanges oidc token and updates the credentials object with an access token retrieved
-     */
-    public static async manualOIDCExchange(jfrogCredentials: JfrogCredentials): Promise<string | undefined> {
         // Exchanges the token and set as access token in the credential's object
-        const applicationKey: string = await this.getApplicationKey();
-        let token: string | undefined = await this.manualExchangeOidc(jfrogCredentials, applicationKey);
+        let token: string | undefined = await this.manualExchangeOidc(jfrogCredentials);
         if (!token) {
             throw new Error('Failed to manually exchange OIDC token via RESTApi');
         }
-        this.outputOidcTokenAndUsernameFromToken(token);
         return token;
     }
 
@@ -91,9 +82,10 @@ export class OidcUtils {
     /**
      * Performs a manual token exchange via HTTP for older CLI versions.
      */
-    public static async manualExchangeOidc(creds: JfrogCredentials, applicationKey: string): Promise<string | undefined> {
+    public static async manualExchangeOidc(creds: JfrogCredentials): Promise<string | undefined> {
         const url: string | undefined = creds.jfrogUrl;
         const providerName: string | undefined = creds.oidcProviderName;
+        const applicationKey: string = await this.getApplicationKey();
         if (!url || !providerName) {
             throw new Error('Missing required JFrog URL or OIDC provider name.');
         }
@@ -116,8 +108,10 @@ export class OidcUtils {
         if (!responseJson.access_token) {
             throw new Error('Access token not found in the response');
         }
-
+        // Export env vars for usage tracking
         this.trackOldOidcUsage();
+        // Export step outputs
+        this.outputOidcTokenAndUsernameFromToken(responseJson.access_token);
         return responseJson.access_token;
     }
 
@@ -154,7 +148,6 @@ export class OidcUtils {
         };
     }
 
-    // TODO maybe add validation of the username
     public static setOidcStepOutputs(username: string, accessToken: string): void {
         core.setSecret(accessToken);
         core.setSecret(username);
