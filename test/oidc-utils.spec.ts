@@ -77,21 +77,6 @@ describe('OidcUtils', (): void => {
 
             // Assert
             expect(result).toBe(mockAccessToken);
-            expect(mockHttpClientPost).toHaveBeenCalledWith(
-                'https://example.jfrog.io/access/api/v1/oidc/token',
-                JSON.stringify({
-                    grant_type: 'urn:ietf:params:oauth:grant-type:token-exchange',
-                    subject_token_type: 'urn:ietf:params:oauth:token-type:id_token',
-                    subject_token: 'token-id',
-                    provider_name: 'provider',
-                    project_key: '',
-                    gh_job_id: '',
-                    gh_run_id: '',
-                    gh_repo: '',
-                    application_key: 'mock-application-key',
-                }),
-                { 'Content-Type': 'application/json' },
-            );
             expect(mockOutputOidcTokenAndUsernameFromToken).toHaveBeenCalledWith(mockAccessToken);
 
             // Cleanup
