@@ -1,0 +1,112 @@
+name: OIDC Integration Test
+# This workflow tests the setup-jfrog-cli GitHub Action's OpenID Connect integration across OSes and CLI versions.
+# It ensures backward compatibility with older CLI versions and validates step outputs and connectivity.
+# CLI versions used:
+# - 2.74.1: Does not support `jf eot` command, validates manual fallback logic.
+# - 2.75.0: Introduced native OIDC token exchange.
+# - Latest: Ensures ongoing compatibility with the most recent CLI build.
+
+on:
+  push:
+    branches:
+      - master
+  # Triggers the workflow on labeled PRs only.
+  pull_request_target:
+    types: [ labeled ]
+# Ensures that only the latest commit is running for each PR at a time.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  oidc-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu, macos, windows ]
+        cli-version: [ '2.74.1', '2.75.0','latest' ]
+    runs-on: ${{ matrix.os }}-latest
+    name: OIDC Test - ${{ matrix.cli-version }} on ${{ matrix.os }}
+    env:
+      JFROG_CLI_LOG_LEVEL: DEBUG
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      # Setup OIDC platform integration
+      - name: Generate unique OIDC provider name
+        id: gen-oidc
+        shell: bash
+        run: |
+          cli_version="${{ matrix.cli-version }}" && cli_version="${cli_version//./-}"
+          echo "oidc_provider_name=oidc-integration-${cli_version}-${{ matrix.os }}-$(date +%s)" >> "$GITHUB_OUTPUT"
+
+      - name: Create OpenID Connect integration
+        shell: bash
+        run: |
+          curl -X POST "${{ secrets.JFROG_PLATFORM_URL }}/access/api/v1/oidc" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.JFROG_PLATFORM_RT_TOKEN }}" \
+            -d '{
+              "name": "${{ steps.gen-oidc.outputs.oidc_provider_name }}",
+              "issuer_url": "https://token.actions.githubusercontent.com",
+              "provider_type": "GitHub",
+              "enable_permissive_configuration": "true",
+              "description": "Test configuration for CLI version ${{ matrix.cli-version }}"
+            }'
+
+      - name: Create OIDC Identity Mapping
+        shell: bash
+        run: |
+          curl -X POST "${{ secrets.JFROG_PLATFORM_URL }}/access/api/v1/oidc/${{ steps.gen-oidc.outputs.oidc_provider_name }}/identity_mappings" \
+            -H 'Content-Type: application/json' \
+            -H "Authorization: Bearer ${{ secrets.JFROG_PLATFORM_RT_TOKEN }}" \
+            -d '{
+              "name": "oidc-test-mapping",
+              "priority": "1",
+              "claims": {
+                "repository": "${{ github.repository_owner }}/setup-jfrog-cli"
+              },
+              "token_spec": {
+                "scope": "applied-permissions/groups:readers",
+                "expires_in": 30
+              }
+            }'
+
+      # Setup
+      - name: Setup JFrog CLI
+        id: setup-jfrog-cli
+        uses: ./
+        env:
+          JF_URL: ${{ secrets.JFROG_PLATFORM_URL }}
+        with:
+          version: ${{ matrix.cli-version }}
+          oidc-provider-name: ${{ steps.gen-oidc.outputs.oidc_provider_name }}
+
+      # validate successful OIDC configuration
+      - name: Test JFrog CLI connectivity
+        run: jf rt ping
+
+      # Validate step outputs
+      - name: Validate user output
+        shell: bash
+        run: test -n "${{ steps.setup-jfrog-cli.outputs.oidc-user }}"
+
+      - name: Validate token output
+        shell: bash
+        run: test -n "${{ steps.setup-jfrog-cli.outputs.oidc-token }}"
+
+      # Cleanup
+      - name: Delete OIDC integration
+        shell: bash
+        if: always()
+        run: |
+          curl -X DELETE "${{ secrets.JFROG_PLATFORM_URL }}/access/api/v1/oidc/${{ steps.gen-oidc.outputs.oidc_provider_name }}" \
+            -H "Authorization: Bearer ${{ secrets.JFROG_PLATFORM_RT_TOKEN }}"

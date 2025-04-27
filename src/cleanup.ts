@@ -1,5 +1,6 @@
 import * as core from '@actions/core';
 import { Utils } from './utils';
+import { JobSummary } from './job-summary';
 
 async function cleanup() {
     if (await shouldSkipCleanup()) {
@@ -31,7 +32,7 @@ async function cleanup() {
  */
 async function buildInfoPostTasks() {
     const disableAutoBuildPublish: boolean = core.getBooleanInput(Utils.AUTO_BUILD_PUBLISH_DISABLE);
-    const disableJobSummary: boolean = core.getBooleanInput(Utils.JOB_SUMMARY_DISABLE) || !Utils.isJobSummarySupported();
+    const disableJobSummary: boolean = core.getBooleanInput(Utils.JOB_SUMMARY_DISABLE) || !JobSummary.isJobSummarySupported();
     if (disableAutoBuildPublish && disableJobSummary) {
         core.info(`Both auto-build-publish and job-summary are disabled. Skipping Build Info post tasks.`);
         return;
@@ -63,11 +64,11 @@ interface BuildPublishResponse {
 
 async function hasUnpublishedModules(workingDirectory: string): Promise<boolean> {
     // Save the old value of the environment variable to revert it later
-    const origValue: string | undefined = process.env[Utils.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV];
+    const origValue: string | undefined = process.env[JobSummary.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV];
     try {
         core.startGroup('Check for unpublished modules');
         // Avoid saving a command summary for this dry-run command
-        core.exportVariable(Utils.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV, '');
+        core.exportVariable(JobSummary.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV, '');
 
         // Running build-publish command with a dry-run flag to check if there are any unpublished modules, 'silent' to avoid polluting the logs
         const responseStr: string = await Utils.runCliAndGetOutput(['rt', 'build-publish', '--dry-run'], { cwd: workingDirectory });
@@ -80,7 +81,7 @@ async function hasUnpublishedModules(workingDirectory: string): Promise<boolean>
         core.warning('Failed to check if there are any unpublished modules: ' + error);
         return false;
     } finally {
-        core.exportVariable(Utils.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV, origValue);
+        core.exportVariable(JobSummary.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV, origValue);
         core.endGroup();
     }
 }
@@ -147,10 +148,10 @@ async function generateJobSummary() {
     try {
         core.startGroup('Generating Job Summary');
         await Utils.runCli(['generate-summary-markdown']);
-        await Utils.setMarkdownAsJobSummary();
-        await Utils.populateCodeScanningTab();
+        await JobSummary.setMarkdownAsJobSummary();
+        await JobSummary.populateCodeScanningTab();
         // Clear files
-        await Utils.clearCommandSummaryDir();
+        await JobSummary.clearCommandSummaryDir();
     } catch (error) {
         core.warning('Failed while attempting to generate job summary: ' + error);
     } finally {

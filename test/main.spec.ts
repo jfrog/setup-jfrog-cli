@@ -1,22 +1,13 @@
 import * as os from 'os';
 import * as core from '@actions/core';
+import * as exec from '@actions/exec';
 
-import { DownloadDetails, JfrogCredentials, JWTTokenData, Utils } from '../src/utils';
-import * as jsYaml from 'js-yaml';
-import * as fs from 'fs';
-import * as path from 'path';
-import semver = require('semver/preload');
+import { Utils } from '../src/utils';
+import { DownloadDetails, JfrogCredentials } from '../src/types';
 
 jest.mock('os');
+jest.mock('@actions/exec');
 jest.mock('@actions/core');
-jest.mock('@actions/core');
-jest.mock('fs', () => ({
-    promises: {
-        readFile: jest.fn(),
-    },
-    existsSync: jest.fn(),
-}));
-jest.mock('path');
 
 const DEFAULT_CLI_URL: string = 'https://releases.jfrog.io/artifactory/jfrog-cli/';
 const CUSTOM_CLI_URL: string = 'http://127.0.0.1:8081/artifactory/jfrog-cli-remote/';
@@ -122,22 +113,22 @@ describe('Collect JFrog Credentials from env vars exceptions', () => {
     });
 });
 
-function testConfigCommand(expectedServerId: string) {
+async function testConfigCommand(expectedServerId: string) {
     // No url
-    let configCommand: string[] | undefined = Utils.getSeparateEnvConfigArgs({} as JfrogCredentials);
+    let configCommand: string[] | undefined = await Utils.getJfrogCliConfigArgs({} as JfrogCredentials);
     expect(configCommand).toBe(undefined);
 
     let jfrogCredentials: JfrogCredentials = {} as JfrogCredentials;
     jfrogCredentials.jfrogUrl = DEFAULT_CLI_URL;
 
     // No credentials
-    configCommand = Utils.getSeparateEnvConfigArgs(jfrogCredentials);
+    configCommand = await Utils.getJfrogCliConfigArgs(jfrogCredentials);
     expect(configCommand).toStrictEqual([expectedServerId, '--url', DEFAULT_CLI_URL, '--interactive=false', '--overwrite=true']);
 
     // Basic authentication
     jfrogCredentials.username = 'user';
     jfrogCredentials.password = 'password';
-    configCommand = Utils.getSeparateEnvConfigArgs(jfrogCredentials);
+    configCommand = await Utils.getJfrogCliConfigArgs(jfrogCredentials);
     expect(configCommand).toStrictEqual([
         expectedServerId,
         '--url',
@@ -154,7 +145,7 @@ function testConfigCommand(expectedServerId: string) {
     jfrogCredentials.username = '';
     jfrogCredentials.password = '';
     jfrogCredentials.accessToken = 'accessToken';
-    configCommand = Utils.getSeparateEnvConfigArgs(jfrogCredentials);
+    configCommand = await Utils.getJfrogCliConfigArgs(jfrogCredentials);
     expect(configCommand).toStrictEqual([
         expectedServerId,
         '--url',
@@ -178,7 +169,7 @@ describe('JFrog CLI Configuration', () => {
         });
 
         // Before setting a custom server ID, expect the default server ID to be used.
-        testConfigCommand(Utils.getRunDefaultServerId());
+        await testConfigCommand(Utils.getRunDefaultServerId());
 
         // Expect the custom server ID to be used.
         let customServerId: string = 'custom-server-id';
@@ -188,7 +179,7 @@ describe('JFrog CLI Configuration', () => {
             }
             return ''; // Default return value for other arguments
         });
-        testConfigCommand(customServerId);
+        await testConfigCommand(customServerId);
 
         // Expect the servers env var to include both servers.
         const servers: string[] = Utils.getConfiguredJFrogServers();
@@ -292,151 +283,6 @@ test('User agent', () => {
     expect(split[1]).toMatch(/\d*.\d*.\d*/);
 });
 
-describe('extractTokenUser', () => {
-    it('should extract user from subject starting with jfrt@', () => {
-        const subject: string = 'jfrt@/users/johndoe';
-        const result: string = Utils.extractTokenUser(subject);
-        expect(result).toBe('johndoe');
-    });
-
-    it('should extract user from subject containing /users/', () => {
-        const subject: string = '/users/johndoe';
-        const result: string = Utils.extractTokenUser(subject);
-        expect(result).toBe('johndoe');
-    });
-
-    it('should return original subject when it does not start with jfrt@ or contain /users/', () => {
-        const subject: string = 'johndoe';
-        const result: string = Utils.extractTokenUser(subject);
-        expect(result).toBe(subject);
-    });
-
-    it('should handle empty subject', () => {
-        const subject: string = '';
-        const result: string = Utils.extractTokenUser(subject);
-        expect(result).toBe(subject);
-    });
-});
-
-describe('decodeOidcToken', () => {
-    it('should decode valid OIDC token', () => {
-        const oidcToken: string =
-            Buffer.from(JSON.stringify({ sub: 'test' })).toString('base64') +
-            '.eyJzdWIiOiJ0ZXN0In0.' +
-            Buffer.from(JSON.stringify({ sub: 'test' })).toString('base64');
-        const result: JWTTokenData = Utils.decodeOidcToken(oidcToken);
-        expect(result).toEqual({ sub: 'test' });
-    });
-
-    it('should throw error for OIDC token with invalid format', () => {
-        const oidcToken: string = 'invalid.token.format';
-        expect(() => Utils.decodeOidcToken(oidcToken)).toThrow(SyntaxError);
-    });
-
-    it('should throw error for OIDC token without subject', () => {
-        const oidcToken: string =
-            Buffer.from(JSON.stringify({ notSub: 'test' })).toString('base64') +
-            '.eyJub3RTdWIiOiJ0ZXN0In0.' +
-            Buffer.from(JSON.stringify({ notSub: 'test' })).toString('base64');
-        expect(() => Utils.decodeOidcToken(oidcToken)).toThrow('OIDC invalid access token format');
-    });
-});
-
-describe('Job Summaries', () => {
-    describe('Job summaries sanity', () => {
-        it('should not crash if no files were found', async () => {
-            expect(async () => await Utils.setMarkdownAsJobSummary()).not.toThrow();
-        });
-    });
-    describe('Command Summaries Disable Flag', () => {
-        const myCore: jest.Mocked<typeof core> = core as any;
-        beforeEach(() => {
-            delete process.env[Utils.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV];
-            delete process.env.RUNNER_TEMP;
-        });
-
-        it('should not set JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR if disable-job-summary is true', () => {
-            myCore.getBooleanInput = jest.fn().mockImplementation(() => {
-                return true;
-            });
-            Utils.setCliEnv();
-            expect(process.env[Utils.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV]).toBeUndefined();
-        });
-
-        it('should set JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR if disable-job-summary is false', () => {
-            process.env.RUNNER_TEMP = '/tmp';
-            myCore.getBooleanInput = jest.fn().mockImplementation(() => {
-                return false;
-            });
-            myCore.exportVariable = jest.fn().mockImplementation((name: string, val: string) => {
-                process.env[name] = val;
-            });
-            Utils.setCliEnv();
-            expect(process.env[Utils.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV]).toBe('/tmp');
-        });
-
-        it('should handle self-hosted machines and set JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR based on OS temp dir', () => {
-            // Mock os.tmpdir() to simulate different OS temp directories
-            const tempDir: string = '/mocked-temp-dir';
-            jest.spyOn(os, 'tmpdir').mockReturnValue(tempDir);
-
-            myCore.getBooleanInput = jest.fn().mockImplementation(() => {
-                return false;
-            });
-            myCore.exportVariable = jest.fn().mockImplementation((name: string, val: string) => {
-                process.env[name] = val;
-            });
-
-            Utils.setCliEnv();
-
-            expect(process.env[Utils.JFROG_CLI_COMMAND_SUMMARY_OUTPUT_DIR_ENV]).toBe(tempDir);
-        });
-
-        it('Should throw error when failing to get temp dir', () => {
-            // Mock os.tmpdir() to return an empty string
-            jest.spyOn(os, 'tmpdir').mockReturnValue('');
-
-            myCore.getBooleanInput = jest.fn().mockImplementation(() => {
-                return false;
-            });
-            myCore.exportVariable = jest.fn().mockImplementation((name: string, val: string) => {
-                process.env[name] = val;
-            });
-
-            // Expect the function to throw an error
-            expect(() => Utils.setCliEnv()).toThrow('Failed to determine the temporary directory');
-
-            // Restore the mock to avoid affecting other tests
-            jest.restoreAllMocks();
-        });
-    });
-});
-
-describe('isJobSummarySupported', () => {
-    const LATEST_CLI_VERSION: string = 'latest';
-
-    beforeEach(() => {
-        jest.resetAllMocks();
-    });
-
-    it('should return true if the version is the latest', () => {
-        jest.spyOn(core, 'getInput').mockReturnValue(LATEST_CLI_VERSION);
-        expect(Utils.isJobSummarySupported()).toBe(true);
-    });
-
-    it('should return true if the version is greater than or equal to the minimum supported version', () => {
-        const version: string = '2.66.0';
-        jest.spyOn(core, 'getInput').mockReturnValue(version);
-        expect(Utils.isJobSummarySupported()).toBe(true);
-    });
-
-    it('should return false if the version is less than the minimum supported version', () => {
-        const version: string = '2.65.0';
-        jest.spyOn(core, 'getInput').mockReturnValue(version);
-        expect(Utils.isJobSummarySupported()).toBe(false);
-    });
-});
-
 describe('Utils.removeJFrogServers', () => {
     beforeEach(() => {
         jest.clearAllMocks();
@@ -471,181 +317,76 @@ describe('Utils.removeJFrogServers', () => {
     });
 });
 
-describe('getApplicationKey', () => {
-    const mockReadFile: jest.Mock = fs.promises.readFile as jest.Mock;
-    const mockExistsSync: jest.Mock = fs.existsSync as jest.Mock;
-    const mockPath: jest.Mock = path.join as jest.Mock;
-
-    beforeEach(() => {
-        jest.resetAllMocks();
-    });
-
-    it('should return application key from config file', async () => {
-        mockPath.mockReturnValue('mocked-path');
-        mockExistsSync.mockReturnValue(true);
-        mockReadFile.mockResolvedValue(jsYaml.dump({ application: { key: 'config-app-key' } }));
-
-        const result: string = await (Utils as any).getApplicationKey();
-        expect(result).toBe('config-app-key');
-        expect(mockReadFile).toHaveBeenCalledWith('mocked-path', 'utf-8');
-    });
-
-    it('should return empty string if config file does not exist', async () => {
-        mockPath.mockReturnValue('mocked-path');
-        mockExistsSync.mockReturnValue(false);
-
-        const result: string = await (Utils as any).getApplicationKey();
-        expect(result).toBe('');
-        expect(mockReadFile).not.toHaveBeenCalled();
-    });
-
-    it('should return empty string if config file is empty', async () => {
-        mockPath.mockReturnValue('mocked-path');
-        mockExistsSync.mockReturnValue(true);
-        mockReadFile.mockResolvedValue('');
-
-        const result: string = await (Utils as any).getApplicationKey();
-        expect(result).toBe('');
-    });
-
-    it('should return empty string if application root is not found in config file', async () => {
-        mockPath.mockReturnValue('mocked-path');
-        mockExistsSync.mockReturnValue(true);
-        mockReadFile.mockResolvedValue(jsYaml.dump({}));
-
-        const result: string = await (Utils as any).getApplicationKey();
-        expect(result).toBe('');
-    });
-
-    it('should return empty string if application key is not found in config file', async () => {
-        mockPath.mockReturnValue('mocked-path');
-        mockExistsSync.mockReturnValue(true);
-        mockReadFile.mockResolvedValue(jsYaml.dump({ application: {} }));
-
-        const result: string = await (Utils as any).getApplicationKey();
-        expect(result).toBe('');
-    });
-});
-
-describe('Test correct encoding of badge URL', () => {
-    describe('getUsageBadge', () => {
-        beforeEach(() => {
-            process.env.JF_URL = 'https://example.jfrog.io/';
-            process.env.GITHUB_RUN_ID = '123';
-        });
-
-        afterEach(() => {
-            delete process.env.JF_URL;
-            delete process.env.GITHUB_WORKFLOW;
-            delete process.env.GITHUB_REPOSITORY;
-            delete process.env.GITHUB_RUN_ID;
-        });
-
-        it('should return the correct usage badge URL', () => {
-            process.env.GITHUB_WORKFLOW = 'test-job';
-            process.env.GITHUB_REPOSITORY = 'test/repo';
-            const expectedBadge: string = '![](https://example.jfrog.io/ui/api/v1/u?s=1&m=1&job_id=test-job&run_id=123&git_repo=test%2Frepo)';
-            expect(Utils.getUsageBadge()).toBe(expectedBadge);
-        });
-
-        it('should URL encode the job ID and repository with spaces', () => {
-            process.env.GITHUB_WORKFLOW = 'test job';
-            process.env.GITHUB_REPOSITORY = 'test repo';
-            const expectedBadge: string = '![](https://example.jfrog.io/ui/api/v1/u?s=1&m=1&job_id=test+job&run_id=123&git_repo=test+repo)';
-            expect(Utils.getUsageBadge()).toBe(expectedBadge);
-        });
-
-        it('should URL encode the job ID and repository with special characters', () => {
-            process.env.GITHUB_WORKFLOW = 'test/job@workflow';
-            process.env.GITHUB_REPOSITORY = 'test/repo@special';
-            const expectedBadge: string =
-                '![](https://example.jfrog.io/ui/api/v1/u?s=1&m=1&job_id=test%2Fjob%40workflow&run_id=123&git_repo=test%2Frepo%40special)';
-            expect(Utils.getUsageBadge()).toBe(expectedBadge);
-        });
-
-        it('should handle missing environment variables gracefully', () => {
-            delete process.env.GITHUB_WORKFLOW;
-            delete process.env.GITHUB_REPOSITORY;
-            const expectedBadge: string = '![](https://example.jfrog.io/ui/api/v1/u?s=1&m=1&job_id=&run_id=123&git_repo=)';
-            expect(Utils.getUsageBadge()).toBe(expectedBadge);
-        });
-    });
-});
-
-describe('getSeparateEnvConfigArgs', () => {
+describe('getJfrogCliConfigArgs', () => {
     beforeEach(() => {
         jest.spyOn(core, 'getInput').mockReturnValue('');
         jest.spyOn(core, 'setSecret').mockImplementation(() => {});
     });
 
     afterEach(() => {
+        jest.clearAllMocks();
         jest.restoreAllMocks();
     });
 
-    it('should return undefined if URL is not set', () => {
+    it('should return undefined if URL is not set', async () => {
         const creds: JfrogCredentials = {} as JfrogCredentials;
-        expect(Utils.getSeparateEnvConfigArgs(creds)).toBeUndefined();
+        expect(await Utils.getJfrogCliConfigArgs(creds)).toBeUndefined();
     });
 
-    it('should use access token if provided', () => {
+    it('should use access token if provided', async () => {
         const creds: JfrogCredentials = {
             jfrogUrl: 'https://example.jfrog.io',
             accessToken: 'abc',
         } as JfrogCredentials;
-        const args: string[] | undefined = Utils.getSeparateEnvConfigArgs(creds);
+        const args: string[] | undefined = await Utils.getJfrogCliConfigArgs(creds);
         expect(args).toContain('--access-token');
         expect(args).toContain('abc');
     });
 
-    it('should use username and password if provided and access token is not', () => {
+    it('should use username and password if provided and access token is not', async () => {
         const creds: JfrogCredentials = {
             jfrogUrl: 'https://example.jfrog.io',
             username: 'admin',
             password: '1234',
         } as JfrogCredentials;
-        const args: string[] | undefined = Utils.getSeparateEnvConfigArgs(creds);
+        const args: string[] | undefined = await Utils.getJfrogCliConfigArgs(creds);
         expect(args).toContain('--user');
         expect(args).toContain('admin');
         expect(args).toContain('--password');
         expect(args).toContain('1234');
     });
 
-    it('should use OIDC provider if specified', () => {
-        const creds: JfrogCredentials = {
-            jfrogUrl: 'https://example.jfrog.io',
-            oidcProviderName: 'setup-jfrog-cli',
-            oidcTokenId: 'abc-123',
-            oidcAudience: 'jfrog-github',
-        } as JfrogCredentials;
-        const args: string[] | undefined = Utils.getSeparateEnvConfigArgs(creds);
-        expect(args).toContain('--oidc-provider-name=setup-jfrog-cli');
-        expect(args).toContain('--oidc-provider-type=Github');
-        expect(args).toContain('--oidc-token-id=abc-123');
-        expect(args).toContain('--oidc-audience=jfrog-github');
-    });
-    it('should not include conflicting or duplicate arguments in the config command', () => {
+    it('should not include conflicting or duplicate arguments in the config command', async () => {
         const jfrogCredentials: JfrogCredentials = {
             jfrogUrl: 'https://example.jfrog.io',
             username: 'test-user',
             password: 'test-password',
+            // Notice this isn't the access token expected, expected OIDC exchanged token
             accessToken: 'test-access-token',
             oidcProviderName: 'oidc-integration-test-provider',
             oidcAudience: 'jfrog-github',
             oidcTokenId: '',
         };
+        jest.spyOn(core, 'getIDToken').mockResolvedValue('mock-token-id');
+        jest.spyOn(exec, 'getExecOutput').mockResolvedValue({
+            stdout: '{AccessToken: abc Username: def }',
+            exitCode: 0,
+            stderr: '',
+        });
+        const configArgs: string[] | undefined = await Utils.getJfrogCliConfigArgs(jfrogCredentials);
 
-        const configArgs: string[] | undefined = Utils.getSeparateEnvConfigArgs(jfrogCredentials);
-
-        // Ensure the command does not include conflicting or duplicate arguments
+        // Ensure we generate a config command with access token auth after exchanging OIDC token
         const configString: string = configArgs?.join(' ') || '';
         expect(configString).toContain('--url https://example.jfrog.io');
         expect(configString).toContain('--interactive=false');
         expect(configString).toContain('--overwrite=true');
-        expect(configString).toContain('--oidc-provider-name=oidc-integration-test-provider');
-        expect(configString).toContain('--oidc-audience=jfrog-github');
-        expect(configString).not.toContain('--access-token test-access-token --username test-user'); // Ensure no conflicting auth methods
+        expect(configString).toContain('--access-token abc');
+        expect(configString).not.toContain('--oidc-provider-name=oidc-integration-test-provider');
+        expect(configString).not.toContain('--username test-user');
+        expect(configString).not.toContain('--oidc-audience=jfrog-github');
     });
-    it('Access Token Auth should be prioritized over basic auth', () => {
+
+    it('should use access token when provided with password', async () => {
         const jfrogCredentials: JfrogCredentials = {
             jfrogUrl: 'https://example.jfrog.io',
             username: 'test-user',
@@ -655,127 +396,12 @@ describe('getSeparateEnvConfigArgs', () => {
             oidcAudience: '',
             oidcTokenId: '',
         };
-
-        const configArgs: string[] | undefined = Utils.getSeparateEnvConfigArgs(jfrogCredentials);
-
-        // Ensure the command does not include conflicting or duplicate arguments
+        const configArgs: string[] | undefined = await Utils.getJfrogCliConfigArgs(jfrogCredentials);
         const configString: string = configArgs?.join(' ') || '';
         expect(configString).toContain('--url https://example.jfrog.io');
         expect(configString).toContain('--interactive=false');
         expect(configString).toContain('--overwrite=true');
         expect(configString).toContain('--access-token test-access-token');
         expect(configString).not.toContain('--username test-user');
-    });
-});
-
-describe('handleOidcAuth', () => {
-    const credentials: JfrogCredentials = {
-        jfrogUrl: 'https://test.jfrog.io',
-        username: undefined,
-        password: undefined,
-        accessToken: undefined,
-        oidcProviderName: 'test-provider',
-        oidcAudience: 'jfrog-github',
-        oidcTokenId: undefined,
-    };
-
-    afterEach(() => {
-        jest.restoreAllMocks();
-    });
-
-    it('should throw if GitHub fails to return ID token', async () => {
-        jest.spyOn(core, 'getIDToken').mockRejectedValue(new Error('mock failure'));
-        const creds: any = { ...credentials };
-        await expect(Utils.handleOidcAuth(creds)).rejects.toThrow('Failed to fetch OpenID Connect JSON Web Token');
-    });
-
-    it('should call setOidcTokenID when CLI version is >= 2.75.0', async () => {
-        jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
-            if (name === Utils.CLI_VERSION_ARG) return '2.75.0';
-            return '';
-        });
-        jest.spyOn(semver, 'gte').mockReturnValue(true);
-        jest.spyOn(Utils as any, 'getIdToken').mockResolvedValue('mock-token-id');
-
-        const result: JfrogCredentials = await (Utils as any).handleOidcAuth(credentials);
-        expect(result.oidcTokenId).toBe('mock-token-id');
-    });
-
-    it('should call manualOIDCExchange when CLI version is < 2.75.0', async () => {
-        jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
-            if (name === Utils.CLI_VERSION_ARG) return '2.74.0';
-            if (name === 'oidc-audience') return 'aud';
-            return '';
-        });
-        jest.spyOn(semver, 'gte').mockReturnValue(false);
-        jest.spyOn(core, 'getIDToken').mockResolvedValue('dummy-jwt');
-        jest.spyOn(Utils as any, 'getApplicationKey').mockResolvedValue('dummy-app-key');
-
-        jest.spyOn(Utils as any, 'exchangeOidcAndSetAsAccessToken').mockResolvedValue({
-            ...credentials,
-            accessToken: 'legacy-token',
-        });
-
-        const result: JfrogCredentials = await (Utils as any).handleOidcAuth(credentials);
-
-        expect(result.accessToken).toBe('legacy-token');
-    });
-
-    it('should fallback to manualOIDCExchange when download repository is set even if CLI is >= 2.75.0', async () => {
-        jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
-            if (name === Utils.CLI_VERSION_ARG) return '2.75.0';
-            if (name === Utils.CLI_REMOTE_ARG) return 'jfrog-cli-remote'; // Simulate presence of remote arg
-            if (name === 'oidc-audience') return 'aud';
-            return '';
-        });
-        jest.spyOn(semver, 'gte').mockReturnValue(true);
-        jest.spyOn(core, 'getIDToken').mockResolvedValue('dummy-jwt');
-        jest.spyOn(Utils as any, 'getApplicationKey').mockResolvedValue('dummy-app-key');
-        jest.spyOn(Utils as any, 'exchangeOidcAndSetAsAccessToken').mockResolvedValue({
-            ...credentials,
-            accessToken: 'forced-manual-token',
-        });
-
-        const result: JfrogCredentials = await (Utils as any).handleOidcAuth(credentials);
-        expect(result.accessToken).toBe('forced-manual-token');
-    });
-    it('should include OIDC flags only for supported versions', () => {
-        const creds: JfrogCredentials = {
-            jfrogUrl: 'https://example.jfrog.io',
-            oidcProviderName: 'setup-jfrog-cli',
-            oidcTokenId: 'abc-123',
-            oidcAudience: 'jfrog-github',
-        } as JfrogCredentials;
-
-        jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
-            if (name === Utils.CLI_VERSION_ARG) return '2.75.0'; // Supported version
-            return '';
-        });
-
-        const args: string[] | undefined = Utils.getSeparateEnvConfigArgs(creds);
-        expect(args).toContain('--oidc-provider-name=setup-jfrog-cli');
-        expect(args).toContain('--oidc-provider-type=Github');
-        expect(args).toContain('--oidc-token-id=abc-123');
-        expect(args).toContain('--oidc-audience=jfrog-github');
-    });
-
-    it('should not include OIDC flags for unsupported versions', () => {
-        const creds: JfrogCredentials = {
-            jfrogUrl: 'https://example.jfrog.io',
-            oidcProviderName: 'setup-jfrog-cli',
-            oidcTokenId: 'abc-123',
-            oidcAudience: 'jfrog-github',
-        } as JfrogCredentials;
-
-        jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
-            if (name === Utils.CLI_VERSION_ARG) return '2.74.0'; // Unsupported version
-            return '';
-        });
-
-        const args: string[] | undefined = Utils.getSeparateEnvConfigArgs(creds);
-        expect(args).not.toContain('--oidc-provider-name=setup-jfrog-cli');
-        expect(args).not.toContain('--oidc-provider-type=Github');
-        expect(args).not.toContain('--oidc-token-id=abc-123');
-        expect(args).not.toContain('--oidc-audience=jfrog-github');
     });
 });

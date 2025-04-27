@@ -1,4 +1,8 @@
-name: Auto Build Publish Test
+name: Auto Build Publish Test And Job Summary
+# This test ensures that the auto build and publish process works correctly and that the job summary is generated.
+# These two are interconnected, as the summary must be generated.
+# This test only verifies its existence, not its content,
+# which is covered in the unit tests.
 on:
   push:
     branches:
@@ -81,3 +85,12 @@ jobs:
         run: |
           jf npm-config --repo-resolve npm-remote
           jf npm install
+
+      - name: Validate job summary was written (sanity check)
+        shell: bash
+        run: |
+          if [ ! -s "$GITHUB_STEP_SUMMARY" ]; then
+            echo "❌ Job summary file is empty!"
+            exit 1
+          fi
+          echo "✅ Job summary written!"
