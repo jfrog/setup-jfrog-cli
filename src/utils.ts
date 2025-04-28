@@ -99,6 +99,9 @@ export class Utils {
             core.info('Found JFrog CLI in cache. No need to download');
             return;
         }
+        if (jfrogCredentials.oidcProviderName && cliRemote != '') {
+            jfrogCredentials.accessToken = await OidcUtils.exchangeOidcToken(jfrogCredentials);
+        }
         // Download JFrog CLI
         let downloadDetails: DownloadDetails = Utils.extractDownloadDetails(cliRemote, jfrogCredentials);
         let url: string = Utils.getCliUrl(version, Utils.getJFrogExecutableName(), downloadDetails);
