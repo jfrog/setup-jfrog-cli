@@ -95,9 +95,6 @@ export class Utils {
         if (!isLatestVer && lt(version, this.MIN_CLI_VERSION)) {
             throw new Error('Requested to download JFrog CLI version ' + version + ' but must be at least ' + this.MIN_CLI_VERSION);
         }
-        if (jfrogCredentials.oidcProviderName && cliRemote != '') {
-            throw new Error('OIDC credentials are not supported for CLI remote downloads, please use an access token instead.');
-        }
         if (!isLatestVer && this.loadFromCache(version)) {
             core.info('Found JFrog CLI in cache. No need to download');
             return;
