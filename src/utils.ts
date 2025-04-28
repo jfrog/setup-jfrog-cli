@@ -100,7 +100,7 @@ export class Utils {
             return;
         }
         if (jfrogCredentials.oidcProviderName && cliRemote != '') {
-            core.info("'Fetching OIDC access token to download CLI from remote repository");
+            core.debug("'Fetching OIDC access token to download CLI from remote repository");
             jfrogCredentials.accessToken = await OidcUtils.exchangeOidcToken(jfrogCredentials);
         }
         // Download JFrog CLI
