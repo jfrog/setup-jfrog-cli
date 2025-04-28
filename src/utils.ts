@@ -99,6 +99,8 @@ export class Utils {
             core.info('Found JFrog CLI in cache. No need to download');
             return;
         }
+        // To download CLI from a remote repository, we first need to fetch an access token.
+        // This should fall back to the 'manual' oidc exchange method.
         if (jfrogCredentials.oidcProviderName && cliRemote != '') {
             core.debug("'Fetching OIDC access token to download CLI from remote repository");
             jfrogCredentials.accessToken = await OidcUtils.exchangeOidcToken(jfrogCredentials);
