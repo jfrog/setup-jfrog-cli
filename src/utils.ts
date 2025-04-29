@@ -52,7 +52,7 @@ export class Utils {
     public static readonly AUTO_BUILD_PUBLISH_DISABLE: string = 'disable-auto-build-publish';
     // Custom server ID input
     private static readonly CUSTOM_SERVER_ID: string = 'custom-server-id';
-    private static DEFAULT_OIDC_AUDIENCE: string = 'jfrog-github';
+    public static DEFAULT_OIDC_AUDIENCE: string = 'jfrog-github';
 
     /**
      * Gathers JFrog's credentials from environment variables and delivers them in a JfrogCredentials structure

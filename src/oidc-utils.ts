@@ -68,9 +68,12 @@ export class OidcUtils {
         if (creds.oidcProviderName === undefined || creds.oidcTokenId === undefined || creds.jfrogUrl === undefined) {
             throw new Error('Missing one or more required fields: OIDC provider name, token ID, or JFrog Platform URL.');
         }
-
+        core.info("---------------------------------")
+        core.info("audience: " + creds.oidcAudience);
+        core.info("provider name: " + creds.oidcProviderName);
+        core.info("---------------------------------")
         output = await Utils.runCliAndGetOutput(
-            ['eot', creds.oidcProviderName, creds.oidcTokenId, '--url', creds.jfrogUrl, '--oidc-audience', creds.oidcAudience || 'jfrog-github'],
+            ['eot', creds.oidcProviderName, creds.oidcTokenId, '--url', creds.jfrogUrl, '--oidc-audience', creds.oidcAudience || Utils.DEFAULT_OIDC_AUDIENCE],
             { silent: true },
         );
 
