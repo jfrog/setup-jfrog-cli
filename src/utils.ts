@@ -203,7 +203,6 @@ export class Utils {
          * @name password - JFrog Platform basic authentication
          * @name accessToken - Jfrog Platform access token
          * @name oidcProviderName - OpenID Connect provider name defined in the JFrog Platform
-         * @name oidcAudience - JFrog Platform OpenID Connect audience
          */
         let url: string | undefined = jfrogCredentials.jfrogUrl;
         let user: string | undefined = jfrogCredentials.username;
