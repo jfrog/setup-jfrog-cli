@@ -9,7 +9,7 @@ name: OIDC Integration Test
 on:
   push:
     branches:
-      - master
+      - "**"
   # Triggers the workflow on labeled PRs only.
   pull_request_target:
     types: [ labeled ]
@@ -29,6 +29,7 @@ jobs:
       matrix:
         os: [ ubuntu, macos, windows ]
         cli-version: [ '2.74.1', '2.75.0','latest' ]
+        audience_value: [ '' ,'','test-assigned' ]
     runs-on: ${{ matrix.os }}-latest
     name: OIDC Test - ${{ matrix.cli-version }} on ${{ matrix.os }}
     env:
@@ -58,6 +59,7 @@ jobs:
               "name": "${{ steps.gen-oidc.outputs.oidc_provider_name }}",
               "issuer_url": "https://token.actions.githubusercontent.com",
               "provider_type": "GitHub",
+              "audience": ${{ matrix.audience_value }},",
               "enable_permissive_configuration": "true",
               "description": "Test configuration for CLI version ${{ matrix.cli-version }}"
             }'
@@ -76,7 +78,7 @@ jobs:
               },
               "token_spec": {
                 "scope": "applied-permissions/groups:readers",
-                "expires_in": 30
+                "expires_in": 10
               }
             }'
 
@@ -89,6 +91,7 @@ jobs:
         with:
           version: ${{ matrix.cli-version }}
           oidc-provider-name: ${{ steps.gen-oidc.outputs.oidc_provider_name }}
+          oidc-audience: ${{ matrix.audience_value }}
 
       # validate successful OIDC configuration
       - name: Test JFrog CLI connectivity
