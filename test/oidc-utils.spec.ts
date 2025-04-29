@@ -88,6 +88,7 @@ describe('OidcUtils', (): void => {
         it('should throw if creds are missing required fields', async (): Promise<void> => {
             const incompleteCreds: JfrogCredentials = {
                 jfrogUrl: 'https://example.jfrog.io',
+                oidcAudience: ''
                 // missing provider and token ID
             };
 

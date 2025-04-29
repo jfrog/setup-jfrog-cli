@@ -41,7 +41,7 @@ export class OidcUtils {
             throw new Error(`JF_URL must be provided when oidc-provider-name is specified`);
         }
         // Get OIDC token ID from GitHub
-        jfrogCredentials.oidcTokenId = await this.getIdToken(jfrogCredentials.oidcAudience || '');
+        jfrogCredentials.oidcTokenId = await this.getIdToken(jfrogCredentials.oidcAudience);
 
         // Version should be more than min version
         // If CLI_REMOTE_ARG specified, we have to fetch token before we can download the CLI.
@@ -68,12 +68,8 @@ export class OidcUtils {
         if (creds.oidcProviderName === undefined || creds.oidcTokenId === undefined || creds.jfrogUrl === undefined) {
             throw new Error('Missing one or more required fields: OIDC provider name, token ID, or JFrog Platform URL.');
         }
-        core.info("---------------------------------")
-        core.info("audience: " + creds.oidcAudience);
-        core.info("provider name: " + creds.oidcProviderName);
-        core.info("---------------------------------")
         output = await Utils.runCliAndGetOutput(
-            ['eot', creds.oidcProviderName, creds.oidcTokenId, '--url', creds.jfrogUrl, '--oidc-audience', creds.oidcAudience || Utils.DEFAULT_OIDC_AUDIENCE],
+            ['eot', creds.oidcProviderName, creds.oidcTokenId, '--url', creds.jfrogUrl, '--oidc-audience', creds.oidcAudience],
             { silent: true },
         );
 
