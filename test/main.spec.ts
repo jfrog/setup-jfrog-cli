@@ -111,6 +111,24 @@ describe('Collect JFrog Credentials from env vars exceptions', () => {
         process.env['JF_PASSWORD'] = password;
         expect(() => Utils.collectJfrogCredentialsFromEnvVars()).toThrow(new Error(exception));
     });
+
+    test('collectJfrogCredentialsFromEnvVars should return default values when no environment variables are set', () => {
+        // Ensure no relevant environment variables are set
+        delete process.env['JF_URL'];
+        delete process.env['JF_ACCESS_TOKEN'];
+        delete process.env['JF_USER'];
+        delete process.env['JF_PASSWORD'];
+
+        // Call the function
+        const jfrogCredentials: JfrogCredentials = Utils.collectJfrogCredentialsFromEnvVars();
+
+        // Verify default values
+        expect(jfrogCredentials.jfrogUrl).toBeUndefined();
+        expect(jfrogCredentials.accessToken).toBeUndefined();
+        expect(jfrogCredentials.username).toBeUndefined();
+        expect(jfrogCredentials.password).toBeUndefined();
+        expect(jfrogCredentials.oidcAudience).toBeUndefined()
+    });
 });
 
 async function testConfigCommand(expectedServerId: string) {
