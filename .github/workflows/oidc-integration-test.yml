@@ -29,6 +29,7 @@ jobs:
       matrix:
         os: [ ubuntu, macos, windows ]
         cli-version: [ '2.74.1', '2.75.0','latest' ]
+        audience_value: [ '' ,'','github-jfrog' ]
     runs-on: ${{ matrix.os }}-latest
     name: OIDC Test - ${{ matrix.cli-version }} on ${{ matrix.os }}
     env:
