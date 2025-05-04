@@ -9,7 +9,7 @@ name: OIDC Integration Test
 on:
   push:
     branches:
-      - "**"
+      - "master"
   # Triggers the workflow on labeled PRs only.
   pull_request_target:
     types: [ labeled ]
@@ -26,7 +26,7 @@ jobs:
   generate-oidc-integration:
     strategy:
       matrix:
-        # This has to match the second audience value in the workflow
+        # This has to match the second audience value in the workflow, under oidc-test matrix.
         audience_value: [ '' ,'test-audience','github-jfrog' ]
     runs-on: ubuntu-latest
     outputs:
@@ -82,7 +82,7 @@ jobs:
       matrix:
         os: [ ubuntu, macos, windows ]
         cli-version: [ '2.74.1', '2.75.0','latest' ]
-        # This has to match the second audience value in the workflow
+        # This has to match the second audience value in the workflow under generate-oidc-integration matrix.
         audience_value: [ '' ,'test-audience','github-jfrog' ]
     runs-on: ${{ matrix.os }}-latest
     env:
