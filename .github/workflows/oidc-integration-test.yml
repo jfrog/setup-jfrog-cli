@@ -91,14 +91,14 @@ jobs:
             audience_value: 'test-audience'
           - cli-version: '2.74.1'
             audience_id: github-default
-            audience_value: 'https://github.com/eyaldelarea'
+            audience_value: ''
           - cli-version: '2.75.0'
             audience_id: github-default
-            audience_value: 'https://github.com/eyaldelarea'
+            audience_value: ''
           - cli-version: latest
             audience_id: github-default
-            audience_value: 'https://github.com/eyaldelarea'
-    runs-on: ${{ matrix.os }}-latest
+            audience_value: ''
+    runs-on: ubuntu-latest
     env:
       JFROG_CLI_LOG_LEVEL: DEBUG
     steps:
