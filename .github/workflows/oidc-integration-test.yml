@@ -80,7 +80,7 @@ jobs:
           - os: ubuntu
             cli-version: latest
             audience_id: github-default
-            audience_value: 'https://github.com/eyaldelarea'
+            audience_value: ''
           - os: macos
             cli-version: latest
             audience_id: github-default
