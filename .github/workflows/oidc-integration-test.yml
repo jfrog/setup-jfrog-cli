@@ -1,21 +1,12 @@
 name: OIDC Integration Test
-# This workflow tests the setup-jfrog-cli GitHub Action's OpenID Connect integration across OSes and CLI versions.
-# It ensures backward compatibility with older CLI versions and validates step outputs and connectivity.
-# CLI versions used:
-# - 2.74.1: Does not support `jf eot` command, validates manual fallback logic.
-# - 2.75.0: Introduced native OIDC token exchange.
-# - Latest: Ensures ongoing compatibility with the most recent CLI build.
 
 on:
   push:
     branches:
-      # - master
-      # TODO remove this before merge
       - "**"
-  # Triggers the workflow on labeled PRs only.
   pull_request_target:
     types: [ labeled ]
-# Ensures that only the latest commit is running for each PR at a time.
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}-${{ github.ref }}
   cancel-in-progress: true
@@ -24,12 +15,16 @@ permissions:
   id-token: write
   contents: read
 
+audience_values: &audience_values
+  - ''
+  - 'test-audience'
+  - 'github-jfrog'
+
 jobs:
   generate-platform-oidc-integration:
     strategy:
       matrix:
-        # This has to match the second audience value in the workflow, under oidc-test matrix.
-        audience_value: [ '' ,'test-audience','github-jfrog' ]
+        audience_value: *audience_values
     runs-on: ubuntu-latest
     outputs:
       oidc_provider_name: ${{ steps.gen-oidc.outputs.oidc_provider_name }}
@@ -83,9 +78,8 @@ jobs:
       fail-fast: false
       matrix:
         os: [ ubuntu, macos, windows ]
-        cli-version: [ '2.74.1', '2.75.0','latest' ]
-        # This has to match the second audience value in the workflow under generate-oidc-integration matrix.
-        audience_value: [ '' ,'test-audience','github-jfrog' ]
+        cli-version: [ '2.74.1', '2.75.0', 'latest' ]
+        audience_value: *audience_values
     runs-on: ${{ matrix.os }}-latest
     env:
       JFROG_CLI_LOG_LEVEL: DEBUG
@@ -118,11 +112,14 @@ jobs:
 
   cleanup-oidc-integration:
     needs: oidc-test
+    strategy:
+      matrix:
+        audience_value: *audience_values
     runs-on: ubuntu-latest
     if: always()
     steps:
       - name: Delete OIDC integration
         shell: bash
         run: |
-          curl -X DELETE "${{ secrets.JFROG_PLATFORM_URL }}/access/api/v1/oidc/${{ needs.generate-platform-oidc-integration.outputs.oidc_provider_name }}" \
+          curl -X DELETE "${{ secrets.JFROG_PLATFORM_URL }}/access/api/v1/oidc/oidc-integration-${{ matrix.audience_value }}-${{ github.run_id }}" \
             -H "Authorization: Bearer ${{ secrets.JFROG_PLATFORM_RT_TOKEN }}"
