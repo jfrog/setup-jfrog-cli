@@ -47,7 +47,7 @@ jobs:
         shell: bash
         run: |
           cli_version="${{ matrix.cli-version }}" && cli_version="${cli_version//./-}"
-          echo "oidc_provider_name=oidc-integration-${cli_version}-${{ matrix.os }}-$(date +%s)" >> "$GITHUB_OUTPUT"
+          echo "oidc_provider_name=oidc-integration-${cli_version}-${{ matrix.os }}-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
 
       - name: Create OpenID Connect integration
         shell: bash
