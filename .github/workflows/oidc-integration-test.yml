@@ -26,6 +26,7 @@ jobs:
   generate-oidc-integration:
     strategy:
       matrix:
+        # This has to match the second audience value in the workflow
         audience_value: [ '' ,'test-audience','github-jfrog' ]
     runs-on: ubuntu-latest
     outputs:
@@ -81,6 +82,7 @@ jobs:
       matrix:
         os: [ ubuntu, macos, windows ]
         cli-version: [ '2.74.1', '2.75.0','latest' ]
+        # This has to match the second audience value in the workflow
         audience_value: [ '' ,'test-audience','github-jfrog' ]
     runs-on: ${{ matrix.os }}-latest
     env:
