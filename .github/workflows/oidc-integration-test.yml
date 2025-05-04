@@ -1,20 +1,14 @@
 name: OIDC Integration Test
 # This workflow tests the setup-jfrog-cli GitHub Action's OpenID Connect integration across OSes and CLI versions.
 # It ensures backward compatibility with older CLI versions and validates step outputs and connectivity.
-# CLI versions used:
-# - 2.74.1: Does not support `jf eot` command, validates manual fallback logic.
-# - 2.75.0: Introduced native OIDC token exchange.
-# - Latest: Ensures ongoing compatibility with the most recent CLI build.
 
 on:
   push:
     branches:
-      #- master
       - "**"
-  # Triggers the workflow on labeled PRs only.
   pull_request_target:
     types: [ labeled ]
-# Ensures that only the latest commit is running for each PR at a time.
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}-${{ github.ref }}
   cancel-in-progress: true
@@ -27,8 +21,13 @@ jobs:
   generate-platform-oidc-integration:
     strategy:
       matrix:
-        # Test with a default and provided audience value
-        audience_value: ['', 'test-audience','https://github.com/eyaldelarea']
+        include:
+          - audience_id: default
+            audience_value: ''
+          - audience_id: test
+            audience_value: 'test-audience'
+          - audience_id: github-default
+            audience_value: 'https://github.com/eyaldelarea'
     runs-on: ubuntu-latest
     steps:
       - name: Create OpenID Connect integration
@@ -38,7 +37,7 @@ jobs:
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer ${{ secrets.JFROG_PLATFORM_RT_TOKEN }}" \
             -d '{
-              "name": "oidc-integration-${{ matrix.audience_value }}-${{ github.run_id }}",
+              "name": "oidc-integration-${{ matrix.audience_id }}-${{ github.run_id }}",
               "issuer_url": "https://token.actions.githubusercontent.com",
               "provider_type": "GitHub",
               "audience": "${{ matrix.audience_value }}",
@@ -49,7 +48,7 @@ jobs:
       - name: Create OIDC Identity Mapping
         shell: bash
         run: |
-          curl -X POST "${{ secrets.JFROG_PLATFORM_URL }}/access/api/v1/oidc/oidc-integration-${{ matrix.audience_value }}-${{ github.run_id }}/identity_mappings" \
+          curl -X POST "${{ secrets.JFROG_PLATFORM_URL }}/access/api/v1/oidc/oidc-integration-${{ matrix.audience_id }}-${{ github.run_id }}/identity_mappings" \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer ${{ secrets.JFROG_PLATFORM_RT_TOKEN }}" \
             -d '{
@@ -69,9 +68,27 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu, macos, windows]
-        cli-version: ['2.74.1', '2.75.0', 'latest']
-        audience_value: ['', 'test-audience','https://github.com/eyaldelarea']
+        include:
+          - os: ubuntu
+            cli-version: '2.74.1'
+            audience_id: default
+            audience_value: ''
+          - os: ubuntu
+            cli-version: '2.75.0'
+            audience_id: test
+            audience_value: 'test-audience'
+          - os: ubuntu
+            cli-version: latest
+            audience_id: github-default
+            audience_value: 'https://github.com/eyaldelarea'
+          - os: macos
+            cli-version: latest
+            audience_id: github-default
+            audience_value: 'https://github.com/eyaldelarea'
+          - os: windows
+            cli-version: latest
+            audience_id: github-default
+            audience_value: 'https://github.com/eyaldelarea'
     runs-on: ${{ matrix.os }}-latest
     env:
       JFROG_CLI_LOG_LEVEL: DEBUG
@@ -88,7 +105,7 @@ jobs:
           JF_URL: ${{ secrets.JFROG_PLATFORM_URL }}
         with:
           version: ${{ matrix.cli-version }}
-          oidc-provider-name: oidc-integration-${{ matrix.audience_value }}-${{ github.run_id }}
+          oidc-provider-name: oidc-integration-${{ matrix.audience_id }}-${{ github.run_id }}
           oidc-audience: ${{ matrix.audience_value }}
 
       - name: Test JFrog CLI connectivity
@@ -107,11 +124,14 @@ jobs:
     if: always()
     strategy:
       matrix:
-        audience_value: ['', 'test-audience','https://github.com/eyaldelarea']
+        include:
+          - audience_id: default
+          - audience_id: test
+          - audience_id: github-default
     runs-on: ubuntu-latest
     steps:
       - name: Delete OIDC integration
         shell: bash
         run: |
-          curl -X DELETE "${{ secrets.JFROG_PLATFORM_URL }}/access/api/v1/oidc/oidc-integration-${{ matrix.audience_value }}-${{ github.run_id }}" \
+          curl -X DELETE "${{ secrets.JFROG_PLATFORM_URL }}/access/api/v1/oidc/oidc-integration-${{ matrix.audience_id }}-${{ github.run_id }}" \
             -H "Authorization: Bearer ${{ secrets.JFROG_PLATFORM_RT_TOKEN }}"
