@@ -27,7 +27,7 @@ jobs:
   generate-platform-oidc-integration:
     strategy:
       matrix:
-        audience_value: ['', 'test-audience', 'github-jfrog']
+        audience_value: ['', 'test-audience']
     runs-on: ubuntu-latest
     steps:
       - name: Generate unique OIDC provider name
@@ -75,7 +75,7 @@ jobs:
       matrix:
         os: [ubuntu, macos, windows]
         cli-version: ['2.74.1', '2.75.0', 'latest']
-        audience_value: ['', 'test-audience', 'github-jfrog']
+        audience_value: ['', 'test-audience']
     runs-on: ${{ matrix.os }}-latest
     env:
       JFROG_CLI_LOG_LEVEL: DEBUG
