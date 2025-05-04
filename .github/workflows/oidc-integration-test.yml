@@ -27,6 +27,7 @@ jobs:
   generate-platform-oidc-integration:
     strategy:
       matrix:
+        # Test with a default and provided audience value
         audience_value: ['', 'test-audience']
     runs-on: ubuntu-latest
     steps:
