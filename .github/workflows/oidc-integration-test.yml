@@ -31,11 +31,6 @@ jobs:
         audience_value: ['', 'test-audience']
     runs-on: ubuntu-latest
     steps:
-      - name: Generate unique OIDC provider name
-        id: gen-oidc
-        shell: bash
-        run: echo "oidc_provider_name=oidc-integration-${{ matrix.audience_value }}-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
-
       - name: Create OpenID Connect integration
         shell: bash
         run: |
