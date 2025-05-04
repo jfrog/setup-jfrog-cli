@@ -59,7 +59,7 @@ jobs:
               "name": "${{ steps.gen-oidc.outputs.oidc_provider_name }}",
               "issuer_url": "https://token.actions.githubusercontent.com",
               "provider_type": "GitHub",
-              "audience": "${{ matrix.audience_value }},",
+              "audience": "${{ matrix.audience_value }}",
               "enable_permissive_configuration": "true",
               "description": "Test configuration for CLI version ${{ matrix.cli-version }}"
             }'
