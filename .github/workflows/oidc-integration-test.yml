@@ -111,7 +111,7 @@ jobs:
     if: always()
     strategy:
       matrix:
-        audience_value: ['', 'test-audience', 'github-jfrog']
+        audience_value: ['', 'test-audience']
     runs-on: ubuntu-latest
     steps:
       - name: Delete OIDC integration
