@@ -9,7 +9,7 @@ name: OIDC Integration Test
 on:
   push:
     branches:
-      - "master"
+      - master
   # Triggers the workflow on labeled PRs only.
   pull_request_target:
     types: [ labeled ]
@@ -23,7 +23,7 @@ permissions:
   contents: read
 
 jobs:
-  generate-oidc-integration:
+  generate-platform-oidc-integration:
     strategy:
       matrix:
         # This has to match the second audience value in the workflow, under oidc-test matrix.
@@ -76,7 +76,7 @@ jobs:
         run: echo "oidc_provider_name=${{ steps.gen-oidc.outputs.oidc_provider_name }}" >> "$GITHUB_ENV"
 
   oidc-test:
-    needs: generate-oidc-integration
+    needs: generate-platform-oidc-integration
     strategy:
       fail-fast: false
       matrix:
