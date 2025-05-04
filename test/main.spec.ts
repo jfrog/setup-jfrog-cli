@@ -127,7 +127,7 @@ describe('Collect JFrog Credentials from env vars exceptions', () => {
         expect(jfrogCredentials.accessToken).toBeUndefined();
         expect(jfrogCredentials.username).toBeUndefined();
         expect(jfrogCredentials.password).toBeUndefined();
-        expect(jfrogCredentials.oidcAudience).toBeUndefined()
+        expect(jfrogCredentials.oidcAudience).toEqual("")
     });
 });
 

@@ -9,7 +9,8 @@ name: OIDC Integration Test
 on:
   push:
     branches:
-      - master
+      #- master
+      - "**"
   # Triggers the workflow on labeled PRs only.
   pull_request_target:
     types: [ labeled ]

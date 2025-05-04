@@ -70,7 +70,7 @@ export class OidcUtils {
         }
 
         const args = ['eot', creds.oidcProviderName, creds.oidcTokenId, '--url', creds.jfrogUrl];
-        if (creds.oidcAudience) {
+        if (creds.oidcAudience !== "") {
             args.push('--oidc-audience', creds.oidcAudience);
         }
         output = await Utils.runCliAndGetOutput(args, { silent: true });
