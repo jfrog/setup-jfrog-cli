@@ -18,6 +18,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  AUDIENCE_VALUES: "['', 'test-audience', 'github-jfrog']"
+
 permissions:
   id-token: write
   contents: read
@@ -26,7 +29,7 @@ jobs:
   generate-oidc-integration:
     strategy:
       matrix:
-        audience_value: [ '' ,'test-audience','github-jfrog' ]
+        audience_value: ${{ env.AUDIENCE_VALUES }}
     runs-on: ubuntu-latest
     outputs:
       oidc_provider_name: ${{ steps.gen-oidc.outputs.oidc_provider_name }}
@@ -81,7 +84,7 @@ jobs:
       matrix:
         os: [ ubuntu, macos, windows ]
         cli-version: [ '2.74.1', '2.75.0','latest' ]
-        audience_value: [ '' ,'test-audience','github-jfrog' ]
+        audience_value: ${{ env.AUDIENCE_VALUES }}
     runs-on: ${{ matrix.os }}-latest
     env:
       JFROG_CLI_LOG_LEVEL: DEBUG
