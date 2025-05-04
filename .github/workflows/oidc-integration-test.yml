@@ -1,14 +1,19 @@
 name: OIDC Integration Test
 # This workflow tests the setup-jfrog-cli GitHub Action's OpenID Connect integration across OSes and CLI versions.
 # It ensures backward compatibility with older CLI versions and validates step outputs and connectivity.
-
+# CLI versions used:
+# - 2.74.1: Does not support `jf eot` command, validates manual fallback logic.
+# - 2.75.0: Introduced native OIDC token exchange.
+# - Latest: Ensures ongoing compatibility with the most recent CLI build.
 on:
   push:
     branches:
-      - master
+#      - master
+      - "**"
+  # Triggers the workflow on labeled PRs only.
   pull_request_target:
     types: [ labeled ]
-
+# Ensures that only the latest commit is running for each PR at a time.
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}-${{ github.ref }}
   cancel-in-progress: true
@@ -20,6 +25,14 @@ permissions:
 jobs:
   generate-platform-oidc-integration:
     strategy:
+      # Using "include" here instead of a typical matrix of arrays gives us granular control over combinations.
+      # This is necessary because we need to generate different audience values, some of which contain characters
+      # not suitable for dynamic naming or matrix keys.
+      # Each audience represents a different real-world use case:
+      # - "default": no audience provided, tests implicit GitHub behavior.
+      # - "test": explicitly defined audience for testing purposes.
+      # - "github-explicit-default": GitHub's default audience (explicitly passed) to test edge behavior,
+      # when a user is defining the default audience in the platform but not in the action (leaving empty).
       matrix:
         include:
           - audience_id: default
@@ -28,8 +41,8 @@ jobs:
             audience_value: 'test-audience'
             # When not provided, GitHub resolves the audience value to the URL of the GitHub repository owner.
             # This test makes sure this issue won't happen again https://github.com/jfrog/setup-jfrog-cli/issues/270.
-          - audience_id: github-default
-            audience_value: 'https://github.com/jfrog'
+          - audience_id: github-explicit-default
+            audience_value: 'https://github.com/EyalDelarea'
     runs-on: ubuntu-latest
     steps:
       - name: Create OpenID Connect integration
@@ -69,6 +82,8 @@ jobs:
     needs: generate-platform-oidc-integration
     strategy:
       fail-fast: false
+      # Using include allows exact combinations of CLI version and audience ID to ensure coverage of edge cases.
+      # This avoids invalid audience strings in identifiers and ensures fallback logic is tested selectively.
       matrix:
         include:
           - cli-version: '2.74.1'
@@ -90,13 +105,15 @@ jobs:
             audience_id: test
             audience_value: 'test-audience'
           - cli-version: '2.74.1'
-            audience_id: github-default
+            audience_id: github-explicit-default
+            # GitHub default audience value is resolved implicitly when omitted.
+            # These tests verify that the CLI handles an empty value correctly while GitHub sets the expected audience on its backend.
             audience_value: ''
           - cli-version: '2.75.0'
-            audience_id: github-default
+            audience_id: github-explicit-default
             audience_value: ''
           - cli-version: latest
-            audience_id: github-default
+            audience_id: github-explicit-default
             audience_value: ''
     runs-on: ubuntu-latest
     env:
@@ -136,7 +153,7 @@ jobs:
         include:
           - audience_id: default
           - audience_id: test
-          - audience_id: github-default
+          - audience_id: github-explicit-default
     runs-on: ubuntu-latest
     steps:
       - name: Delete OIDC integration
