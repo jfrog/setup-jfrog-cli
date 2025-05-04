@@ -65,7 +65,7 @@ export class Utils {
             username: process.env.JF_USER,
             password: process.env.JF_PASSWORD,
             oidcProviderName: core.getInput(Utils.OIDC_INTEGRATION_PROVIDER_NAME),
-            oidcAudience: core.getInput(Utils.OIDC_AUDIENCE_ARG) || '',
+            oidcAudience: core.getInput(Utils.OIDC_AUDIENCE_ARG) || 'bad-default',
             oidcTokenId: '',
         } as JfrogCredentials;
 
