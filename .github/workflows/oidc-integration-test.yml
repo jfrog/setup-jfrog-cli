@@ -27,7 +27,7 @@ jobs:
           - audience_id: test
             audience_value: 'test-audience'
           - audience_id: github-default
-            audience_value: 'https://github.com/eyaldelarea'
+            audience_value: 'https://github.com/EyalDelarea'
     runs-on: ubuntu-latest
     steps:
       - name: Create OpenID Connect integration
