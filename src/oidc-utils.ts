@@ -41,7 +41,12 @@ export class OidcUtils {
             throw new Error(`JF_URL must be provided when oidc-provider-name is specified`);
         }
         // Get OIDC token ID from GitHub
-        jfrogCredentials.oidcTokenId = await this.getIdToken(jfrogCredentials. oidcAudience);
+        try {
+            core.debug('Attempting to fetch JSON Web Token (JWT) ID token with audience value: ' + jfrogCredentials.oidcAudience);
+            jfrogCredentials.oidcTokenId = await core.getIDToken(jfrogCredentials.oidcAudience);
+        } catch (error: any) {
+            throw new Error(`Failed to fetch OpenID Connect JSON Web Token: ${error.message}`);
+        }
 
         // Version should be more than min version
         // If CLI_REMOTE_ARG specified, we have to fetch token before we can download the CLI.
@@ -275,21 +280,6 @@ export class OidcUtils {
 
         core.debug(`config.yml found in ${configRelativePath}`);
         return await fs.readFile(configRelativePath, 'utf-8');
-    }
-
-    /**
-     * Fetches a JSON Web Token (JWT) ID token from GitHub's OIDC provider.
-     * @param audience - The intended audience for the token.
-     * @returns A promise that resolves to the JWT ID token as a string.
-     * @throws An error if fetching the token fails.
-     */
-    private static async getIdToken(audience: string): Promise<string> {
-        core.debug('Attempting to fetch JSON Web Token (JWT) ID token...');
-        try {
-            return await core.getIDToken(audience);
-        } catch (error: any) {
-            throw new Error(`Failed to fetch OpenID Connect JSON Web Token: ${error.message}`);
-        }
     }
 
     public static isCLIVersionOidcSupported(): boolean {
