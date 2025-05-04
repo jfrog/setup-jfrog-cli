@@ -26,6 +26,8 @@ jobs:
             audience_value: ''
           - audience_id: test
             audience_value: 'test-audience'
+            # When not provided, GitHub resolves the audience value to the URL of the GitHub repository owner.
+            # This test makes sure this issue won't happen again https://github.com/jfrog/setup-jfrog-cli/issues/270.
           - audience_id: github-default
             audience_value: 'https://github.com/EyalDelarea'
     runs-on: ubuntu-latest
@@ -69,18 +71,33 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu
-            cli-version: '2.74.1'
+          - cli-version: '2.74.1'
             audience_id: default
             audience_value: ''
-          - os: ubuntu
-            cli-version: '2.75.0'
+          - cli-version: '2.75.0'
+            audience_id: default
+            audience_value: ''
+          - cli-version: latest
+            audience_id: default
+            audience_value: ''
+          - cli-version: '2.74.1'
             audience_id: test
             audience_value: 'test-audience'
-          - os: ubuntu
-            cli-version: latest
+          - cli-version: '2.75.0'
+            audience_id: test
+            audience_value: 'test-audience'
+          - cli-version: latest
+            audience_id: test
+            audience_value: 'test-audience'
+          - cli-version: '2.74.1'
             audience_id: github-default
-            audience_value: ''
+            audience_value: 'https://github.com/eyaldelarea'
+          - cli-version: '2.75.0'
+            audience_id: github-default
+            audience_value: 'https://github.com/eyaldelarea'
+          - cli-version: latest
+            audience_id: github-default
+            audience_value: 'https://github.com/eyaldelarea'
     runs-on: ${{ matrix.os }}-latest
     env:
       JFROG_CLI_LOG_LEVEL: DEBUG
@@ -111,19 +128,19 @@ jobs:
         shell: bash
         run: test -n "${{ steps.setup-jfrog-cli.outputs.oidc-token }}"
 
-#  cleanup-oidc-integration:
-#    needs: oidc-test
-#    if: always()
-#    strategy:
-#      matrix:
-#        include:
-#          - audience_id: default
-#          - audience_id: test
-#          - audience_id: github-default
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Delete OIDC integration
-#        shell: bash
-#        run: |
-#          curl -X DELETE "${{ secrets.JFROG_PLATFORM_URL }}/access/api/v1/oidc/oidc-integration-${{ matrix.audience_id }}-${{ github.run_id }}" \
-#            -H "Authorization: Bearer ${{ secrets.JFROG_PLATFORM_RT_TOKEN }}"
+  cleanup-oidc-integration:
+    needs: oidc-test
+    if: always()
+    strategy:
+      matrix:
+        include:
+          - audience_id: default
+          - audience_id: test
+          - audience_id: github-default
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete OIDC integration
+        shell: bash
+        run: |
+          curl -X DELETE "${{ secrets.JFROG_PLATFORM_URL }}/access/api/v1/oidc/oidc-integration-${{ matrix.audience_id }}-${{ github.run_id }}" \
+            -H "Authorization: Bearer ${{ secrets.JFROG_PLATFORM_RT_TOKEN }}"
