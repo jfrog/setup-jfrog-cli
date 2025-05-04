@@ -71,7 +71,7 @@ jobs:
       matrix:
         os: [ubuntu, macos, windows]
         cli-version: ['2.74.1', '2.75.0', 'latest']
-        audience_value: ['', 'test-audience']
+        audience_value: ['', 'test-audience','https://github.com/eyaldelarea']
     runs-on: ${{ matrix.os }}-latest
     env:
       JFROG_CLI_LOG_LEVEL: DEBUG
@@ -107,7 +107,7 @@ jobs:
     if: always()
     strategy:
       matrix:
-        audience_value: ['', 'test-audience']
+        audience_value: ['', 'test-audience','https://github.com/eyaldelarea']
     runs-on: ubuntu-latest
     steps:
       - name: Delete OIDC integration
