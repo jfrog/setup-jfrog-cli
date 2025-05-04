@@ -5,7 +5,7 @@ name: OIDC Integration Test
 on:
   push:
     branches:
-      - "**"
+      - master
   pull_request_target:
     types: [ labeled ]
 
@@ -29,7 +29,7 @@ jobs:
             # When not provided, GitHub resolves the audience value to the URL of the GitHub repository owner.
             # This test makes sure this issue won't happen again https://github.com/jfrog/setup-jfrog-cli/issues/270.
           - audience_id: github-default
-            audience_value: 'https://github.com/EyalDelarea'
+            audience_value: 'https://github.com/jfrog'
     runs-on: ubuntu-latest
     steps:
       - name: Create OpenID Connect integration
