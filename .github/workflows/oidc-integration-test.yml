@@ -28,7 +28,7 @@ jobs:
     strategy:
       matrix:
         # Test with a default and provided audience value
-        audience_value: ['', 'test-audience']
+        audience_value: ['', 'test-audience','https://github.com/eyaldelarea']
     runs-on: ubuntu-latest
     steps:
       - name: Create OpenID Connect integration
@@ -43,7 +43,7 @@ jobs:
               "provider_type": "GitHub",
               "audience": "${{ matrix.audience_value }}",
               "enable_permissive_configuration": true,
-              "description": "Temp integration for testing OIDC with audience: ${{ matrix.audience_value }}"
+              "description": "Temp integration for testing OIDC with audience value: ${{ matrix.audience_value }}"
             }'
 
       - name: Create OIDC Identity Mapping
