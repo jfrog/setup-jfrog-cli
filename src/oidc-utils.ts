@@ -78,6 +78,7 @@ export class OidcUtils {
         if (creds.oidcAudience !== "") {
             args.push('--oidc-audience', creds.oidcAudience);
         }
+        core.debug('Running CLI command: ' + args.join(' '));
         output = await Utils.runCliAndGetOutput(args, { silent: true });
 
         const { accessToken, username }: CliExchangeTokenResponse = this.extractValuesFromOIDCToken(output);

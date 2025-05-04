@@ -81,14 +81,6 @@ jobs:
             cli-version: latest
             audience_id: github-default
             audience_value: ''
-          - os: macos
-            cli-version: latest
-            audience_id: github-default
-            audience_value: 'https://github.com/eyaldelarea'
-          - os: windows
-            cli-version: latest
-            audience_id: github-default
-            audience_value: 'https://github.com/eyaldelarea'
     runs-on: ${{ matrix.os }}-latest
     env:
       JFROG_CLI_LOG_LEVEL: DEBUG
@@ -119,19 +111,19 @@ jobs:
         shell: bash
         run: test -n "${{ steps.setup-jfrog-cli.outputs.oidc-token }}"
 
-  cleanup-oidc-integration:
-    needs: oidc-test
-    if: always()
-    strategy:
-      matrix:
-        include:
-          - audience_id: default
-          - audience_id: test
-          - audience_id: github-default
-    runs-on: ubuntu-latest
-    steps:
-      - name: Delete OIDC integration
-        shell: bash
-        run: |
-          curl -X DELETE "${{ secrets.JFROG_PLATFORM_URL }}/access/api/v1/oidc/oidc-integration-${{ matrix.audience_id }}-${{ github.run_id }}" \
-            -H "Authorization: Bearer ${{ secrets.JFROG_PLATFORM_RT_TOKEN }}"
+#  cleanup-oidc-integration:
+#    needs: oidc-test
+#    if: always()
+#    strategy:
+#      matrix:
+#        include:
+#          - audience_id: default
+#          - audience_id: test
+#          - audience_id: github-default
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Delete OIDC integration
+#        shell: bash
+#        run: |
+#          curl -X DELETE "${{ secrets.JFROG_PLATFORM_URL }}/access/api/v1/oidc/oidc-integration-${{ matrix.audience_id }}-${{ github.run_id }}" \
+#            -H "Authorization: Bearer ${{ secrets.JFROG_PLATFORM_RT_TOKEN }}"
