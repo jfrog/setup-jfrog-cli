@@ -32,7 +32,7 @@ jobs:
       # - "default": no audience provided, tests implicit GitHub behavior.
       # - "test": explicitly defined audience for testing purposes.
       # - "github-explicit-default": GitHub's default audience (explicitly passed) to test edge behavior,
-      # when a user is defining the default audience in the platform but not in the action (leaving empty).
+      # when a user is defining the default audience in the platform but not in the action.
       matrix:
         include:
           - audience_id: default
@@ -74,7 +74,7 @@ jobs:
               },
               "token_spec": {
                 "scope": "applied-permissions/groups:readers",
-                "expires_in": 10
+                "expires_in": 30
               }
             }'
 
@@ -104,10 +104,10 @@ jobs:
           - cli-version: latest
             audience_id: test
             audience_value: 'test-audience'
-          - cli-version: '2.74.1'
-            audience_id: github-explicit-default
             # GitHub default audience value is resolved implicitly when omitted.
             # These tests verify that the CLI handles an empty value correctly while GitHub sets the expected audience on its backend.
+          - cli-version: '2.74.1'
+            audience_id: github-explicit-default
             audience_value: ''
           - cli-version: '2.75.0'
             audience_id: github-explicit-default
