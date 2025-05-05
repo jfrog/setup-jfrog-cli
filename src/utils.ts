@@ -52,7 +52,6 @@ export class Utils {
     public static readonly AUTO_BUILD_PUBLISH_DISABLE: string = 'disable-auto-build-publish';
     // Custom server ID input
     private static readonly CUSTOM_SERVER_ID: string = 'custom-server-id';
-    private static DEFAULT_OIDC_AUDIENCE: string = 'jfrog-github';
 
     /**
      * Gathers JFrog's credentials from environment variables and delivers them in a JfrogCredentials structure
@@ -66,7 +65,7 @@ export class Utils {
             username: process.env.JF_USER,
             password: process.env.JF_PASSWORD,
             oidcProviderName: core.getInput(Utils.OIDC_INTEGRATION_PROVIDER_NAME),
-            oidcAudience: core.getInput(Utils.OIDC_AUDIENCE_ARG) || Utils.DEFAULT_OIDC_AUDIENCE,
+            oidcAudience: core.getInput(Utils.OIDC_AUDIENCE_ARG) || '',
             oidcTokenId: '',
         } as JfrogCredentials;
 
@@ -204,7 +203,6 @@ export class Utils {
          * @name password - JFrog Platform basic authentication
          * @name accessToken - Jfrog Platform access token
          * @name oidcProviderName - OpenID Connect provider name defined in the JFrog Platform
-         * @name oidcAudience - JFrog Platform OpenID Connect audience
          */
         let url: string | undefined = jfrogCredentials.jfrogUrl;
         let user: string | undefined = jfrogCredentials.username;

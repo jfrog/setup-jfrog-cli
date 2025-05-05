@@ -12,7 +12,7 @@ export interface JfrogCredentials {
     accessToken?: string;
     oidcProviderName?: string;
     oidcTokenId?: string;
-    oidcAudience?: string;
+    oidcAudience : string;
 }
 
 /**
