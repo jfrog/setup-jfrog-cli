@@ -8,7 +8,7 @@ name: OIDC Integration Test
 on:
   push:
     branches:
-#      - master
+      - master
       - "**"
   # Triggers the workflow on labeled PRs only.
   pull_request_target:
@@ -25,24 +25,23 @@ permissions:
 jobs:
   generate-platform-oidc-integration:
     strategy:
-      # Using "include" here instead of a typical matrix of arrays gives us granular control over combinations.
-      # This is necessary because we need to generate different audience values, some of which contain characters
-      # not suitable for dynamic naming or matrix keys.
-      # Each audience represents a different real-world use case:
-      # - "default": no audience provided, tests implicit GitHub behavior.
-      # - "test": explicitly defined audience for testing purposes.
-      # - "github-explicit-default": GitHub's default audience (explicitly passed) to test edge behavior,
-      # when a user is defining the default audience in the platform but not in the action.
+      # Using "include" instead of a matrix of arrays gives us fine-grained control over test combinations.
+      # This is needed because some audience values (e.g., URLs) contain characters not valid in matrix keys or job names.
+      #
+      # Each scenario represents a real-world case:
+      # - "default": No audience is set in the action or the platform integration.
+      # - "test": A custom audience is explicitly set in both the action and the platform integration.
+      # - "github-implicit-default": The platform integration is explicitly configured with GitHub's default audience,
+      #    but the action does not pass any audience.
+      #    This tests CLI behavior in case of mismatches — see https://github.com/jfrog/setup-jfrog-cli/issues/270
       matrix:
         include:
           - audience_id: default
             audience_value: ''
           - audience_id: test
-            audience_value: 'test-audience'
-            # When not provided, GitHub resolves the audience value to the URL of the GitHub repository owner.
-            # This test makes sure this issue won't happen again https://github.com/jfrog/setup-jfrog-cli/issues/270.
-          - audience_id: github-explicit-default
-            audience_value: 'https://github.com/EyalDelarea'
+            audience_value: 'audience-value'
+          - audience_id: github-implicit-default
+            audience_value: 'https://github.com/jfrog'
     runs-on: ubuntu-latest
     steps:
       - name: Create OpenID Connect integration
@@ -97,23 +96,23 @@ jobs:
             audience_value: ''
           - cli-version: '2.74.1'
             audience_id: test
-            audience_value: 'test-audience'
+            audience_value: 'audience-value'
           - cli-version: '2.75.0'
             audience_id: test
-            audience_value: 'test-audience'
+            audience_value: 'audience-value'
           - cli-version: latest
             audience_id: test
-            audience_value: 'test-audience'
+            audience_value: 'audience-value'
             # GitHub default audience value is resolved implicitly when omitted.
             # These tests verify that the CLI handles an empty value correctly while GitHub sets the expected audience on its backend.
           - cli-version: '2.74.1'
-            audience_id: github-explicit-default
+            audience_id: github-implicit-default
             audience_value: ''
           - cli-version: '2.75.0'
-            audience_id: github-explicit-default
+            audience_id: github-implicit-default
             audience_value: ''
           - cli-version: latest
-            audience_id: github-explicit-default
+            audience_id: github-implicit-default
             audience_value: ''
     runs-on: ubuntu-latest
     env:
@@ -153,7 +152,7 @@ jobs:
         include:
           - audience_id: default
           - audience_id: test
-          - audience_id: github-explicit-default
+          - audience_id: github-implicit-default
     runs-on: ubuntu-latest
     steps:
       - name: Delete OIDC integration
