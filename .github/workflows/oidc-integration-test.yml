@@ -23,6 +23,7 @@ permissions:
 
 jobs:
   generate-platform-oidc-integration:
+    if: contains(github.event.pull_request.labels.*.name, 'safe to test') || github.event_name == 'push'
     strategy:
       # Using "include" instead of a matrix of arrays gives us fine-grained control over test combinations.
       # This is needed because some audience values (e.g., URLs) contain characters not valid in matrix keys or job names.
