@@ -146,7 +146,7 @@ jobs:
 
   cleanup-oidc-integration:
     needs: oidc-test
-    if: always()
+    if: success() || failure()
     strategy:
       matrix:
         include:

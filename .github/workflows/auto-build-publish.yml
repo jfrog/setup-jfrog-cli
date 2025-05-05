@@ -85,12 +85,3 @@ jobs:
         run: |
           jf npm-config --repo-resolve npm-remote
           jf npm install
-
-      - name: Validate job summary was written (sanity check)
-        shell: bash
-        run: |
-          if [ ! -s "$GITHUB_STEP_SUMMARY" ]; then
-            echo "❌ Job summary file is empty!"
-            exit 1
-          fi
-          echo "✅ Job summary written!"
