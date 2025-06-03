@@ -75,7 +75,7 @@ export class OidcUtils {
         }
 
         const args = ['eot', creds.oidcProviderName, creds.oidcTokenId, '--url', creds.jfrogUrl];
-        if (creds.oidcAudience !== "") {
+        if (creds.oidcAudience !== '') {
             args.push('--oidc-audience', creds.oidcAudience);
         }
         core.debug('Running CLI command: ' + args.join(' '));
@@ -221,6 +221,8 @@ export class OidcUtils {
             gh_job_id: process.env.GITHUB_JOB ?? '',
             gh_run_id: process.env.GITHUB_RUN_ID ?? '',
             gh_repo: process.env.GITHUB_REPOSITORY ?? '',
+            gh_revision: process.env.GITHUB_SHA ?? '',
+            gh_branch: process.env.GITHUB_REF_NAME ?? '',
             application_key: applicationKey,
         };
     }
