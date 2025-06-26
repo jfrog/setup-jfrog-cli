@@ -74,8 +74,8 @@ export class OidcUtils {
             throw new Error('Missing one or more required fields: OIDC provider name, token ID, or JFrog Platform URL.');
         }
 
-        const args = ['eot', creds.oidcProviderName, creds.oidcTokenId, '--url', creds.jfrogUrl];
-        if (creds.oidcAudience !== "") {
+        const args: string[] = ['eot', creds.oidcProviderName, creds.oidcTokenId, '--url', creds.jfrogUrl];
+        if (creds.oidcAudience !== '') {
             args.push('--oidc-audience', creds.oidcAudience);
         }
         core.debug('Running CLI command: ' + args.join(' '));
@@ -211,7 +211,7 @@ export class OidcUtils {
         core.exportVariable('JFROG_CLI_USAGE_OIDC_USED', 'TRUE');
     }
 
-    private static buildOidcTokenExchangePayload(jwt: string, providerName: string, applicationKey: string): Record<string, string> {
+    private static buildOidcTokenExchangePayload(jwt: string, providerName: string, applicationKey: string): Record<string, any> {
         return {
             grant_type: 'urn:ietf:params:oauth:grant-type:token-exchange',
             subject_token_type: 'urn:ietf:params:oauth:token-type:id_token',
@@ -221,8 +221,23 @@ export class OidcUtils {
             gh_job_id: process.env.GITHUB_JOB ?? '',
             gh_run_id: process.env.GITHUB_RUN_ID ?? '',
             gh_repo: process.env.GITHUB_REPOSITORY ?? '',
+            gh_revision: process.env.GITHUB_SHA ?? '',
+            gh_branch: process.env.GITHUB_REF_NAME ?? '',
             application_key: applicationKey,
+            context: {
+                vcs_commit: {
+                    vcs_url: this.buildVcsUrl(),
+                    branch: process.env.GITHUB_REF_NAME ?? '',
+                    revision: process.env.GITHUB_SHA ?? '',
+                },
+            },
         };
+    }
+
+    private static buildVcsUrl(): string {
+        const serverUrl: string | undefined = process.env.GITHUB_SERVER_URL;
+        const repo: string | undefined = process.env.GITHUB_REPOSITORY;
+        return serverUrl && repo ? `${serverUrl}/${repo}` : '';
     }
 
     /**
