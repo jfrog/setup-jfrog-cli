@@ -218,6 +218,7 @@ describe('JFrog CLI V1 URL Tests', () => {
         ['linux' as NodeJS.Platform, 'arm64', 'jfrog', 'v1/1.2.3/jfrog-cli-linux-arm64/jfrog'],
         ['linux' as NodeJS.Platform, '386', 'jfrog', 'v1/1.2.3/jfrog-cli-linux-386/jfrog'],
         ['linux' as NodeJS.Platform, 'arm', 'jfrog', 'v1/1.2.3/jfrog-cli-linux-arm/jfrog'],
+        ['linux' as NodeJS.Platform, 's390x', 'jfrog', 'v1/1.2.3/jfrog-cli-linux-s390x/jfrog'],
     ];
 
     test.each(cases)('CLI Url for %s-%s', (platform, arch, fileName, expectedUrl) => {
@@ -242,6 +243,7 @@ describe('JFrog CLI V2 URL Tests', () => {
         ['linux' as NodeJS.Platform, 'arm64', 'jfrog', 'v2/2.3.4/jfrog-cli-linux-arm64/jfrog'],
         ['linux' as NodeJS.Platform, '386', 'jfrog', 'v2/2.3.4/jfrog-cli-linux-386/jfrog'],
         ['linux' as NodeJS.Platform, 'arm', 'jfrog', 'v2/2.3.4/jfrog-cli-linux-arm/jfrog'],
+        ['linux' as NodeJS.Platform, 's390x', 'jfrog', 'v2/2.3.4/jfrog-cli-linux-s390x/jfrog'],
     ];
 
     test.each(cases)('CLI Url for %s-%s', (platform, arch, fileName, expectedUrl) => {
