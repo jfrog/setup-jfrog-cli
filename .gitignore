@@ -3,7 +3,7 @@
 .vscode
 *.iml
 
-node_modules/.package-lock.json
+node_modules
 __tests__/runner/*
 
 # Vim
