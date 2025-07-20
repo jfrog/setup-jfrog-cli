@@ -280,6 +280,7 @@ export class Utils {
         Utils.exportVariableIfNotSet('JFROG_CLI_SOURCECODE_REPOSITORY', process.env.GITHUB_REPOSITORY ?? '');
         Utils.exportVariableIfNotSet('JFROG_CLI_CI_JOB_ID', process.env.GITHUB_WORKFLOW ?? '');
         Utils.exportVariableIfNotSet('JFROG_CLI_CI_RUN_ID', process.env.GITHUB_RUN_ID ?? '');
+        Utils.exportVariableIfNotSet('JFROG_CLI_GITHUB_TOKEN', process.env.GITHUB_TOKEN ?? '');
 
         let buildNameEnv: string | undefined = process.env.GITHUB_WORKFLOW;
         if (buildNameEnv) {
