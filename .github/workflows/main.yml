@@ -20,7 +20,7 @@ jobs:
           echo ""
           echo ""
 
-      - uses: jfrog/setup-jfrog-cli
+      - uses: jfrog/setup-jfrog-cli@2bc6e55719cd37dfb2f655a1e4f16c3440182a9f
         env:
           JF_URL: <custom_jfrog_url>
           JF_ACCESS_TOKEN: <access_token>
