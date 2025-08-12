@@ -20,7 +20,7 @@ jobs:
           echo ""
           echo ""
 
-      - uses: nirvanin/setup-jfrog-cli@feature/JPI-396 # v4.4.1
+      - uses: jfrog/setup-jfrog-cli
         env:
           JF_URL: <custom_jfrog_url>
           JF_ACCESS_TOKEN: <access_token>
