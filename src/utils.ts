@@ -50,6 +50,8 @@ export class Utils {
     public static readonly JOB_SUMMARY_DISABLE: string = 'disable-job-summary';
     // Disable auto build info publish feature flag
     public static readonly AUTO_BUILD_PUBLISH_DISABLE: string = 'disable-auto-build-publish';
+    // Disable auto evidence collection feature flag
+    public static readonly AUTO_EVIDENCE_COLLECTION_DISABLE: string = 'disable-auto-evidence-collection';
     // Custom server ID input
     private static readonly CUSTOM_SERVER_ID: string = 'custom-server-id';
 
@@ -280,6 +282,7 @@ export class Utils {
         Utils.exportVariableIfNotSet('JFROG_CLI_SOURCECODE_REPOSITORY', process.env.GITHUB_REPOSITORY ?? '');
         Utils.exportVariableIfNotSet('JFROG_CLI_CI_JOB_ID', process.env.GITHUB_WORKFLOW ?? '');
         Utils.exportVariableIfNotSet('JFROG_CLI_CI_RUN_ID', process.env.GITHUB_RUN_ID ?? '');
+        Utils.exportVariableIfNotSet('JFROG_CLI_GITHUB_TOKEN', process.env.GITHUB_TOKEN ?? '');
 
         let buildNameEnv: string | undefined = process.env.GITHUB_WORKFLOW;
         if (buildNameEnv) {

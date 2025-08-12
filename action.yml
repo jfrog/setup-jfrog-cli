@@ -4,7 +4,7 @@ author: "JFrog"
 inputs:
     version:
         description: "JFrog CLI Version"
-        default: "2.75.0"
+        default: "2.78.3"
         required: false
     download-repository:
         description: "Remote repository in Artifactory pointing to 'https://releases.jfrog.io/artifactory/jfrog-cli'. Use this parameter in case you don't have an Internet access."
@@ -21,6 +21,10 @@ inputs:
         required: false
     disable-auto-build-publish:
         description: "By default, if the workflow completes with collected build-info that has not been published using the jf rt build-publish command, the build-info will be automatically published to Artifactory. Set this to true to disable the automatic publication of build-info at the end of the workflow."
+        default: "false"
+        required: false
+    disable-auto-evidence-collection:
+        description: "Set to true to disable the automatic collection of evidence at the end of the workflow."
         default: "false"
         required: false
     custom-server-id:

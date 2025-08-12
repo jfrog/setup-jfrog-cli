@@ -1,13 +1,14 @@
 import * as core from '@actions/core';
 import { Utils } from './utils';
 import { JobSummary } from './job-summary';
+import { collectEvidences } from './evidence-collection';
 
 async function cleanup() {
     if (await shouldSkipCleanup()) {
         return;
     }
 
-    // Run post tasks related to Build Info (auto build publish, job summary)
+    // Run post tasks related to Build Info (auto build publish, evidence collection, job summary)
     await buildInfoPostTasks();
 
     // Cleanup JFrog CLI servers configuration
@@ -25,36 +26,43 @@ async function cleanup() {
  * Executes post tasks related to build information.
  *
  * This function performs several tasks after the main build process:
- * 1. Checks if auto build publish and job summary are disabled.
+ * 1. Checks if auto build publish, evidence collection, and job summary are disabled.
  * 2. Verifies connection to JFrog Artifactory.
  * 3. Collects and publishes build information if needed.
- * 4. Generates a job summary if required.
+ * 4. Collects evidences if enabled.
+ * 5. Generates a job summary if required.
  */
 async function buildInfoPostTasks() {
     const disableAutoBuildPublish: boolean = core.getBooleanInput(Utils.AUTO_BUILD_PUBLISH_DISABLE);
+    const disableAutoEvidenceCollection: boolean = core.getBooleanInput(Utils.AUTO_EVIDENCE_COLLECTION_DISABLE);
     const disableJobSummary: boolean = core.getBooleanInput(Utils.JOB_SUMMARY_DISABLE) || !JobSummary.isJobSummarySupported();
-    if (disableAutoBuildPublish && disableJobSummary) {
-        core.info(`Both auto-build-publish and job-summary are disabled. Skipping Build Info post tasks.`);
+    if (disableAutoBuildPublish && disableAutoEvidenceCollection && disableJobSummary) {
+        core.info(`All post tasks (auto-build-publish, evidence collection, and job-summary) are disabled. Skipping Build Info post tasks.`);
         return;
     }
 
     // Check connection to Artifactory before proceeding with build info post tasks
-    if (!(await checkConnectionToArtifactory())) {
-        return;
-    }
+    const pingWorked: boolean = await checkConnectionToArtifactory();
 
     // Auto-publish build info if needed
-    if (!disableAutoBuildPublish) {
+    if (pingWorked && !disableAutoBuildPublish) {
         await collectAndPublishBuildInfoIfNeeded();
     } else {
-        core.info('Auto build info publish is disabled. Skipping auto build info collection and publishing');
+        core.info('Auto build info publish is disabled or jf rt ping failed. Skipping auto build info collection and publishing');
+    }
+
+    // Collect evidences if not disabled. Evidence use Access token that may not work with jf rt ping.
+    if (!disableAutoEvidenceCollection) {
+        await collectEvidences();
+    } else {
+        core.info('Auto evidence collection is disabled. Skipping evidence collection');
     }
 
     // Generate job summary if not disabled and the JFrog CLI version supports it
-    if (!disableJobSummary) {
+    if (pingWorked && !disableJobSummary) {
         await generateJobSummary();
     } else {
-        core.info('Job summary is disabled. Skipping job summary generation');
+        core.info('Job summary is disabled or jf rt ping failed. Skipping job summary generation');
     }
 }
 
@@ -126,7 +134,7 @@ function getWorkingDirectory(): string {
     return workingDirectory;
 }
 
-async function checkConnectionToArtifactory(): Promise<boolean> {
+export async function checkConnectionToArtifactory(): Promise<boolean> {
     try {
         core.startGroup('Checking connection to JFrog Artifactory');
         const pingResult: string = await Utils.runCliAndGetOutput(['rt', 'ping']);
