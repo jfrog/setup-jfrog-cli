@@ -311,6 +311,16 @@ export class Utils {
 
         // Indicate if JF_GIT_TOKEN is provided as an environment variable, used by Xray usage.
         Utils.exportVariableIfNotSet('JFROG_CLI_USAGE_GH_TOKEN_FOR_CODE_SCANNING_ALERTS_PROVIDED', process.env.JF_GIT_TOKEN ?? '');
+
+        Utils.exportVariableIfNotSet('JFROG_CLI_CI_VCS_REVISION', process.env.GITHUB_SHA ?? '' ?? '');
+        Utils.exportVariableIfNotSet('JFROG_CLI_CI_BRANCH', process.env.GITHUB_REF_NAME ?? '' ?? '');
+        Utils.exportVariableIfNotSet('JFROG_CLI_CI_VCS_URL', Utils.buildVcsUrl());
+    }
+
+    private static buildVcsUrl(): string {
+        const serverUrl: string | undefined = process.env.GITHUB_SERVER_URL;
+        const repo: string | undefined = process.env.GITHUB_REPOSITORY;
+        return serverUrl && repo ? `${serverUrl}/${repo}` : '';
     }
 
     public static exportVariableIfNotSet(key: string, value: string) {
