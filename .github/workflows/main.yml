@@ -1,0 +1,39 @@
+name: test-jfrog
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-jfrog:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check workflow statuses and display token usage before setup-jfrog-cli
+        run: |
+          echo ""
+          echo ""
+          echo "current rest api rate usage using github token:"
+          curl -s -H "Accept: application/vnd.github+json" -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/rate_limit | jq .rate.used
+          echo ""
+          echo ""
+          echo "current rest api rate usage for anonymous:"
+          curl -s -H "Accept: application/vnd.github+json" https://api.github.com/rate_limit | jq .rate.used
+          echo ""
+          echo ""
+
+      - uses: jfrog/setup-jfrog-cli@2bc6e55719cd37dfb2f655a1e4f16c3440182a9f
+        env:
+          JF_URL: <custom_jfrog_url>
+          JF_ACCESS_TOKEN: <access_token>
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+
+      - name: Check workflow statuses and display token usage after setup-jfrog-cli
+        run: |
+          echo "current rest api rate usage using github token:"
+          curl -s -H "Accept: application/vnd.github+json" -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/rate_limit | jq .rate.used
+          echo ""
+          echo ""
+          echo "current rest api rate usage for anonymous:"
+          curl -s -H "Accept: application/vnd.github+json" https://api.github.com/rate_limit | jq .rate.used
+          echo ""
+          echo ""
