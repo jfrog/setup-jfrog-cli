@@ -50,10 +50,10 @@ export class OidcUtils {
 
         // Version should be more than min version
         // If CLI_REMOTE_ARG specified, we have to fetch token before we can download the CLI.
-        if (this.isCLIVersionOidcSupported() && !core.getInput(Utils.CLI_REMOTE_ARG)) {
-            core.debug('Using CLI exchange-oidc-token..');
-            return await this.exchangeOIDCTokenAndExportStepOutputs(jfrogCredentials);
-        }
+        // if (this.isCLIVersionOidcSupported() && !core.getInput(Utils.CLI_REMOTE_ARG)) {
+        //     core.debug('Using CLI exchange-oidc-token..');
+        //     return await this.exchangeOIDCTokenAndExportStepOutputs(jfrogCredentials);
+        // }
 
         // Fallback to manual OIDC exchange for backward compatibility
         core.debug('Using Manual OIDC Auth Method..');
@@ -101,6 +101,9 @@ export class OidcUtils {
         }
         const exchangeUrl: string = url.replace(/\/$/, '') + '/access/api/v1/oidc/token';
         const payload: Record<string, string> = this.buildOidcTokenExchangePayload(creds.oidcTokenId, providerName, applicationKey);
+
+        console.log(`Exchanging OIDC token with payload: ${JSON.stringify(payload)}`);
+
         const httpClient: HttpClient = new HttpClient();
         const headers: OutgoingHttpHeaders = { 'Content-Type': 'application/json' };
 
@@ -218,19 +221,12 @@ export class OidcUtils {
             subject_token: jwt,
             provider_name: providerName,
             project_key: process.env.JF_PROJECT ?? '',
-            gh_job_id: process.env.GITHUB_JOB ?? '',
-            gh_run_id: process.env.GITHUB_RUN_ID ?? '',
-            gh_repo: process.env.GITHUB_REPOSITORY ?? '',
-            gh_revision: process.env.GITHUB_SHA ?? '',
-            gh_branch: process.env.GITHUB_REF_NAME ?? '',
-            application_key: applicationKey,
-            context: {
-                vcs_commit: {
-                    vcs_url: this.buildVcsUrl(),
-                    branch: process.env.GITHUB_REF_NAME ?? '',
-                    revision: process.env.GITHUB_SHA ?? '',
-                },
-            },
+            jobId: process.env.GITHUB_JOB ?? '',
+            runId: process.env.GITHUB_RUN_ID ?? '',
+            repo: process.env.GITHUB_REPOSITORY ?? '',
+            revision: process.env.GITHUB_SHA ?? '',
+            branch: process.env.GITHUB_REF_NAME ?? '',
+            applicationKey: applicationKey,
         };
     }
 
