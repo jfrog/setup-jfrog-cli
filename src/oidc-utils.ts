@@ -226,7 +226,7 @@ export class OidcUtils {
             repo: process.env.GITHUB_REPOSITORY ?? '',
             revision: process.env.GITHUB_SHA ?? '',
             branch: process.env.GITHUB_REF_NAME ?? '',
-            applicationKey: applicationKey,
+            application_key: applicationKey,
         };
     }
 
