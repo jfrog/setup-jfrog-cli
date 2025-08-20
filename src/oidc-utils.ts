@@ -50,10 +50,10 @@ export class OidcUtils {
 
         // Version should be more than min version
         // If CLI_REMOTE_ARG specified, we have to fetch token before we can download the CLI.
-        // if (this.isCLIVersionOidcSupported() && !core.getInput(Utils.CLI_REMOTE_ARG)) {
-        //     core.debug('Using CLI exchange-oidc-token..');
-        //     return await this.exchangeOIDCTokenAndExportStepOutputs(jfrogCredentials);
-        // }
+        if (this.isCLIVersionOidcSupported() && !core.getInput(Utils.CLI_REMOTE_ARG)) {
+            core.debug('Using CLI exchange-oidc-token..');
+            return await this.exchangeOIDCTokenAndExportStepOutputs(jfrogCredentials);
+        }
 
         // Fallback to manual OIDC exchange for backward compatibility
         core.debug('Using Manual OIDC Auth Method..');
@@ -101,9 +101,6 @@ export class OidcUtils {
         }
         const exchangeUrl: string = url.replace(/\/$/, '') + '/access/api/v1/oidc/token';
         const payload: Record<string, string> = this.buildOidcTokenExchangePayload(creds.oidcTokenId, providerName, applicationKey);
-
-        console.log(`Exchanging OIDC token with payload: ${JSON.stringify(payload)}`);
-
         const httpClient: HttpClient = new HttpClient();
         const headers: OutgoingHttpHeaders = { 'Content-Type': 'application/json' };
 
@@ -228,12 +225,6 @@ export class OidcUtils {
             branch: process.env.GITHUB_REF_NAME ?? '',
             application_key: applicationKey,
         };
-    }
-
-    private static buildVcsUrl(): string {
-        const serverUrl: string | undefined = process.env.GITHUB_SERVER_URL;
-        const repo: string | undefined = process.env.GITHUB_REPOSITORY;
-        return serverUrl && repo ? `${serverUrl}/${repo}` : '';
     }
 
     /**
