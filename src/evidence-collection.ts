@@ -17,7 +17,7 @@ interface EvidenceConfigResponse {
  */
 export async function collectEvidences() {
     try {
-        core.startGroup('Collecting evidences');
+        core.startGroup('Collecting evidence');
 
         // Check authentication method first - evidence collection requires access token or OIDC
         const credentials = Utils.collectJfrogCredentialsFromEnvVars();
@@ -35,7 +35,6 @@ export async function collectEvidences() {
         // Check if evidence collection is supported by the server
         const evidenceConfig = await getEvidenceConfiguration();
         if (!evidenceConfig.external_evidence_collection_supported) {
-            core.info("Evidence collection is not supported by Artifactory's license type. Skipping evidence collection.");
             return;
         }
 
@@ -96,13 +95,26 @@ async function getEvidenceConfiguration(): Promise<EvidenceConfigResponse> {
         return { external_evidence_collection_supported: false, evidence_file_size_limit_mb: 0 };
     }
 
+    // 200 OK
     if (response.message.statusCode !== 200) {
-        core.warning(`Failed to get evidence configuration. Status: ${response.message.statusCode}, Response: ${body}`);
+        // 401 Unauthorized
+        if (response.message.statusCode === 401) {
+            core.warning(
+                `Failed to get evidence configuration. Given credentials are not sufficient` +
+                    ` to create evidence in the JFrog platform, Response: ${body}`,
+            );
+        } else {
+            core.warning(`Failed to get evidence configuration. Status: ${response.message.statusCode}, Response: ${body}`);
+        }
+
         return { external_evidence_collection_supported: false, evidence_file_size_limit_mb: 0 };
     }
 
     try {
         const config: EvidenceConfigResponse = JSON.parse(body);
+        if (!config.external_evidence_collection_supported) {
+            core.info("Evidence collection is not supported by Artifactory's license type. Skipping evidence collection.");
+        }
         return config;
     } catch (error) {
         core.warning(`Failed to parse evidence config response: ${error}`);
@@ -142,6 +154,11 @@ export async function getSigstoreBundlePaths(): Promise<string[]> {
     }
 
     core.info(`Found ${filePaths.length} sigstore bundle file(s) to process.`);
+    if (core.isDebug()) {
+        filePaths.forEach((filePath) => {
+            core.debug(`Sigstore bundle file found: ${filePath}`);
+        });
+    }
     return filePaths;
 }
 
