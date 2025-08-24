@@ -211,6 +211,16 @@ export class OidcUtils {
         core.exportVariable('JFROG_CLI_USAGE_OIDC_USED', 'TRUE');
     }
 
+    /**
+     * Constructs the payload for the OIDC token exchange request.
+     * NOTE: This structure is intended for legacy CLI versions and matches the access API format.
+     * The payload includes a context object and some duplicated parameters for backward compatibility.
+     * Future updates will move all additional parameters into the context object.
+     * @param jwt
+     * @param providerName
+     * @param applicationKey
+     * @private
+     */
     private static buildOidcTokenExchangePayload(jwt: string, providerName: string, applicationKey: string): Record<string, any> {
         return {
             grant_type: 'urn:ietf:params:oauth:grant-type:token-exchange',
@@ -218,26 +228,23 @@ export class OidcUtils {
             subject_token: jwt,
             provider_name: providerName,
             project_key: process.env.JF_PROJECT ?? '',
+            // gh_* params are used for usage tracking
             gh_job_id: process.env.GITHUB_JOB ?? '',
             gh_run_id: process.env.GITHUB_RUN_ID ?? '',
             gh_repo: process.env.GITHUB_REPOSITORY ?? '',
             gh_revision: process.env.GITHUB_SHA ?? '',
             gh_branch: process.env.GITHUB_REF_NAME ?? '',
             application_key: applicationKey,
+            // This object is planned to be expanded as needed
+            // even though currently it contains some duplicated parameters
             context: {
                 vcs_commit: {
-                    vcs_url: this.buildVcsUrl(),
+                    vcs_url: Utils.buildVcsUrl(),
                     branch: process.env.GITHUB_REF_NAME ?? '',
                     revision: process.env.GITHUB_SHA ?? '',
                 },
             },
         };
-    }
-
-    private static buildVcsUrl(): string {
-        const serverUrl: string | undefined = process.env.GITHUB_SERVER_URL;
-        const repo: string | undefined = process.env.GITHUB_REPOSITORY;
-        return serverUrl && repo ? `${serverUrl}/${repo}` : '';
     }
 
     /**

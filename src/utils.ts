@@ -320,7 +320,7 @@ export class Utils {
         Utils.exportVariableIfNotSet('JFROG_CLI_CI_VCS_URL', Utils.buildVcsUrl());
     }
 
-    private static buildVcsUrl(): string {
+    public static buildVcsUrl(): string {
         const serverUrl: string | undefined = process.env.GITHUB_SERVER_URL;
         const repo: string | undefined = process.env.GITHUB_REPOSITORY;
         return serverUrl && repo ? `${serverUrl}/${repo}` : '';
