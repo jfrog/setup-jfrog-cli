@@ -273,6 +273,9 @@ export class Utils {
     }
 
     public static setCliEnv() {
+        if (core.isDebug()) {
+            Utils.exportVariableIfNotSet('JFROG_CLI_LOG_LEVEL', 'DEBUG');
+        }
         Utils.exportVariableIfNotSet(
             'JFROG_CLI_ENV_EXCLUDE',
             '*password*;*secret*;*key*;*token*;*auth*;JF_ARTIFACTORY_*;JF_ENV_*;JF_URL;JF_USER;JF_PASSWORD;JF_ACCESS_TOKEN',
@@ -428,6 +431,7 @@ export class Utils {
      * @throws An error if the JFrog CLI command exits with a non-success code.
      */
     public static async runCliAndGetOutput(args: string[], options?: ExecOptions): Promise<string> {
+        core.debug(`jf ${args.join(' ')}`);
         let output: ExecOutput;
         output = await getExecOutput('jf', args, { ...options, ignoreReturnCode: true });
         if (output.exitCode !== core.ExitCode.Success) {
