@@ -218,13 +218,26 @@ export class OidcUtils {
             subject_token: jwt,
             provider_name: providerName,
             project_key: process.env.JF_PROJECT ?? '',
-            job_id: process.env.GITHUB_JOB ?? '',
-            run_id: process.env.GITHUB_RUN_ID ?? '',
-            repo: process.env.GITHUB_REPOSITORY ?? '',
-            revision: process.env.GITHUB_SHA ?? '',
-            branch: process.env.GITHUB_REF_NAME ?? '',
+            gh_job_id: process.env.GITHUB_JOB ?? '',
+            gh_run_id: process.env.GITHUB_RUN_ID ?? '',
+            gh_repo: process.env.GITHUB_REPOSITORY ?? '',
+            gh_revision: process.env.GITHUB_SHA ?? '',
+            gh_branch: process.env.GITHUB_REF_NAME ?? '',
             application_key: applicationKey,
+            context: {
+                vcs_commit: {
+                    vcs_url: this.buildVcsUrl(),
+                    branch: process.env.GITHUB_REF_NAME ?? '',
+                    revision: process.env.GITHUB_SHA ?? '',
+                },
+            },
         };
+    }
+
+    private static buildVcsUrl(): string {
+        const serverUrl: string | undefined = process.env.GITHUB_SERVER_URL;
+        const repo: string | undefined = process.env.GITHUB_REPOSITORY;
+        return serverUrl && repo ? `${serverUrl}/${repo}` : '';
     }
 
     /**
