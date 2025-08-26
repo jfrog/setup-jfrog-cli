@@ -105,29 +105,15 @@ export class JobSummary {
     }
 
     /**
-     * Uploads a gzip-compressed, base64-encoded SARIF payload to GitHub Code Scanning.
-     *
-     * Uses the current GitHub Actions context (owner, repo, commit SHA, and ref) for the target.
-     * If a GitHub Enterprise Server base URL is provided via the 'ghe-base-url' or 'ghe_base_url'
-     * action input, the request is sent to that endpoint; otherwise, it targets github.com.
-     *
-     * @param encodedSarif - The SARIF report content after gzip compression and base64 encoding,
-     *                       as required by the POST /repos/{owner}/{repo}/code-scanning/sarifs API.
-     *                       Typically produced by compressing raw SARIF with gzip and encoding to base64.
-     * @param token - GitHub token used to authenticate the upload request. Must have
-     *                security_events: write permission on the target repository (e.g., a PAT or GITHUB_TOKEN
-     *                with the appropriate permission).
-     *
-     * @returns A promise that resolves when the upload completes successfully.
-     * @throws Error if the API response status is not 2xx; the thrown error includes the resolved baseUrl
-     *         and a serialized response summary to aid debugging.
+     * Uploads the code scanning SARIF content to the code-scanning GitHub API.
+     * @param encodedSarif - The final compressed and encoded sarif content.
+     * @param token - GitHub token to use for the request. Has to have 'security-events: write' permission.
+     * @private
      */
     private static async uploadCodeScanningSarif(encodedSarif: string, token: string) {
-        const inputBaseUrl = core.getInput('ghe-base-url', { required: false }) || core.getInput('ghe_base_url', { required: false }) || '';
-
-        const octokit = inputBaseUrl ? github.getOctokit(token, { baseUrl: inputBaseUrl }) : github.getOctokit(token);
-
-        const response = await octokit.request('POST /repos/{owner}/{repo}/code-scanning/sarifs', {
+        const octokit: Octokit = new Octokit({ auth: token });
+        let response: OctokitResponse<any> | undefined;
+        response = await octokit.request('POST /repos/{owner}/{repo}/code-scanning/sarifs', {
             owner: github.context.repo.owner,
             repo: github.context.repo.repo,
             commit_sha: github.context.sha,
@@ -136,8 +122,7 @@ export class JobSummary {
         });
 
         if (response.status < 200 || response.status >= 300) {
-            const usedBaseUrl = (octokit as any).request?.endpoint?.DEFAULTS?.baseUrl || 'unknown';
-            throw new Error(`Failed to upload SARIF file (status ${response.status}). baseUrl=${usedBaseUrl}; response=` + JSON.stringify(response));
+            throw new Error(`Failed to upload SARIF file: ` + JSON.stringify(response));
         }
 
         core.info('SARIF file uploaded successfully');
