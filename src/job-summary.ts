@@ -103,17 +103,23 @@ export class JobSummary {
             core.warning(`Failed populating code scanning sarif: ${error}`);
         }
     }
-
+    
     /**
-     * Uploads the code scanning SARIF content to the code-scanning GitHub API.
-     * @param encodedSarif - The final compressed and encoded sarif content.
-     * @param token - GitHub token to use for the request. Has to have 'security-events: write' permission.
-     * @private
+     * Uploads a SARIF (Static Analysis Results Interchange Format) file to GitHub's code scanning API.
+     * This method handles the communication with GitHub's REST API to populate the code scanning tab with security analysis results.
+     * Supports both GitHub.com and GitHub Enterprise Server installations.
+     * @param encodedSarif - The SARIF content that has been compressed using gzip and encoded to base64 format.
+     *                       This encoding is required by GitHub's code-scanning/sarifs API endpoint.
+     * @param token - GitHub authentication token with appropriate permissions to upload SARIF files.
+     *                Must have 'security_events: write' and 'contents: read' permissions.
+     * @throws Will throw an error if the HTTP response status is not in the 2xx range or if authentication fails.
      */
     private static async uploadCodeScanningSarif(encodedSarif: string, token: string) {
-        const octokit: Octokit = new Octokit({ auth: token });
-        let response: OctokitResponse<any> | undefined;
-        response = await octokit.request('POST /repos/{owner}/{repo}/code-scanning/sarifs', {
+        const inputBaseUrl = core.getInput('ghe-base-url', { required: false }) || core.getInput('ghe_base_url', { required: false }) || '';
+
+        const octokit = inputBaseUrl ? github.getOctokit(token, { baseUrl: inputBaseUrl }) : github.getOctokit(token);
+
+        const response = await octokit.request('POST /repos/{owner}/{repo}/code-scanning/sarifs', {
             owner: github.context.repo.owner,
             repo: github.context.repo.repo,
             commit_sha: github.context.sha,
@@ -122,7 +128,8 @@ export class JobSummary {
         });
 
         if (response.status < 200 || response.status >= 300) {
-            throw new Error(`Failed to upload SARIF file: ` + JSON.stringify(response));
+            const usedBaseUrl = (octokit as any).request?.endpoint?.DEFAULTS?.baseUrl || 'unknown';
+            throw new Error(`Failed to upload SARIF file (status ${response.status}). baseUrl=${usedBaseUrl}; response=` + JSON.stringify(response));
         }
 
         core.info('SARIF file uploaded successfully');
