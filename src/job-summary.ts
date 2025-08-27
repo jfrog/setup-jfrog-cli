@@ -103,7 +103,7 @@ export class JobSummary {
             core.warning(`Failed populating code scanning sarif: ${error}`);
         }
     }
-    
+
     /**
      * Uploads a SARIF (Static Analysis Results Interchange Format) file to GitHub's code scanning API.
      * This method handles the communication with GitHub's REST API to populate the code scanning tab with security analysis results.
@@ -115,7 +115,7 @@ export class JobSummary {
      * @throws Will throw an error if the HTTP response status is not in the 2xx range or if authentication fails.
      */
     private static async uploadCodeScanningSarif(encodedSarif: string, token: string) {
-        const inputBaseUrl = core.getInput('ghe-base-url', { required: false }) || core.getInput('ghe_base_url', { required: false }) || '';
+        const inputBaseUrl = Utils.getGheBaseUrl();
 
         const octokit = inputBaseUrl ? github.getOctokit(token, { baseUrl: inputBaseUrl }) : github.getOctokit(token);
 
