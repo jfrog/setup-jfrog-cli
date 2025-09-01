@@ -103,7 +103,7 @@ export class JobSummary {
             core.warning(`Failed populating code scanning sarif: ${error}`);
         }
     }
-
+    
     /**
      * Uploads a SARIF (Static Analysis Results Interchange Format) file to GitHub's code scanning API.
      * This method handles the communication with GitHub's REST API to populate the code scanning tab with security analysis results.
