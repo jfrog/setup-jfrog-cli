@@ -115,7 +115,7 @@ export class JobSummary {
      * @throws Will throw an error if the HTTP response status is not in the 2xx range or if authentication fails.
      */
     private static async uploadCodeScanningSarif(encodedSarif: string, token: string) {
-        const inputBaseUrl = core.getInput('ghe-base-url', { required: false }) || core.getInput('ghe_base_url', { required: false }) || '';
+        const inputBaseUrl = Utils.getGheBaseUrl();
 
         const octokit = inputBaseUrl ? github.getOctokit(token, { baseUrl: inputBaseUrl }) : github.getOctokit(token);
 

@@ -54,6 +54,9 @@ export class Utils {
     public static readonly AUTO_EVIDENCE_COLLECTION_DISABLE: string = 'disable-auto-evidence-collection';
     // Custom server ID input
     private static readonly CUSTOM_SERVER_ID: string = 'custom-server-id';
+    // GHES baseUrl support
+    public static readonly GHE_BASE_URL_INPUT: string = 'ghe-base-url';
+    public static readonly GHE_BASE_URL_ALIAS_INPUT: string = 'ghe_base_url';
 
     /**
      * Gathers JFrog's credentials from environment variables and delivers them in a JfrogCredentials structure
@@ -86,6 +89,12 @@ export class Utils {
         }
 
         return jfrogCredentials;
+    }
+
+    public static getGheBaseUrl(): string {
+        const v =
+            core.getInput(Utils.GHE_BASE_URL_INPUT, { required: false }) || core.getInput(Utils.GHE_BASE_URL_ALIAS_INPUT, { required: false }) || '';
+        return v.trim();
     }
 
     public static async getAndAddCliToPath(jfrogCredentials: JfrogCredentials) {
