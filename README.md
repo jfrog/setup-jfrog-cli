@@ -22,6 +22,9 @@
     -   [Custom Server ID and Multi-Configuration](#custom-server-id-and-multi-configuration)
 -   [JFrog Job Summary](#jfrog-job-summary)
 -   [Code Scanning Alerts](#code-scanning-alerts)
+-   [Automatic Evidence Collection](#automatic-evidence-collection)
+    -   [Evidence Subject Detection](#evidece-subject-detection)
+    -   [Docker Image Subject Name](#docker-image-subject-name)
 -   [Example Projects](#example-projects)
 -   [Contributions](#contributions)
 -   [References](#references)
@@ -35,6 +38,7 @@ Additionally, the Action incorporates the following features when utilizing JFro
 -   **Versatile authentication methods** - Three distinct methods are available for [authenticating](#Authentication-Methods) with the JFrog Platform.
 -   **Seamless build info generation** - All build related operations will be automatically recorded, and the collected build info will be published at the end of the workflow. There's no need to add the _build name_ and _build number_ options and arguments to commands which accept them, and no need to run `jf rt build-publish` for the build to be published.
 -   **Extensive Job Summary** - A detailed summary of key JFrog CLI commands executed during the workflow will be generated and displayed in the GitHub Actions run page. 
+-   **Automatic Evidence Collection** - When a GitHub attestations are created using the standard GitHub actions, it is automatically collected into the JFrog platform at the end of the workflow. 
 
 ## Usage
 
@@ -451,6 +455,71 @@ permissions:
 ### Code Scanning Alerts Example:
 
 ![Code-Scanning-Alerts](images/code-scanning.png)
+
+## Automatic Evidence Collection
+
+GitHub supply actions to create attestations. The `setup-jfrog-cli` post stage (that runs at the end of the job) automatically find these created attestations and collects them as evidence into the JFrog platform.
+
+#### Evidece Subject Detection
+
+The evidence are created by calling the `jf evd create` command with the `--sigstore-bundle`. The command automatically detects the subject of the evidence from the attestation file. In order for the attestation file to be created with the desired subject supply the subject to the GitHub action. 
+
+For example if you uploaded the artifact to `dev-repo-local` repository:
+
+```yaml
+            - name: Upload artifact
+              run: |
+                jf rt upload artifact1.txt dev-repo-local/artifact1.txt
+```
+
+You should create the attestion with the `subject-name` set to the JFrog Artifatory path and the `subject-digest` set to the SHA256 of the artifact: 
+
+```yaml
+            - name: Create artifact digest
+              id: create_artifact_digest
+              run: |
+                ARTIFACT_DIGEST=$(sha256sum artifact1.txt | awk '{print "sha256:"$1}')
+                echo "artifact_digest=$ARTIFACT_DIGEST" >> $GITHUB_OUTPUT
+
+            - name: Create attestation
+              uses: actions/attest@v2
+              with:
+                subject-digest: ${{ steps.create_artifact_digest.outputs.artifact_digest }}
+                subject-name: dev-repo-local/artifact1.txt
+                predicate-type: "https://example.com/attestations/custom-review-v1"
+                predicate: |
+                  {
+                    "creationTime": "${{ github.event.repository.pushed_at }}",
+                    "reviewer": "John Doe",
+                    "repository": "${{ github.repository }}"
+                  }
+```
+
+#### Docker Image Subject Name
+
+When building a docker image and pusing it to the JFrog platform the subject name should be in form `oci://<REGISTRY>/<IMAGE_NAME>`. The digest should be the digest of the manifest file of the docker image or the list file for multi-architecture dockers. This is the default digest the build-push-action produces. 
+
+Example:
+
+```yaml
+    - name: Build and push Docker image
+      id: build-and-push
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        push: true
+        tags: dev-docker-repo-local/dockerimage:21
+
+    - name: Attest docker image
+      uses: actions/attest-build-provenance@v2
+      with:
+        subject-name: oci://dev-docker-repo-local/dockerimage
+        subject-digest: ${{ steps.build-and-push.outputs.digest }}
+```
+
+### Automatic Evidence Collection Example
+
+![Automatic-Evidence-Collection](images/evidnce_collect_job_output.png)
 
 ## Example Projects
 
