@@ -251,7 +251,13 @@ export class JobSummary {
     }
 
     private static wrapContent(fileContent: string) {
-        return this.getMarkdownHeader() + fileContent + this.getMarkdownFooter();
+        return (
+            '<details>\n\n<summary>JFrog Job Summary</summary>\n\n' +
+            this.getMarkdownHeader() +
+            fileContent +
+            this.getMarkdownFooter() +
+            '\n\n</details>'
+        );
     }
 
     private static getMarkdownFooter() {
