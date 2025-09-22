@@ -10,7 +10,7 @@ inputs:
         description: "Remote repository in Artifactory pointing to 'https://releases.jfrog.io/artifactory/jfrog-cli'. Use this parameter in case you don't have an Internet access."
         required: false
 runs:
-    using: "node20"
+    using: "node24"
     main: "lib/main.js"
     post: "lib/cleanup.js"
 branding:
