@@ -1,6 +1,13 @@
 import * as os from 'os';
-import { Utils, DownloadDetails } from '../src/utils';
+import * as core from '@actions/core';
+import * as exec from '@actions/exec';
+
+import { Utils } from '../src/utils';
+import { DownloadDetails, JfrogCredentials } from '../src/types';
+
 jest.mock('os');
+jest.mock('@actions/exec');
+jest.mock('@actions/core');
 
 const DEFAULT_CLI_URL: string = 'https://releases.jfrog.io/artifactory/jfrog-cli/';
 const CUSTOM_CLI_URL: string = 'http://127.0.0.1:8081/artifactory/jfrog-cli-remote/';
@@ -25,18 +32,7 @@ const V2_CONFIG_TOKEN: string = `eyJ2ZXJzaW9uIjoyLCJ1cmwiOiJodHRwOi8vMTI3LjAuMC4
     zNsQzdqSXkzSmdudC1WQSIsInNlcnZlcklkIjoibG9jYWwifQ==`;
 
 beforeEach(() => {
-    [
-        'JF_ARTIFACTORY_1',
-        'JF_ARTIFACTORY_2',
-        'ARTIFACTORY_JF_1',
-        'JF_ENV_1',
-        'JF_ENV_2',
-        'ENV_JF_1',
-        'JF_ENV_LOCAL',
-        'JF_USER',
-        'JF_PASSWORD',
-        'JF_ACCESS_TOKEN',
-    ].forEach((envKey) => {
+    ['JF_ENV_1', 'JF_ENV_2', 'ENV_JF_1', 'JF_ENV_LOCAL', 'JF_USER', 'JF_PASSWORD', 'JF_ACCESS_TOKEN'].forEach((envKey) => {
         delete process.env[envKey];
     });
 });
@@ -58,38 +54,101 @@ test('Get Config Tokens', async () => {
     expect(configTokens).toStrictEqual(new Set(['DUMMY_CONFIG_TOKEN_1', 'DUMMY_CONFIG_TOKEN_2']));
 });
 
-test('Get legacy Config Tokens', async () => {
-    process.env['ARTIFACTORY_JF_1'] = 'ILLEGAL_CONFIG_TOKEN';
-    expect(Utils.getConfigTokens().size).toBe(0);
+describe('Collect credentials from environment variables test', () => {
+    let cases: string[][] = [
+        // [JF_URL, JF_ACCESS_TOKEN, JF_USER, JF_PASSWORD]
+        ['', '', '', ''],
+        ['https://my-server.io', 'my-access-token', '', ''],
+        ['https://my-server.io', 'my-access-token', 'my-user', 'my-password'],
+    ];
 
-    process.env['JF_ARTIFACTORY_1'] = 'DUMMY_CONFIG_TOKEN_1';
-    expect(Utils.getConfigTokens()).toStrictEqual(new Set(['DUMMY_CONFIG_TOKEN_1']));
+    test.each(cases)(
+        'Checking JFrog credentials struct for url: %s, access token %s, username: %s, password: %s',
+        (jfrogUrl, accessToken, username, password) => {
+            process.env['JF_URL'] = jfrogUrl;
+            process.env['JF_ACCESS_TOKEN'] = accessToken;
+            process.env['JF_USER'] = username;
+            process.env['JF_PASSWORD'] = password;
 
-    process.env['JF_ARTIFACTORY_2'] = 'DUMMY_CONFIG_TOKEN_2';
-    expect(Utils.getConfigTokens()).toStrictEqual(new Set(['DUMMY_CONFIG_TOKEN_1', 'DUMMY_CONFIG_TOKEN_2']));
+            let jfrogCredentials: JfrogCredentials = Utils.collectJfrogCredentialsFromEnvVars();
+            if (jfrogUrl) {
+                expect(jfrogCredentials.jfrogUrl).toEqual(jfrogUrl);
+            } else {
+                expect(jfrogCredentials.jfrogUrl).toBeFalsy();
+            }
 
-    process.env['JF_ENV_1'] = 'DUMMY_CONFIG_TOKEN_1';
-    process.env['JF_ENV_2'] = 'DUMMY_CONFIG_TOKEN_3';
-    expect(Utils.getConfigTokens()).toStrictEqual(new Set(['DUMMY_CONFIG_TOKEN_1', 'DUMMY_CONFIG_TOKEN_2', 'DUMMY_CONFIG_TOKEN_3']));
+            if (accessToken) {
+                expect(jfrogCredentials.accessToken).toEqual(accessToken);
+            } else {
+                expect(jfrogCredentials.accessToken).toBeFalsy();
+            }
+
+            if (username) {
+                expect(jfrogCredentials.username).toEqual(username);
+            } else {
+                expect(jfrogCredentials.username).toBeFalsy();
+            }
+
+            if (password) {
+                expect(jfrogCredentials.password).toEqual(password);
+            } else {
+                expect(jfrogCredentials.password).toBeFalsy();
+            }
+        },
+    );
 });
 
-test('Get separate env config', async () => {
+describe('Collect JFrog Credentials from env vars exceptions', () => {
+    let cases: string[][] = [
+        // [JF_USER, JF_PASSWORD, EXCEPTION]
+        ['', 'password', 'JF_PASSWORD is configured, but the JF_USER environment variable was not set.'],
+        ['user', '', 'JF_USER is configured, but the JF_PASSWORD or JF_ACCESS_TOKEN environment variables were not set.'],
+    ];
+
+    test.each(cases)('Checking JFrog credentials struct for username: %s, password: %s', (username, password, exception) => {
+        process.env['JF_ACCESS_TOKEN'] = '';
+        process.env['JF_USER'] = username;
+        process.env['JF_PASSWORD'] = password;
+        expect(() => Utils.collectJfrogCredentialsFromEnvVars()).toThrow(new Error(exception));
+    });
+
+    test('collectJfrogCredentialsFromEnvVars should return default values when no environment variables are set', () => {
+        // Ensure no relevant environment variables are set
+        delete process.env['JF_URL'];
+        delete process.env['JF_ACCESS_TOKEN'];
+        delete process.env['JF_USER'];
+        delete process.env['JF_PASSWORD'];
+
+        // Call the function
+        const jfrogCredentials: JfrogCredentials = Utils.collectJfrogCredentialsFromEnvVars();
+
+        // Verify default values
+        expect(jfrogCredentials.jfrogUrl).toBeUndefined();
+        expect(jfrogCredentials.accessToken).toBeUndefined();
+        expect(jfrogCredentials.username).toBeUndefined();
+        expect(jfrogCredentials.password).toBeUndefined();
+        expect(jfrogCredentials.oidcAudience).toEqual('');
+    });
+});
+
+async function testConfigCommand(expectedServerId: string) {
     // No url
-    let configCommand: string[] | undefined = Utils.getSeparateEnvConfigArgs();
+    let configCommand: string[] | undefined = await Utils.getJfrogCliConfigArgs({} as JfrogCredentials);
     expect(configCommand).toBe(undefined);
 
-    process.env['JF_URL'] = DEFAULT_CLI_URL;
+    let jfrogCredentials: JfrogCredentials = {} as JfrogCredentials;
+    jfrogCredentials.jfrogUrl = DEFAULT_CLI_URL;
 
     // No credentials
-    configCommand = Utils.getSeparateEnvConfigArgs();
-    expect(configCommand).toStrictEqual([Utils.SETUP_JFROG_CLI_SERVER_ID, '--url', DEFAULT_CLI_URL, '--interactive=false', '--overwrite=true']);
+    configCommand = await Utils.getJfrogCliConfigArgs(jfrogCredentials);
+    expect(configCommand).toStrictEqual([expectedServerId, '--url', DEFAULT_CLI_URL, '--interactive=false', '--overwrite=true']);
 
     // Basic authentication
-    process.env['JF_USER'] = 'user';
-    process.env['JF_PASSWORD'] = 'password';
-    configCommand = Utils.getSeparateEnvConfigArgs();
+    jfrogCredentials.username = 'user';
+    jfrogCredentials.password = 'password';
+    configCommand = await Utils.getJfrogCliConfigArgs(jfrogCredentials);
     expect(configCommand).toStrictEqual([
-        Utils.SETUP_JFROG_CLI_SERVER_ID,
+        expectedServerId,
         '--url',
         DEFAULT_CLI_URL,
         '--interactive=false',
@@ -101,12 +160,12 @@ test('Get separate env config', async () => {
     ]);
 
     // Access Token
-    process.env['JF_USER'] = '';
-    process.env['JF_PASSWORD'] = '';
-    process.env['JF_ACCESS_TOKEN'] = 'accessToken';
-    configCommand = Utils.getSeparateEnvConfigArgs();
+    jfrogCredentials.username = '';
+    jfrogCredentials.password = '';
+    jfrogCredentials.accessToken = 'accessToken';
+    configCommand = await Utils.getJfrogCliConfigArgs(jfrogCredentials);
     expect(configCommand).toStrictEqual([
-        Utils.SETUP_JFROG_CLI_SERVER_ID,
+        expectedServerId,
         '--url',
         DEFAULT_CLI_URL,
         '--interactive=false',
@@ -114,6 +173,40 @@ test('Get separate env config', async () => {
         '--access-token',
         'accessToken',
     ]);
+}
+
+describe('JFrog CLI Configuration', () => {
+    afterAll(() => {
+        delete process.env[Utils.JFROG_CLI_SERVER_IDS_ENV_VAR];
+    });
+    const myCore: jest.Mocked<typeof core> = core as any;
+
+    test('Get separate env config', async () => {
+        myCore.exportVariable = jest.fn().mockImplementation((name: string, val: string) => {
+            process.env[name] = val;
+        });
+
+        // Before setting a custom server ID, expect the default server ID to be used.
+        await testConfigCommand(Utils.getRunDefaultServerId());
+
+        // Expect the custom server ID to be used.
+        let customServerId: string = 'custom-server-id';
+        jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
+            if (name === customServerId) {
+                return 'custom-server-id'; // Return this value for the specific argument
+            }
+            return ''; // Default return value for other arguments
+        });
+        await testConfigCommand(customServerId);
+
+        // Expect the servers env var to include both servers.
+        const servers: string[] = Utils.getConfiguredJFrogServers();
+        expect(servers).toStrictEqual([Utils.getRunDefaultServerId(), customServerId]);
+    });
+
+    test('Get default server ID', async () => {
+        expect(Utils.getRunDefaultServerId()).toStrictEqual('setup-jfrog-cli-server');
+    });
 });
 
 describe('JFrog CLI V1 URL Tests', () => {
@@ -130,11 +223,11 @@ describe('JFrog CLI V1 URL Tests', () => {
     test.each(cases)('CLI Url for %s-%s', (platform, arch, fileName, expectedUrl) => {
         myOs.platform.mockImplementation(() => <NodeJS.Platform>platform);
         myOs.arch.mockImplementation(() => arch);
-        let cliUrl: string = Utils.getCliUrl('1', '1.2.3', fileName, Utils.DEFAULT_DOWNLOAD_DETAILS);
+        let cliUrl: string = Utils.getCliUrl('1.2.3', fileName, Utils.DEFAULT_DOWNLOAD_DETAILS);
         expect(cliUrl).toBe(DEFAULT_CLI_URL + expectedUrl);
 
         process.env.JF_ENV_LOCAL = V1_CONFIG;
-        cliUrl = Utils.getCliUrl('1', '1.2.3', fileName, Utils.extractDownloadDetails('jfrog-cli-remote'));
+        cliUrl = Utils.getCliUrl('1.2.3', fileName, Utils.extractDownloadDetails('jfrog-cli-remote', {} as JfrogCredentials));
         expect(cliUrl).toBe(CUSTOM_CLI_URL + expectedUrl);
     });
 });
@@ -155,11 +248,11 @@ describe('JFrog CLI V2 URL Tests', () => {
         myOs.platform.mockImplementation(() => <NodeJS.Platform>platform);
         myOs.arch.mockImplementation(() => arch);
 
-        let cliUrl: string = Utils.getCliUrl('2', '2.3.4', fileName, Utils.extractDownloadDetails(''));
+        let cliUrl: string = Utils.getCliUrl('2.3.4', fileName, Utils.extractDownloadDetails('', {} as JfrogCredentials));
         expect(cliUrl).toBe(DEFAULT_CLI_URL + expectedUrl);
 
         process.env.JF_ENV_LOCAL = V2_CONFIG;
-        cliUrl = Utils.getCliUrl('2', '2.3.4', fileName, Utils.extractDownloadDetails('jfrog-cli-remote'));
+        cliUrl = Utils.getCliUrl('2.3.4', fileName, Utils.extractDownloadDetails('jfrog-cli-remote', {} as JfrogCredentials));
         expect(cliUrl).toBe(CUSTOM_CLI_URL + expectedUrl);
     });
 });
@@ -167,14 +260,14 @@ describe('JFrog CLI V2 URL Tests', () => {
 test('Extract download details Tests', () => {
     for (let config of [V1_CONFIG, V2_CONFIG]) {
         process.env.JF_ENV_LOCAL = config;
-        let downloadDetails: DownloadDetails = Utils.extractDownloadDetails('jfrog-cli-remote');
+        let downloadDetails: DownloadDetails = Utils.extractDownloadDetails('jfrog-cli-remote', {} as JfrogCredentials);
         expect(downloadDetails.artifactoryUrl).toBe('http://127.0.0.1:8081/artifactory/');
         expect(downloadDetails.repository).toBe('jfrog-cli-remote');
         expect(downloadDetails.auth).toBe('Basic YWRtaW46cGFzc3dvcmQ=');
     }
 
     process.env.JF_ENV_LOCAL = V2_CONFIG_TOKEN;
-    let downloadDetails: DownloadDetails = Utils.extractDownloadDetails('jfrog-cli-remote');
+    let downloadDetails: DownloadDetails = Utils.extractDownloadDetails('jfrog-cli-remote', {} as JfrogCredentials);
     expect(downloadDetails.artifactoryUrl).toBe('http://127.0.0.1:8081/artifactory/');
     expect(downloadDetails.repository).toBe('jfrog-cli-remote');
     expect(downloadDetails.auth).toBe(
@@ -182,18 +275,19 @@ test('Extract download details Tests', () => {
     );
 
     process.env.JF_ENV_LOCAL = '';
-    process.env['JF_URL'] = 'http://127.0.0.1:8081';
-    process.env['JF_USER'] = 'user';
-    process.env['JF_PASSWORD'] = 'password';
-    downloadDetails = Utils.extractDownloadDetails('jfrog-cli-remote');
+    let jfrogCredentials1: JfrogCredentials = {} as JfrogCredentials;
+    jfrogCredentials1.jfrogUrl = 'http://127.0.0.1:8081';
+    jfrogCredentials1.username = 'user';
+    jfrogCredentials1.password = 'password';
+    downloadDetails = Utils.extractDownloadDetails('jfrog-cli-remote', jfrogCredentials1);
     expect(downloadDetails.artifactoryUrl).toBe('http://127.0.0.1:8081/artifactory');
     expect(downloadDetails.repository).toBe('jfrog-cli-remote');
     expect(downloadDetails.auth).toBe('Basic dXNlcjpwYXNzd29yZA==');
 
-    process.env['JF_USER'] = '';
-    process.env['JF_PASSWORD'] = '';
-    process.env['JF_ACCESS_TOKEN'] = 'YWNjZXNzVG9rZW4=';
-    downloadDetails = Utils.extractDownloadDetails('jfrog-cli-remote');
+    let jfrogCredentials2: JfrogCredentials = {} as JfrogCredentials;
+    jfrogCredentials2.jfrogUrl = 'http://127.0.0.1:8081';
+    jfrogCredentials2.accessToken = 'YWNjZXNzVG9rZW4=';
+    downloadDetails = Utils.extractDownloadDetails('jfrog-cli-remote', jfrogCredentials2);
     expect(downloadDetails.artifactoryUrl).toBe('http://127.0.0.1:8081/artifactory');
     expect(downloadDetails.repository).toBe('jfrog-cli-remote');
     expect(downloadDetails.auth).toBe(`Bearer YWNjZXNzVG9rZW4=`);
@@ -205,4 +299,127 @@ test('User agent', () => {
     expect(split).toHaveLength(2);
     expect(split[0]).toBe('setup-jfrog-cli-github-action');
     expect(split[1]).toMatch(/\d*.\d*.\d*/);
+});
+
+describe('Utils.removeJFrogServers', () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
+
+    it('should remove only the custom server ID if defined', async () => {
+        const customServerId: string = 'custom-server-id';
+        jest.spyOn(Utils as any, 'getInputtedCustomId').mockReturnValue(customServerId);
+        jest.spyOn(Utils as any, 'runCli').mockResolvedValue(undefined);
+
+        await Utils.removeJFrogServers();
+
+        expect(core.info).toHaveBeenCalledWith(`The value of custom is: '${customServerId}'`);
+        expect(core.debug).toHaveBeenCalledWith(`Removing custom server ID: '${customServerId}'...`);
+        expect(Utils.runCli).toHaveBeenCalledWith(['c', 'rm', customServerId, '--quiet']);
+    });
+
+    it('should remove all configured server IDs if no custom server ID is defined', async () => {
+        jest.spyOn(Utils as any, 'getInputtedCustomId').mockReturnValue(undefined);
+        const serverIds: string[] = ['server1', 'server2'];
+        jest.spyOn(Utils as any, 'getConfiguredJFrogServers').mockReturnValue(serverIds);
+        jest.spyOn(Utils as any, 'runCli').mockResolvedValue(undefined);
+
+        await Utils.removeJFrogServers();
+
+        expect(core.info).toHaveBeenCalledWith(`The value of custom is: 'undefined'`);
+        for (const serverId of serverIds) {
+            expect(core.debug).toHaveBeenCalledWith(`Removing server ID: '${serverId}'...`);
+            expect(Utils.runCli).toHaveBeenCalledWith(['c', 'rm', serverId, '--quiet']);
+        }
+        expect(core.exportVariable).toHaveBeenCalledWith(Utils.JFROG_CLI_SERVER_IDS_ENV_VAR, '');
+    });
+});
+
+describe('getJfrogCliConfigArgs', () => {
+    beforeEach(() => {
+        jest.spyOn(core, 'getInput').mockReturnValue('');
+        jest.spyOn(core, 'setSecret').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+        jest.clearAllMocks();
+        jest.restoreAllMocks();
+    });
+
+    it('should return undefined if URL is not set', async () => {
+        const creds: JfrogCredentials = {} as JfrogCredentials;
+        expect(await Utils.getJfrogCliConfigArgs(creds)).toBeUndefined();
+    });
+
+    it('should use access token if provided', async () => {
+        const creds: JfrogCredentials = {
+            jfrogUrl: 'https://example.jfrog.io',
+            accessToken: 'abc',
+        } as JfrogCredentials;
+        const args: string[] | undefined = await Utils.getJfrogCliConfigArgs(creds);
+        expect(args).toContain('--access-token');
+        expect(args).toContain('abc');
+    });
+
+    it('should use username and password if provided and access token is not', async () => {
+        const creds: JfrogCredentials = {
+            jfrogUrl: 'https://example.jfrog.io',
+            username: 'admin',
+            password: '1234',
+        } as JfrogCredentials;
+        const args: string[] | undefined = await Utils.getJfrogCliConfigArgs(creds);
+        expect(args).toContain('--user');
+        expect(args).toContain('admin');
+        expect(args).toContain('--password');
+        expect(args).toContain('1234');
+    });
+
+    it('should not include conflicting or duplicate arguments in the config command', async () => {
+        const jfrogCredentials: JfrogCredentials = {
+            jfrogUrl: 'https://example.jfrog.io',
+            username: 'test-user',
+            password: 'test-password',
+            // Notice this isn't the access token expected, expected OIDC exchanged token
+            accessToken: 'test-access-token',
+            oidcProviderName: 'oidc-integration-test-provider',
+            oidcAudience: 'jfrog-github',
+            oidcTokenId: '',
+        };
+        jest.spyOn(core, 'getIDToken').mockResolvedValue('mock-token-id');
+        jest.spyOn(exec, 'getExecOutput').mockResolvedValue({
+            stdout: '{AccessToken: abc Username: def }',
+            exitCode: 0,
+            stderr: '',
+        });
+        const configArgs: string[] | undefined = await Utils.getJfrogCliConfigArgs(jfrogCredentials);
+
+        // Ensure we generate a config command with access token auth after exchanging OIDC token
+        const configString: string = configArgs?.join(' ') || '';
+        expect(configString).toContain('--url https://example.jfrog.io');
+        expect(configString).toContain('--interactive=false');
+        expect(configString).toContain('--overwrite=true');
+        expect(configString).toContain('--access-token abc');
+        expect(configString).not.toContain('--oidc-provider-name=oidc-integration-test-provider');
+        expect(configString).not.toContain('--username test-user');
+        expect(configString).not.toContain('--oidc-audience=jfrog-github');
+    });
+
+    it('should use access token when provided with password', async () => {
+        const jfrogCredentials: JfrogCredentials = {
+            jfrogUrl: 'https://example.jfrog.io',
+            username: 'test-user',
+            password: 'test-password',
+            accessToken: 'test-access-token',
+            oidcProviderName: '',
+            oidcAudience: '',
+            oidcTokenId: '',
+        };
+        const configArgs: string[] | undefined = await Utils.getJfrogCliConfigArgs(jfrogCredentials);
+        const configString: string = configArgs?.join(' ') || '';
+        expect(configString).toContain('--url https://example.jfrog.io');
+        expect(configString).toContain('--interactive=false');
+        expect(configString).toContain('--overwrite=true');
+        expect(configString).toContain('--access-token test-access-token');
+        expect(configString).not.toContain('--username test-user');
+    });
 });
