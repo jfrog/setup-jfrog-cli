@@ -234,16 +234,11 @@ export class OidcUtils {
             gh_repo: process.env.GITHUB_REPOSITORY ?? '',
             gh_revision: process.env.GITHUB_SHA ?? '',
             gh_branch: process.env.GITHUB_REF_NAME ?? '',
+            // AppTrust context parameters
+            repo: process.env.GITHUB_REPOSITORY,
+            revision: process.env.GITHUB_SHA,
+            branch: process.env.GITHUB_REF_NAME,
             application_key: applicationKey,
-            // This object is planned to be expanded as needed
-            // even though currently it contains some duplicated parameters
-            context: {
-                vcs_commit: {
-                    vcs_url: Utils.buildVcsUrl(),
-                    branch: process.env.GITHUB_REF_NAME ?? '',
-                    revision: process.env.GITHUB_SHA ?? '',
-                },
-            },
         };
     }
 
