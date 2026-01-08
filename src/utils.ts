@@ -290,6 +290,7 @@ export class Utils {
             '*password*;*secret*;*key*;*token*;*auth*;JF_ARTIFACTORY_*;JF_ENV_*;JF_URL;JF_USER;JF_PASSWORD;JF_ACCESS_TOKEN',
         );
         Utils.exportVariableIfNotSet('JFROG_CLI_OFFER_CONFIG', 'false');
+        Utils.exportVariableIfNotSet('JFROG_CLI_AVOID_NEW_VERSION_WARNING', 'true');
         Utils.exportVariableIfNotSet('CI', 'true');
         Utils.exportVariableIfNotSet('JFROG_CLI_SOURCECODE_REPOSITORY', process.env.GITHUB_REPOSITORY ?? '');
         Utils.exportVariableIfNotSet('JFROG_CLI_CI_JOB_ID', process.env.GITHUB_WORKFLOW ?? '');
@@ -479,8 +480,8 @@ export class Utils {
             if (!jfrogCredentials.jfrogUrl) {
                 throw new Error(
                     `'download-repository' input provided, but no JFrog environment details found. ` +
-                        `Hint - Ensure that the JFrog connection details environment variables are set: ` +
-                        `either a Config Token with a JF_ENV_ prefix or separate env config (JF_URL, JF_USER, JF_PASSWORD, JF_ACCESS_TOKEN)`,
+                    `Hint - Ensure that the JFrog connection details environment variables are set: ` +
+                    `either a Config Token with a JF_ENV_ prefix or separate env config (JF_URL, JF_USER, JF_PASSWORD, JF_ACCESS_TOKEN)`,
                 );
             }
             serverObj.artifactoryUrl = jfrogCredentials.jfrogUrl.replace(/\/$/, '') + '/artifactory';
