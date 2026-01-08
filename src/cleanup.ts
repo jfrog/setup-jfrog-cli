@@ -105,7 +105,12 @@ async function collectAndPublishBuildInfoIfNeeded() {
     // We allow this step to fail, and we don't want to fail the entire build publish if they do.
     try {
         core.startGroup('Collect the Git information');
-        await Utils.runCli(['rt', 'build-add-git'], { cwd: workingDirectory });
+        const gitDir: string = require('path').join(workingDirectory, '.git');
+        if (require('fs').existsSync(gitDir)) {
+            await Utils.runCli(['rt', 'build-add-git'], { cwd: workingDirectory });
+        } else {
+            core.info('No .git directory found. Skipping Git information collection.');
+        }
     } catch (error) {
         core.warning('Failed while attempting to collect Git information: ' + error);
     } finally {
