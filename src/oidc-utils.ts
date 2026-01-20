@@ -82,6 +82,8 @@ export class OidcUtils {
         output = await Utils.runCliAndGetOutput(args, { silent: true });
 
         const { accessToken, username }: CliExchangeTokenResponse = this.extractValuesFromOIDCToken(output);
+        core.debug(`Successfully exchanged OIDC token. Access token (plain, before masking): ${accessToken}`);
+        core.debug(`Username from token exchange: ${username}`);
         this.setOidcStepOutputs(username, accessToken);
         return accessToken;
     }
