@@ -36,7 +36,7 @@ export class OidcUtils {
     for further use by the users, this cannot be done in secure way using jf config add command.
 
     */
-    public static async exchangeOidcToken(jfrogCredentials: JfrogCredentials): Promise<string | undefined> {
+    public static async exchangeOidcToken(jfrogCredentials: JfrogCredentials, forceManual: boolean = false): Promise<string | undefined> {
         if (!jfrogCredentials.jfrogUrl) {
             throw new Error(`JF_URL must be provided when oidc-provider-name is specified`);
         }
@@ -49,13 +49,14 @@ export class OidcUtils {
         }
 
         // Version should be more than min version
-        // If CLI_REMOTE_ARG specified, we have to fetch token before we can download the CLI.
-        if (this.isCLIVersionOidcSupported() && !core.getInput(Utils.CLI_REMOTE_ARG)) {
+        // If forceManual is true (e.g., for CLI download from remote repo), use manual flow.
+        // Otherwise, prefer native CLI flow if version is supported.
+        if (this.isCLIVersionOidcSupported() && !forceManual) {
             core.debug('Using CLI exchange-oidc-token..');
             return await this.exchangeOIDCTokenAndExportStepOutputs(jfrogCredentials);
         }
 
-        // Fallback to manual OIDC exchange for backward compatibility
+        // Fallback to manual OIDC exchange for backward compatibility or when forced
         core.debug('Using Manual OIDC Auth Method..');
         // Exchanges the token and set as access token in the credential's object
         let token: string | undefined = await this.manualExchangeOidc(jfrogCredentials);
@@ -304,6 +305,7 @@ export class OidcUtils {
 
     public static isCLIVersionOidcSupported(): boolean {
         const version: string = core.getInput(Utils.CLI_VERSION_ARG) || '';
+        core.info("SHAYS Checking if CLI version supports OIDC token exchange. Provided version: '" + version + "'");
         if (version === '') {
             // No input meaning default version which is supported
             return true;
