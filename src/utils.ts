@@ -400,6 +400,9 @@ export class Utils {
         if (arch().includes('arm')) {
             return arch().includes('64') ? 'linux-arm64' : 'linux-arm';
         }
+        if (arch().includes('s390x')) {
+            return 'linux-s390x';
+        }
         return arch().includes('64') ? 'linux-amd64' : 'linux-386';
     }
 
