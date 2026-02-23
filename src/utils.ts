@@ -7,7 +7,7 @@ import { appendFileSync, chmodSync } from 'fs';
 import { arch, platform } from 'os';
 
 import { join } from 'path';
-import { lt } from 'semver';
+import { gte, lt } from 'semver';
 
 import { DownloadDetails, JfrogCredentials } from './types';
 import { OidcUtils } from './oidc-utils';
@@ -59,6 +59,9 @@ export class Utils {
     public static readonly GHE_BASE_URL_ALIAS_INPUT: string = 'ghe_base_url';
     // Enable Package Alias so mvn, npm, go etc. are intercepted in subsequent steps
     public static readonly ENABLE_PACKAGE_ALIAS: string = 'enable-package-alias';
+
+    // Minimum JFrog CLI version that supports jf package-alias
+    private static readonly MIN_CLI_VERSION_PACKAGE_ALIAS: string = '2.93.0';
 
     /**
      * Gathers JFrog's credentials from environment variables and delivers them in a JfrogCredentials structure
@@ -531,6 +534,14 @@ export class Utils {
         const githubPath = process.env.GITHUB_PATH;
         if (!githubPath) {
             core.warning("enable-package-alias is true but GITHUB_PATH is not set (not running in GitHub Actions?). Skipping package-alias setup.");
+            return;
+        }
+        const version: string = core.getInput(Utils.CLI_VERSION_ARG);
+        if (version !== Utils.LATEST_CLI_VERSION && !gte(version, this.MIN_CLI_VERSION_PACKAGE_ALIAS)) {
+            core.warning(
+                "Package aliasing requires JFrog CLI " + this.MIN_CLI_VERSION_PACKAGE_ALIAS + " or above; requested version is " + version + ". " +
+                "Skipping package-alias setup; subsequent steps will not use package aliases."
+            );
             return;
         }
         const exitCode = await exec('jf', ['package-alias', 'install'], { ignoreReturnCode: true });
