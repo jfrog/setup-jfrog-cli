@@ -2,7 +2,7 @@ import * as core from '@actions/core';
 import { exec, ExecOptions, ExecOutput, getExecOutput } from '@actions/exec';
 
 import * as toolCache from '@actions/tool-cache';
-import { chmodSync } from 'fs';
+import { appendFileSync, chmodSync } from 'fs';
 
 import { arch, platform } from 'os';
 
@@ -57,6 +57,8 @@ export class Utils {
     // GHES baseUrl support
     public static readonly GHE_BASE_URL_INPUT: string = 'ghe-base-url';
     public static readonly GHE_BASE_URL_ALIAS_INPUT: string = 'ghe_base_url';
+    // Enable Package Alias so mvn, npm, go etc. are intercepted in subsequent steps
+    public static readonly ENABLE_PACKAGE_ALIAS: string = 'enable-package-alias';
 
     /**
      * Gathers JFrog's credentials from environment variables and delivers them in a JfrogCredentials structure
@@ -505,5 +507,43 @@ export class Utils {
             return 'Basic ' + Buffer.from(serverObj.user + ':' + serverObj.password).toString('base64');
         }
         return;
+    }
+
+    /**
+     * Returns the package-alias bin directory used by `jf package-alias install`.
+     * Linux/macOS: $HOME/.jfrog/package-alias/bin
+     * Windows: %USERPROFILE%\.jfrog\package-alias\bin
+     */
+    public static getPackageAliasBinDir(): string {
+        const home = process.env.HOME || process.env.USERPROFILE || '';
+        return join(home, '.jfrog', 'package-alias', 'bin');
+    }
+
+    /**
+     * If enable-package-alias is true and GITHUB_PATH is set, runs `jf package-alias install`
+     * and appends the alias bin directory to GITHUB_PATH so subsequent steps intercept mvn, npm, go, etc.
+     * On failure (e.g. older CLI without package-alias), logs a warning and does not fail the job.
+     */
+    public static async setupPackageAliasIfRequested(): Promise<void> {
+        if (!core.getBooleanInput(Utils.ENABLE_PACKAGE_ALIAS)) {
+            return;
+        }
+        const githubPath = process.env.GITHUB_PATH;
+        if (!githubPath) {
+            core.warning("enable-package-alias is true but GITHUB_PATH is not set (not running in GitHub Actions?). Skipping package-alias setup.");
+            return;
+        }
+        const exitCode = await exec('jf', ['package-alias', 'install'], { ignoreReturnCode: true });
+        if (exitCode !== core.ExitCode.Success) {
+            core.warning(
+                "jf package-alias install failed (exit code " + exitCode + "). " +
+                "Package Aliasing requires JFrog CLI version that supports 'jf package-alias'. " +
+                "Skipping; subsequent steps will not use package aliases."
+            );
+            return;
+        }
+        const aliasBinDir = Utils.getPackageAliasBinDir();
+        appendFileSync(githubPath, aliasBinDir + '\n');
+        core.info('Package aliases installed and "' + aliasBinDir + '" appended to GITHUB_PATH.');
     }
 }
