@@ -485,8 +485,8 @@ export class Utils {
             if (!jfrogCredentials.jfrogUrl) {
                 throw new Error(
                     `'download-repository' input provided, but no JFrog environment details found. ` +
-                    `Hint - Ensure that the JFrog connection details environment variables are set: ` +
-                    `either a Config Token with a JF_ENV_ prefix or separate env config (JF_URL, JF_USER, JF_PASSWORD, JF_ACCESS_TOKEN)`,
+                        `Hint - Ensure that the JFrog connection details environment variables are set: ` +
+                        `either a Config Token with a JF_ENV_ prefix or separate env config (JF_URL, JF_USER, JF_PASSWORD, JF_ACCESS_TOKEN)`,
                 );
             }
             serverObj.artifactoryUrl = jfrogCredentials.jfrogUrl.replace(/\/$/, '') + '/artifactory';
@@ -533,23 +533,29 @@ export class Utils {
         }
         const githubPath = process.env.GITHUB_PATH;
         if (!githubPath) {
-            core.warning("enable-package-alias is true but GITHUB_PATH is not set (not running in GitHub Actions?). Skipping package-alias setup.");
+            core.warning('enable-package-alias is true but GITHUB_PATH is not set (not running in GitHub Actions?). Skipping package-alias setup.');
             return;
         }
         const version: string = core.getInput(Utils.CLI_VERSION_ARG);
         if (version !== Utils.LATEST_CLI_VERSION && !gte(version, this.MIN_CLI_VERSION_PACKAGE_ALIAS)) {
             core.warning(
-                "Package aliasing requires JFrog CLI " + this.MIN_CLI_VERSION_PACKAGE_ALIAS + " or above; requested version is " + version + ". " +
-                "Skipping package-alias setup; subsequent steps will not use package aliases."
+                'Package aliasing requires JFrog CLI ' +
+                    this.MIN_CLI_VERSION_PACKAGE_ALIAS +
+                    ' or above; requested version is ' +
+                    version +
+                    '. ' +
+                    'Skipping package-alias setup; subsequent steps will not use package aliases.',
             );
             return;
         }
         const exitCode = await exec('jf', ['package-alias', 'install'], { ignoreReturnCode: true });
         if (exitCode !== core.ExitCode.Success) {
             core.warning(
-                "jf package-alias install failed (exit code " + exitCode + "). " +
-                "Package Aliasing requires JFrog CLI version that supports 'jf package-alias'. " +
-                "Skipping; subsequent steps will not use package aliases."
+                'jf package-alias install failed (exit code ' +
+                    exitCode +
+                    '). ' +
+                    "Package Aliasing requires JFrog CLI version that supports 'jf package-alias'. " +
+                    'Skipping; subsequent steps will not use package aliases.',
             );
             return;
         }
