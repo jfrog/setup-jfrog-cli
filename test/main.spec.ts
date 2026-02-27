@@ -1,6 +1,7 @@
 import * as os from 'os';
 import * as core from '@actions/core';
 import * as exec from '@actions/exec';
+import { existsSync, unlinkSync } from 'fs';
 
 import { Utils } from '../src/utils';
 import { DownloadDetails, JfrogCredentials } from '../src/types';
@@ -421,5 +422,107 @@ describe('getJfrogCliConfigArgs', () => {
         expect(configString).toContain('--overwrite=true');
         expect(configString).toContain('--access-token test-access-token');
         expect(configString).not.toContain('--username test-user');
+    });
+});
+
+describe('setupPackageAliasIfRequested', () => {
+    const myCore: jest.Mocked<typeof core> = core as any;
+    const myExec: jest.Mocked<typeof exec> = exec as any;
+    let githubPath: string;
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+        githubPath = `.github-path-${Date.now()}`;
+        process.env.GITHUB_PATH = githubPath;
+    });
+
+    afterEach(() => {
+        delete process.env.GITHUB_PATH;
+        if (existsSync(githubPath)) {
+            unlinkSync(githubPath);
+        }
+        jest.restoreAllMocks();
+    });
+
+    it('should run package-alias install without --packages when package-alias-tools is empty', async () => {
+        jest.spyOn(core, 'getBooleanInput').mockReturnValue(true);
+        jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
+            if (name === Utils.CLI_VERSION_ARG) {
+                return Utils.LATEST_CLI_VERSION;
+            }
+            if (name === Utils.PACKAGE_ALIAS_TOOLS) {
+                return '';
+            }
+            return '';
+        });
+        myExec.exec.mockResolvedValue(0);
+
+        await Utils.setupPackageAliasIfRequested();
+
+        expect(myExec.exec).toHaveBeenCalledWith('jf', ['package-alias', 'install'], { ignoreReturnCode: true });
+    });
+
+    it('should pass normalized tools as --packages when package-alias-tools is provided', async () => {
+        jest.spyOn(core, 'getBooleanInput').mockReturnValue(true);
+        jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
+            if (name === Utils.CLI_VERSION_ARG) {
+                return Utils.LATEST_CLI_VERSION;
+            }
+            if (name === Utils.PACKAGE_ALIAS_TOOLS) {
+                return 'npm,  mvn, ,go  ';
+            }
+            return '';
+        });
+        myExec.exec.mockResolvedValue(0);
+
+        await Utils.setupPackageAliasIfRequested();
+
+        expect(myExec.exec).toHaveBeenCalledWith('jf', ['package-alias', 'install', '--packages', 'npm,mvn,go'], { ignoreReturnCode: true });
+    });
+
+    it('should ignore whitespace-only package-alias-tools segments', async () => {
+        jest.spyOn(core, 'getBooleanInput').mockReturnValue(true);
+        jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
+            if (name === Utils.CLI_VERSION_ARG) {
+                return Utils.LATEST_CLI_VERSION;
+            }
+            if (name === Utils.PACKAGE_ALIAS_TOOLS) {
+                return ' , ,  ';
+            }
+            return '';
+        });
+        myExec.exec.mockResolvedValue(0);
+
+        await Utils.setupPackageAliasIfRequested();
+
+        expect(myExec.exec).toHaveBeenCalledWith('jf', ['package-alias', 'install'], { ignoreReturnCode: true });
+    });
+
+    it('should skip package alias setup when feature is disabled', async () => {
+        jest.spyOn(core, 'getBooleanInput').mockReturnValue(false);
+        myExec.exec.mockResolvedValue(0);
+
+        await Utils.setupPackageAliasIfRequested();
+
+        expect(myExec.exec).not.toHaveBeenCalled();
+    });
+
+    it('should preserve skip behavior for unsupported CLI versions', async () => {
+        jest.spyOn(core, 'getBooleanInput').mockReturnValue(true);
+        jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
+            if (name === Utils.CLI_VERSION_ARG) {
+                return '2.92.0';
+            }
+            if (name === Utils.PACKAGE_ALIAS_TOOLS) {
+                return 'npm,mvn';
+            }
+            return '';
+        });
+        myExec.exec.mockResolvedValue(0);
+
+        await Utils.setupPackageAliasIfRequested();
+
+        expect(myCore.warning).toHaveBeenCalled();
+        expect(myExec.exec).not.toHaveBeenCalled();
     });
 });

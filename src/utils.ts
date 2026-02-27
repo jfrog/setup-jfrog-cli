@@ -2,7 +2,7 @@ import * as core from '@actions/core';
 import { exec, ExecOptions, ExecOutput, getExecOutput } from '@actions/exec';
 
 import * as toolCache from '@actions/tool-cache';
-import { appendFileSync, chmodSync } from 'fs';
+import { chmodSync } from 'fs';
 
 import { arch, platform } from 'os';
 
@@ -524,7 +524,7 @@ export class Utils {
 
     /**
      * If enable-package-alias is true and GITHUB_PATH is set, runs `jf package-alias install`
-     * and appends the alias bin directory to GITHUB_PATH so subsequent steps intercept mvn, npm, go, etc.
+     * and adds the alias bin directory to PATH via core.addPath so subsequent steps intercept mvn, npm, go, etc.
      * On failure (e.g. older CLI without package-alias), logs a warning and does not fail the job.
      */
     public static async setupPackageAliasIfRequested(): Promise<void> {
@@ -560,7 +560,7 @@ export class Utils {
             return;
         }
         const aliasBinDir = Utils.getPackageAliasBinDir();
-        appendFileSync(githubPath, aliasBinDir + '\n');
-        core.info('Package aliases installed and "' + aliasBinDir + '" appended to GITHUB_PATH.');
+        core.addPath(aliasBinDir);
+        core.info('Package aliases installed and "' + aliasBinDir + '" added to PATH.');
     }
 }

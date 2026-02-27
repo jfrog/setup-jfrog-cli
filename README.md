@@ -362,12 +362,15 @@ Alternating between configurations can be done by providing the `--server-id` op
 
 When enabled, the action runs `jf package-alias install` after setting up JFrog CLI and appends the alias bin directory to `GITHUB_PATH`. Subsequent steps will transparently intercept package manager commands such as `mvn`, `npm`, `go`, etc., so they use JFrog CLI without changing your workflow scripts.
 
+You can optionally provide `package-alias-tools` as a comma-separated list to pass specific package managers to `jf package-alias install --packages`.
+
 This feature requires JFrog CLI version **2.93.0** or above. If the requested version is older, or if `jf package-alias install` fails for another reason, the action logs a warning and does not fail the job; subsequent steps will not use package aliases.
 
 ```yml
 - uses: jfrog/setup-jfrog-cli@v4
   with:
     enable-package-alias: true
+    package-alias-tools: npm,mvn,go
 ```
 </details>
 
