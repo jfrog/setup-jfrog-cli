@@ -11,6 +11,6 @@
     "typescript.tsc.autoDetect": "off",
     "workbench.editor.enablePreview": false,
     "workbench.editor.enablePreviewFromQuickOpen": false,
-    "workbench.editor.showTabs": true,
+    "workbench.editor.showTabs": "multiple",
     "files.autoSave": "afterDelay"
 }

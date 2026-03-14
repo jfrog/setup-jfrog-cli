@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 60"> <!-- Increased height to accommodate text -->
+
+  <!-- Define the symbol -->
+  <symbol viewBox="0 0 50 50" id="colorful/packageTypes/generic">
+    <path d="M40.7627 16.3181L25.4515 24.8681V43.5105L40.7627 35.28L40.7627 16.3181Z" fill="url(#generic1)"></path>
+    <path d="M32.4736 25.7267L28.6768 27.8962L28.6768 32.2561L32.4736 30.2276L32.9449 31.1096L32.4736 30.2276V25.7267Z" stroke="#485363" stroke-width="2"></path>
+    <path d="M9.76465 16.3537L25.4506 24.8856V43.666L9.76465 35.2801V16.3537Z" fill="url(#generic2)"></path>
+    <path d="M25.2519 7.98704L40.7627 16.3535L25.4588 24.8966L9.76273 16.3508L25.2519 7.98704Z" fill="url(#generic3)"></path>
+    <path d="M32.2834 11.8219L34.0072 12.7525L19.0107 21.3793L17.0515 20.3162L32.2834 11.8219Z" fill="#485363"></path>
+  </symbol>
+
+  <!-- Reference the symbol -->
+  <use href="#colorful/packageTypes/generic" x="0" y="0"/>
+
+  <!-- Add text below the symbol -->
+  <text x="25" y="55" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#8a8a8a">Generic</text>
+
+  <!-- Define the gradients used in the symbol -->
+  <defs>
+    <linearGradient id="generic1" x1="25.4515" y1="16.3181" x2="44.8178" y2="41.4454" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#697588"></stop>
+      <stop offset="1" stop-color="#556274"></stop>
+    </linearGradient>
+    <linearGradient id="generic2" x1="13.6849" y1="22.4872" x2="30.1201" y2="32.045" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#677383"></stop>
+      <stop offset="1" stop-color="#77879D"></stop>
+    </linearGradient>
+    <linearGradient id="generic3" x1="20.5792" y1="8.31945" x2="27.1335" y2="23.1929" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#556274"></stop>
+      <stop offset="1" stop-color="#69788D"></stop>
+    </linearGradient>
+  </defs>
+
+</svg>
+
