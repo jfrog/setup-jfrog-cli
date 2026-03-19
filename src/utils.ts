@@ -59,6 +59,8 @@ export class Utils {
     public static readonly GHE_BASE_URL_ALIAS_INPUT: string = 'ghe_base_url';
     // Enable Package Alias so mvn, npm, go etc. are intercepted in subsequent steps
     public static readonly ENABLE_PACKAGE_ALIAS: string = 'enable-package-alias';
+    // Comma-separated package managers to include in package alias install
+    public static readonly PACKAGE_ALIAS_TOOLS: string = 'package-alias-tools';
 
     // Minimum JFrog CLI version that supports jf package-alias
     private static readonly MIN_CLI_VERSION_PACKAGE_ALIAS: string = '2.93.0';
@@ -514,10 +516,15 @@ export class Utils {
 
     /**
      * Returns the package-alias bin directory used by `jf package-alias install`.
-     * Linux/macOS: $HOME/.jfrog/package-alias/bin
-     * Windows: %USERPROFILE%\.jfrog\package-alias\bin
+     * When JFROG_CLI_HOME_DIR is set: $JFROG_CLI_HOME_DIR/package-alias/bin
+     * Otherwise Linux/macOS: $HOME/.jfrog/package-alias/bin
+     * Otherwise Windows: %USERPROFILE%\.jfrog\package-alias\bin
      */
     public static getPackageAliasBinDir(): string {
+        const cliHomeDir = process.env.JFROG_CLI_HOME_DIR;
+        if (cliHomeDir) {
+            return join(cliHomeDir, 'package-alias', 'bin');
+        }
         const home = process.env.HOME || process.env.USERPROFILE || '';
         return join(home, '.jfrog', 'package-alias', 'bin');
     }
@@ -548,7 +555,17 @@ export class Utils {
             );
             return;
         }
-        const exitCode = await exec('jf', ['package-alias', 'install'], { ignoreReturnCode: true });
+        const packageAliasTools = core
+            .getInput(Utils.PACKAGE_ALIAS_TOOLS)
+            .split(',')
+            .map((tool: string) => tool.trim())
+            .filter((tool: string) => !!tool)
+            .join(',');
+        const packageAliasInstallArgs = ['package-alias', 'install'];
+        if (packageAliasTools) {
+            packageAliasInstallArgs.push('--packages', packageAliasTools);
+        }
+        const exitCode = await exec('jf', packageAliasInstallArgs, { ignoreReturnCode: true });
         if (exitCode !== core.ExitCode.Success) {
             core.warning(
                 'jf package-alias install failed (exit code ' +

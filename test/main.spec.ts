@@ -425,6 +425,32 @@ describe('getJfrogCliConfigArgs', () => {
     });
 });
 
+describe('getPackageAliasBinDir', () => {
+    const originalEnv = process.env;
+
+    afterEach(() => {
+        process.env = originalEnv;
+    });
+
+    it('should use JFROG_CLI_HOME_DIR when set', () => {
+        process.env = { ...originalEnv, JFROG_CLI_HOME_DIR: '/custom/cli/home' };
+        expect(Utils.getPackageAliasBinDir()).toBe('/custom/cli/home/package-alias/bin');
+    });
+
+    it('should fall back to HOME/.jfrog when JFROG_CLI_HOME_DIR is not set', () => {
+        process.env = { ...originalEnv, HOME: '/home/runner', JFROG_CLI_HOME_DIR: undefined };
+        delete process.env.JFROG_CLI_HOME_DIR;
+        expect(Utils.getPackageAliasBinDir()).toBe('/home/runner/.jfrog/package-alias/bin');
+    });
+
+    it('should fall back to USERPROFILE/.jfrog when HOME is not set', () => {
+        process.env = { ...originalEnv, USERPROFILE: 'C:\\Users\\runner', HOME: undefined, JFROG_CLI_HOME_DIR: undefined };
+        delete process.env.HOME;
+        delete process.env.JFROG_CLI_HOME_DIR;
+        expect(Utils.getPackageAliasBinDir()).toMatch(/C:\\Users\\runner.*\.jfrog.*package-alias.*bin/);
+    });
+});
+
 describe('setupPackageAliasIfRequested', () => {
     const myCore: jest.Mocked<typeof core> = core as any;
     const myExec: jest.Mocked<typeof exec> = exec as any;
