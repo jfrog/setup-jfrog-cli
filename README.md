@@ -20,6 +20,7 @@
     -   [Setting the JFrog Project Key](#setting-the-jfrog-project-key)
     -   [Downloading JFrog CLI from Artifactory](#downloading-jfrog-cli-from-artifactory)
     -   [Custom Server ID and Multi-Configuration](#custom-server-id-and-multi-configuration)
+    -   [Enabling Package Alias](#enabling-package-alias)
 -   [JFrog Job Summary](#jfrog-job-summary)
 -   [Code Scanning Alerts](#code-scanning-alerts)
 -   [Automatic Evidence Collection](#automatic-evidence-collection)
@@ -352,6 +353,25 @@ You may override the default server ID by providing a custom server ID:
 You may also use multiple configurations in the same workflow by providing a custom server ID for each configuration.
 
 Alternating between configurations can be done by providing the `--server-id` option to JFrog CLI commands or by setting a default server using  `jf c use <server-id>`.
+</details>
+
+<details>
+    <summary>Enabling Package Alias</summary>
+
+### Enabling Package Alias
+
+When enabled, the action runs `jf package-alias install` after setting up JFrog CLI and appends the alias bin directory to `GITHUB_PATH`. Subsequent steps will transparently intercept package manager commands such as `mvn`, `npm`, `go`, etc., so they use JFrog CLI without changing your workflow scripts.
+
+You can optionally provide `package-alias-tools` as a comma-separated list to pass specific package managers to `jf package-alias install --packages`.
+
+This feature requires JFrog CLI version **2.93.0** or above. If the requested version is older, or if `jf package-alias install` fails for another reason, the action logs a warning and does not fail the job; subsequent steps will not use package aliases.
+
+```yml
+- uses: jfrog/setup-jfrog-cli@v4
+  with:
+    enable-package-alias: true
+    package-alias-tools: npm,mvn,go
+```
 </details>
 
 ## JFrog Job Summary
