@@ -1,4 +1,5 @@
 import * as os from 'os';
+import * as path from 'path';
 import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 import { existsSync, unlinkSync } from 'fs';
@@ -434,13 +435,13 @@ describe('getPackageAliasBinDir', () => {
 
     it('should use JFROG_CLI_HOME_DIR when set', () => {
         process.env = { ...originalEnv, JFROG_CLI_HOME_DIR: '/custom/cli/home' };
-        expect(Utils.getPackageAliasBinDir()).toBe('/custom/cli/home/package-alias/bin');
+        expect(Utils.getPackageAliasBinDir()).toBe(path.join('/custom/cli/home', 'package-alias', 'bin'));
     });
 
     it('should fall back to HOME/.jfrog when JFROG_CLI_HOME_DIR is not set', () => {
         process.env = { ...originalEnv, HOME: '/home/runner', JFROG_CLI_HOME_DIR: undefined };
         delete process.env.JFROG_CLI_HOME_DIR;
-        expect(Utils.getPackageAliasBinDir()).toBe('/home/runner/.jfrog/package-alias/bin');
+        expect(Utils.getPackageAliasBinDir()).toBe(path.join('/home/runner', '.jfrog', 'package-alias', 'bin'));
     });
 
     it('should fall back to USERPROFILE/.jfrog when HOME is not set', () => {
