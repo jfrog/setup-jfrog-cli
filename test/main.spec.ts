@@ -1,6 +1,8 @@
 import * as os from 'os';
+import * as path from 'path';
 import * as core from '@actions/core';
 import * as exec from '@actions/exec';
+import { existsSync, unlinkSync } from 'fs';
 
 import { Utils } from '../src/utils';
 import { DownloadDetails, JfrogCredentials } from '../src/types';
@@ -421,5 +423,133 @@ describe('getJfrogCliConfigArgs', () => {
         expect(configString).toContain('--overwrite=true');
         expect(configString).toContain('--access-token test-access-token');
         expect(configString).not.toContain('--username test-user');
+    });
+});
+
+describe('getPackageAliasBinDir', () => {
+    const originalEnv = process.env;
+
+    afterEach(() => {
+        process.env = originalEnv;
+    });
+
+    it('should use JFROG_CLI_HOME_DIR when set', () => {
+        process.env = { ...originalEnv, JFROG_CLI_HOME_DIR: '/custom/cli/home' };
+        expect(Utils.getPackageAliasBinDir()).toBe(path.join('/custom/cli/home', 'package-alias', 'bin'));
+    });
+
+    it('should fall back to HOME/.jfrog when JFROG_CLI_HOME_DIR is not set', () => {
+        process.env = { ...originalEnv, HOME: '/home/runner', JFROG_CLI_HOME_DIR: undefined };
+        delete process.env.JFROG_CLI_HOME_DIR;
+        expect(Utils.getPackageAliasBinDir()).toBe(path.join('/home/runner', '.jfrog', 'package-alias', 'bin'));
+    });
+
+    it('should fall back to USERPROFILE/.jfrog when HOME is not set', () => {
+        process.env = { ...originalEnv, USERPROFILE: 'C:\\Users\\runner', HOME: undefined, JFROG_CLI_HOME_DIR: undefined };
+        delete process.env.HOME;
+        delete process.env.JFROG_CLI_HOME_DIR;
+        expect(Utils.getPackageAliasBinDir()).toMatch(/C:\\Users\\runner.*\.jfrog.*package-alias.*bin/);
+    });
+});
+
+describe('setupPackageAliasIfRequested', () => {
+    const myCore: jest.Mocked<typeof core> = core as any;
+    const myExec: jest.Mocked<typeof exec> = exec as any;
+    let githubPath: string;
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+        githubPath = `.github-path-${Date.now()}`;
+        process.env.GITHUB_PATH = githubPath;
+    });
+
+    afterEach(() => {
+        delete process.env.GITHUB_PATH;
+        if (existsSync(githubPath)) {
+            unlinkSync(githubPath);
+        }
+        jest.restoreAllMocks();
+    });
+
+    it('should run package-alias install without --packages when package-alias-tools is empty', async () => {
+        jest.spyOn(core, 'getBooleanInput').mockReturnValue(true);
+        jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
+            if (name === Utils.CLI_VERSION_ARG) {
+                return Utils.LATEST_CLI_VERSION;
+            }
+            if (name === Utils.PACKAGE_ALIAS_TOOLS) {
+                return '';
+            }
+            return '';
+        });
+        myExec.exec.mockResolvedValue(0);
+
+        await Utils.setupPackageAliasIfRequested();
+
+        expect(myExec.exec).toHaveBeenCalledWith('jf', ['package-alias', 'install'], { ignoreReturnCode: true });
+    });
+
+    it('should pass normalized tools as --packages when package-alias-tools is provided', async () => {
+        jest.spyOn(core, 'getBooleanInput').mockReturnValue(true);
+        jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
+            if (name === Utils.CLI_VERSION_ARG) {
+                return Utils.LATEST_CLI_VERSION;
+            }
+            if (name === Utils.PACKAGE_ALIAS_TOOLS) {
+                return 'npm,  mvn, ,go  ';
+            }
+            return '';
+        });
+        myExec.exec.mockResolvedValue(0);
+
+        await Utils.setupPackageAliasIfRequested();
+
+        expect(myExec.exec).toHaveBeenCalledWith('jf', ['package-alias', 'install', '--packages', 'npm,mvn,go'], { ignoreReturnCode: true });
+    });
+
+    it('should ignore whitespace-only package-alias-tools segments', async () => {
+        jest.spyOn(core, 'getBooleanInput').mockReturnValue(true);
+        jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
+            if (name === Utils.CLI_VERSION_ARG) {
+                return Utils.LATEST_CLI_VERSION;
+            }
+            if (name === Utils.PACKAGE_ALIAS_TOOLS) {
+                return ' , ,  ';
+            }
+            return '';
+        });
+        myExec.exec.mockResolvedValue(0);
+
+        await Utils.setupPackageAliasIfRequested();
+
+        expect(myExec.exec).toHaveBeenCalledWith('jf', ['package-alias', 'install'], { ignoreReturnCode: true });
+    });
+
+    it('should skip package alias setup when feature is disabled', async () => {
+        jest.spyOn(core, 'getBooleanInput').mockReturnValue(false);
+        myExec.exec.mockResolvedValue(0);
+
+        await Utils.setupPackageAliasIfRequested();
+
+        expect(myExec.exec).not.toHaveBeenCalled();
+    });
+
+    it('should preserve skip behavior for unsupported CLI versions', async () => {
+        jest.spyOn(core, 'getBooleanInput').mockReturnValue(true);
+        jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
+            if (name === Utils.CLI_VERSION_ARG) {
+                return '2.92.0';
+            }
+            if (name === Utils.PACKAGE_ALIAS_TOOLS) {
+                return 'npm,mvn';
+            }
+            return '';
+        });
+        myExec.exec.mockResolvedValue(0);
+
+        await Utils.setupPackageAliasIfRequested();
+
+        expect(myCore.warning).toHaveBeenCalled();
+        expect(myExec.exec).not.toHaveBeenCalled();
     });
 });
