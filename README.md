@@ -18,6 +18,7 @@
     -   [Setting Build Name and Number for Build Info Publication](#setting-build-name-and-number-for-build-info-publication)
     -   [Setting JFrog CLI Version](#setting-jfrog-cli-version)
     -   [Setting the JFrog Project Key](#setting-the-jfrog-project-key)
+    -   [Monorepo Support](#monorepo-support)
     -   [Downloading JFrog CLI from Artifactory](#downloading-jfrog-cli-from-artifactory)
     -   [Custom Server ID and Multi-Configuration](#custom-server-id-and-multi-configuration)
 -   [JFrog Job Summary](#jfrog-job-summary)
@@ -309,6 +310,104 @@ You can set the project key in the environment variable ```JF_PROJECT``` to avoi
       JF_PROJECT: "project-key"
 ```
 </details>
+
+<details>
+    <summary>Monorepo Support</summary>
+    
+### Monorepo Support
+
+If your repository is a monorepo containing multiple services, you can associate each service with a different application key in the JFrog Platform by setting the `JFROG_CLI_APPLICATION_KEY` environment variable at the job level.
+
+#### Prerequisites
+
+- OIDC authentication must be [configured](#connecting-to-jfrog-using-oidc-openid-connect).
+- The `JFROG_CLI_APPLICATION_KEY` environment variable resolution requires the CLI's **native OIDC**
+authentication flow. To use native OIDC, the following conditions must be met:
+- JFrog CLI version **2.75.0 or above**.
+- The CLI is **not** being downloaded from Artifactory (i.e., the `download-repository` input is not set).
+
+> [!IMPORTANT]
+> If the CLI version is below 2.75.0, or if you are downloading the CLI from Artifactory using `download-repository`, the action falls back to a manual OIDC token exchange via the JFrog Platform REST API. This fallback does **not** support `JFROG_CLI_APPLICATION_KEY` resolution.
+
+#### Application Key Resolution
+
+The application key is resolved in the following order of precedence:
+1. **Job-level environment variable** — If `JFROG_CLI_APPLICATION_KEY` is set as an environment variable in the job, it takes precedence.
+2. **config.yml** — If the environment variable is not set in the job, the action reads the application key from the `/path/to/git-repo/.jfrog/config.yml` file. Note that `config.yml` supports only a single application key.
+3. **No association** — If the variable is not defined in either location, no application is associated with the service.
+
+#### Configuring Multiple Application Keys
+
+While `config.yml` supports only a single application key, you can map different services to different application keys by defining separate jobs in your workflow. Each job sets its own
+`JFROG_CLI_APPLICATION_KEY` environment variable, as shown in the code segment below:
+
+```name: "Setup JFrog CLI OIDC Example"
+on: 
+  push:
+  workflow_dispatch:
+
+permissions:
+  # This is required for requesting the OIDC token
+  id-token: write
+  # This is required for actions/checkout
+  contents: read
+jobs:
+  deploy-nginx:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JFrog CLI
+        uses: jfrog/setup-jfrog-cli@v4
+        env:
+          JF_URL: ${{ secrets.JFROG_URL }}
+          JFROG_CLI_APPLICATION_KEY: nginx-app
+        with:
+          # Name of the OIDC provider as specified on the OIDC integration page in the JFrog Platform
+          oidc-provider-name: nginx-oidc
+
+      # BUILD & PUSH STEP
+      - name: Build and push Docker image
+        run: |
+          # Build the Docker image using JFrog CLI
+          jf docker build -t <artifactory host>/monorepo-docker-local/my-nginx:1.0.${{ github.run_number }} nginx-service
+          # Push the Docker image to JFrog Artifactory
+          jf docker push <artifactory host>/monorepo-docker-local/my-nginx:1.0.${{ github.run_number }}
+          # Reindex metadata server for the repository
+          jf rt curl -X POST "/api/metadata_server/reindex?async=false" -H "Content-Type: application/json" -d '{"paths": ["monorepo-docker-local"]}'
+
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JFrog CLI
+        uses: jfrog/setup-jfrog-cli@v4
+        env:
+          JF_URL: ${{ secrets.JFROG_URL }}
+          JFROG_CLI_APPLICATION_KEY: frontend-app
+        with:
+          # Name of the OIDC provider as specified on the OIDC integration page in the JFrog Platform
+          oidc-provider-name: frontend-oidc
+
+      # BUILD & PUSH STEP
+      - name: Build and push Docker image
+        run: |
+          # Build the Docker image using JFrog CLI
+          jf docker build -t <artifactory host>/monorepo-docker-local/my-frontend:1.0.${{ github.run_number }} frontend-service
+          # Push the Docker image to JFrog Artifactory
+          jf docker push <artifactory host>/monorepo-docker-local/my-frontend:1.0.${{ github.run_number }}
+          # Reindex metadata server for the repository
+          jf rt curl -X POST "/api/metadata_server/reindex?async=false" -H "Content-Type: application/json" -d '{"paths": ["monorepo-docker-local"]}'
+```
+    
+In this example, each job builds and publishes a different service from the monorepo, and each is associated with a distinct application key in the JFrog Platform.
+> [!IMPORTANT]
+> If two services should share the same application key, set the same JFROG_CLI_APPLICATION_KEY value in both jobs.
+</details>
+
 
 <details>
     <summary>Downloading JFrog CLI from Artifactory</summary>
