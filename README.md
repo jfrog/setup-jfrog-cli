@@ -341,74 +341,66 @@ The application key is resolved in the following order of precedence:
 While `config.yml` supports only a single application key, you can map different services to different application keys by defining separate jobs in your workflow. Each job sets its own
 `JFROG_CLI_APPLICATION_KEY` environment variable, as shown in the code segment below:
 
-```yaml
+```name: "Setup JFrog CLI OIDC Example"
+on: 
+  push:
+  workflow_dispatch:
+
+permissions:
+  # This is required for requesting the OIDC token
+  id-token: write
+  # This is required for actions/checkout
+  contents: read
 jobs:
-deploy-nginx:
-  runs-on: ubuntu-latest
-  env:
-    JFROG_CLI_LOG_LEVEL: DEBUG
-  steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-    - name: Debug OIDC Token Claims
-      run: |
-        OIDC_TOKEN=$(curl -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-          "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https://github.com/shayshim" | jq -r '.value')
-        echo "OIDC Token Claims (decoded):"
-        echo $OIDC_TOKEN | cut -d '.' -f 2 | base64 -d 2>/dev/null | jq .
-    - name: Setup JFrog CLI
-      uses: jfrog/setup-jfrog-cli@feature/APP-1644
-      env:
-        JF_URL: ${{ secrets.JFROG_URL }}
-        JFROG_CLI_APPLICATION_KEY: nginx-app
-      with:
-        version: '2.99.0'
-        download-repository: 'jfrog-cli'
-        # Name of the OIDC provider as specified on the OIDC integration page in the JFrog Platform
-        oidc-provider-name: nginx-shays
-    - name: Debug JFROG_CLI_APPLICATION_KEY
-      env:
-        JFROG_CLI_APPLICATION_KEY: nginx-app
-      run: echo "JFROG_CLI_APPLICATION_KEY=$JFROG_CLI_APPLICATION_KEY"
-    # BUILD & PUSH STEP
-    - name: Build and push Docker image
-      run: |
-        # Build the Docker image using JFrog CLI
-        jf docker build -t yuriprod.jfrog.io/monorepo-docker-local/my-nginx:1.0.${{ github.run_number }} nginx-service
-        # Push the Docker image to JFrog Artifactory
-        jf docker push yuriprod.jfrog.io/monorepo-docker-local/my-nginx:1.0.${{ github.run_number }}
-        # Reindex metadata server for the repository
-        jf rt curl -X POST "/api/metadata_server/reindex?async=false" -H "Content-Type: application/json" -d '{"paths": ["monorepo-docker-local"]}'
-#      - name: Bind Docker package to application
-#        run: |
-#          # Bind the Docker package to the application key 'nginx'
-#          jf apptrust package-bind nginx-app docker my-nginx 1.0.${{ github.run_number }}
-deploy-frontend:
-  runs-on: ubuntu-latest
-  env:
-    JFROG_CLI_LOG_LEVEL: DEBUG
-  steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-    - name: Debug OIDC Token Claims
-      run: |
-        OIDC_TOKEN=$(curl -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-          "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https://github.com/shayshim" | jq -r '.value')
-        echo "OIDC Token Claims (decoded):"
-        echo $OIDC_TOKEN | cut -d '.' -f 2 | base64 -d 2>/dev/null | jq .
-    - name: Setup JFrog CLI
-      uses: jfrog/setup-jfrog-cli@feature/APP-1644
-      env:
-        JF_URL: ${{ secrets.JFROG_URL }}
-        JFROG_CLI_APPLICATION_KEY: frontend-app
-      with:
-        version: '2.99.0'
-        # Name of the OIDC provider as specified on the OIDC integration page in the JFrog Platform
-        oidc-provider-name: frontend-shays
-    - name: Debug JFROG_CLI_APPLICATION_KEY
-      env:
-        JFROG_CLI_APPLICATION_KEY: frontend-app
-      run: echo "JFROG_CLI_APPLICATION_KEY=$JFROG_CLI_APPLICATION_KEY"
+  deploy-nginx:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JFrog CLI
+        uses: jfrog/setup-jfrog-cli@v4
+        env:
+          JF_URL: ${{ secrets.JFROG_URL }}
+          JFROG_CLI_APPLICATION_KEY: nginx-app
+        with:
+          # Name of the OIDC provider as specified on the OIDC integration page in the JFrog Platform
+          oidc-provider-name: nginx-oidc
+
+      # BUILD & PUSH STEP
+      - name: Build and push Docker image
+        run: |
+          # Build the Docker image using JFrog CLI
+          jf docker build -t <artifactory host>/monorepo-docker-local/my-nginx:1.0.${{ github.run_number }} nginx-service
+          # Push the Docker image to JFrog Artifactory
+          jf docker push <artifactory host>/monorepo-docker-local/my-nginx:1.0.${{ github.run_number }}
+          # Reindex metadata server for the repository
+          jf rt curl -X POST "/api/metadata_server/reindex?async=false" -H "Content-Type: application/json" -d '{"paths": ["monorepo-docker-local"]}'
+
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JFrog CLI
+        uses: jfrog/setup-jfrog-cli@v4
+        env:
+          JF_URL: ${{ secrets.JFROG_URL }}
+          JFROG_CLI_APPLICATION_KEY: frontend-app
+        with:
+          # Name of the OIDC provider as specified on the OIDC integration page in the JFrog Platform
+          oidc-provider-name: frontend-oidc
+
+      # BUILD & PUSH STEP
+      - name: Build and push Docker image
+        run: |
+          # Build the Docker image using JFrog CLI
+          jf docker build -t <artifactory host>/monorepo-docker-local/my-frontend:1.0.${{ github.run_number }} frontend-service
+          # Push the Docker image to JFrog Artifactory
+          jf docker push <artifactory host>/monorepo-docker-local/my-frontend:1.0.${{ github.run_number }}
+          # Reindex metadata server for the repository
+          jf rt curl -X POST "/api/metadata_server/reindex?async=false" -H "Content-Type: application/json" -d '{"paths": ["monorepo-docker-local"]}'
 ```
     
 In this example, each job builds and publishes a different service from the monorepo, and each is associated with a distinct application key in the JFrog Platform.
