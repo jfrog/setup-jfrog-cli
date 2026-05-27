@@ -92,7 +92,7 @@ export class Utils {
     }
 
     public static getGheBaseUrl(): string {
-        const v =
+        const v: string =
             core.getInput(Utils.GHE_BASE_URL_INPUT, { required: false }) || core.getInput(Utils.GHE_BASE_URL_ALIAS_INPUT, { required: false }) || '';
         return v.trim();
     }
@@ -248,14 +248,32 @@ export class Utils {
     private static getServerIdForConfig(): string {
         let serverId: string = Utils.getCustomOrDefaultServerId();
 
-        // Add new serverId to the servers env var if it doesn't already exist.
-        if (Utils.getConfiguredJFrogServers().includes(serverId)) {
-            return serverId;
+        Utils.addServerIdForCleanup(serverId);
+        return serverId;
+    }
+
+    /**
+     * Add new serverId to the servers env var if it doesn't already exist.
+     */
+    private static addServerIdForCleanup(serverId: string) {
+        if (!serverId || Utils.getConfiguredJFrogServers().includes(serverId)) {
+            return;
         }
         const currentValue: string | undefined = process.env[Utils.JFROG_CLI_SERVER_IDS_ENV_VAR];
         const newVal: string = currentValue ? `${currentValue};${serverId}` : serverId;
         core.exportVariable(Utils.JFROG_CLI_SERVER_IDS_ENV_VAR, newVal);
-        return serverId;
+    }
+
+    private static getServerIdFromConfigToken(configToken: string): string | undefined {
+        try {
+            const serverObj: any = JSON.parse(Buffer.from(configToken, 'base64').toString());
+            if (serverObj && typeof serverObj.serverId === 'string') {
+                return serverObj.serverId.trim();
+            }
+        } catch (error) {
+            core.debug(`Could not extract server ID from JF_ENV config token: ${error}`);
+        }
+        return;
     }
 
     /**
@@ -349,6 +367,10 @@ export class Utils {
             // Mark the credentials as secrets to prevent them from being printed in the logs or exported to other workflows
             core.setSecret(configToken);
             await Utils.runCli(cliConfigCmd.concat('import', configToken));
+            const serverId: string | undefined = Utils.getServerIdFromConfigToken(configToken);
+            if (serverId) {
+                Utils.addServerIdForCleanup(serverId);
+            }
         }
 
         let configArgs: string[] | undefined = await Utils.getJfrogCliConfigArgs(jfrogCredentials);
