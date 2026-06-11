@@ -9,6 +9,7 @@ async function main() {
         let jfrogCredentials: JfrogCredentials = Utils.collectJfrogCredentialsFromEnvVars();
         await Utils.getAndAddCliToPath(jfrogCredentials);
         await Utils.configJFrogServers(jfrogCredentials);
+        await Utils.setupPackageAliasIfRequested();
     } catch (error) {
         core.setFailed((<any>error).message);
     } finally {
