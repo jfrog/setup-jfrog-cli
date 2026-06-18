@@ -42,7 +42,8 @@
         "@actions/tool-cache": "~2.0.1",
         "@octokit/core": "^5.2.0",
         "semver": "~7.6.3",
-        "js-yaml": "^4.1.0"
+        "js-yaml": "^4.1.0",
+        "mcp-dashboards-shared": "^1.0.0"
     },
     "devDependencies": {
         "@types/jest": "^29.5.12",
