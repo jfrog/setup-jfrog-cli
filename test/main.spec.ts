@@ -37,6 +37,7 @@ beforeEach(() => {
     ['JF_ENV_1', 'JF_ENV_2', 'ENV_JF_1', 'JF_ENV_LOCAL', 'JF_USER', 'JF_PASSWORD', 'JF_ACCESS_TOKEN'].forEach((envKey) => {
         delete process.env[envKey];
     });
+    delete process.env[Utils.JFROG_CLI_SERVER_IDS_ENV_VAR];
 });
 
 test('Get Config Tokens', async () => {
@@ -204,6 +205,20 @@ describe('JFrog CLI Configuration', () => {
         // Expect the servers env var to include both servers.
         const servers: string[] = Utils.getConfiguredJFrogServers();
         expect(servers).toStrictEqual([Utils.getRunDefaultServerId(), customServerId]);
+    });
+
+    test('Config token imports are registered for post-job cleanup', async () => {
+        myCore.exportVariable = jest.fn().mockImplementation((name: string, val: string) => {
+            process.env[name] = val;
+        });
+        const runCliMock = jest.spyOn(Utils, 'runCli').mockResolvedValue(undefined);
+        process.env.JF_ENV_LOCAL = V2_CONFIG;
+
+        await Utils.configJFrogServers({} as JfrogCredentials);
+
+        expect(runCliMock).toHaveBeenCalledWith(['config', 'import', V2_CONFIG]);
+        expect(core.exportVariable).toHaveBeenCalledWith(Utils.JFROG_CLI_SERVER_IDS_ENV_VAR, 'local');
+        expect(Utils.getConfiguredJFrogServers()).toStrictEqual(['local']);
     });
 
     test('Get default server ID', async () => {
