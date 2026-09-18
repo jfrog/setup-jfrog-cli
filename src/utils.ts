@@ -593,6 +593,8 @@ export class Utils {
         }
         const aliasBinDir = Utils.getPackageAliasBinDir();
         core.addPath(aliasBinDir);
+        // Ghost Frog interception is opt-in; without this env var the PATH shims do not activate.
+        Utils.exportVariableIfNotSet('JFROG_CLI_GHOST_FROG', 'true');
         core.info('Package aliases installed and "' + aliasBinDir + '" added to PATH.');
     }
 }

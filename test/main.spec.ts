@@ -622,6 +622,7 @@ describe('setupPackageAliasIfRequested', () => {
         await Utils.setupPackageAliasIfRequested();
 
         expect(myExec.exec).toHaveBeenCalledWith('jf', ['package-alias', 'install'], { ignoreReturnCode: true });
+        expect(myCore.exportVariable).toHaveBeenCalledWith('JFROG_CLI_GHOST_FROG', 'true');
     });
 
     it('should pass normalized tools as --packages when package-alias-tools is provided', async () => {

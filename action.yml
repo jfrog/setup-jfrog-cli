@@ -37,7 +37,7 @@ inputs:
         description: 'Alias for ghe-base-url'
         required: false
     enable-package-alias:
-        description: "If true, after setting up JFrog CLI the action runs 'jf package-alias install' and appends the alias directory to GITHUB_PATH so that mvn, npm, go, etc. are transparently intercepted in subsequent steps."
+        description: "If true, after setting up JFrog CLI the action runs 'jf package-alias install', appends the alias directory to GITHUB_PATH, and sets JFROG_CLI_GHOST_FROG so that mvn, npm, go, etc. are transparently intercepted in subsequent steps."
         default: "false"
         required: false
     package-alias-tools:
