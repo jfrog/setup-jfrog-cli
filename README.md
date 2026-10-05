@@ -45,7 +45,7 @@ Additionally, the Action incorporates the following features when utilizing JFro
 ## Usage
 
 ```yml
-- uses: jfrog/setup-jfrog-cli@v4
+- uses: jfrog/setup-jfrog-cli@v5
 # + Authentication method
 - run: jf --version
 ```
@@ -117,7 +117,7 @@ To utilize the OIDC protocol, follow these steps:
 Example step utilizing OpenID Connect:
 
 ```yml
-- uses: jfrog/setup-jfrog-cli@v4
+- uses: jfrog/setup-jfrog-cli@v5
   env:
       JF_URL: ${{ vars.JF_URL }}
   with:
@@ -171,7 +171,7 @@ You can set the connection details to your JFrog Platform by using one of the fo
 You can use these environment variables in your workflow as follows:
 
 ```yml
-- uses: jfrog/setup-jfrog-cli@v4
+- uses: jfrog/setup-jfrog-cli@v5
   env:
     # JFrog Platform url
     JF_URL: ${{ vars.JF_URL }} # or 'https://acme.jfrog.io'
@@ -203,7 +203,7 @@ The secret should be exposed as an environment variable with the _JF*ENV*_ prefi
 Here's how you do this:
 
 ```yml
-- uses: jfrog/setup-jfrog-cli@v4
+- uses: jfrog/setup-jfrog-cli@v5
   env:
       JF_ENV_1: ${{ secrets.JF_SECRET_ENV_1 }}
 - run: |
@@ -217,7 +217,7 @@ as the _JF_ENV_1_ environment variable. That's it - the ping command will now pi
 If you have multiple Config Tokens as secrets, you can use all of them in the workflow as follows:
 
 ```yml
-- uses: jfrog/setup-jfrog-cli@v4
+- uses: jfrog/setup-jfrog-cli@v5
   env:
       JF_ENV_1: ${{ secrets.JF_SECRET_ENV_1 }}
       JF_ENV_2: ${{ secrets.JF_SECRET_ENV_2 }}
@@ -276,7 +276,7 @@ env:
 By default, the JFrog CLI version set in [action.yml](https://github.com/jfrog/setup-jfrog-cli/blob/master/action.yml) is used. To set a specific version, add the _version_ input as follows:
 
 ```yml
-- uses: jfrog/setup-jfrog-cli@v4
+- uses: jfrog/setup-jfrog-cli@v5
   with:
       version: X.Y.Z
 ```
@@ -284,7 +284,7 @@ By default, the JFrog CLI version set in [action.yml](https://github.com/jfrog/s
 It is also possible to set the latest JFrog CLI version by adding the _version_ input as follows:
 
 ```yml
-- uses: jfrog/setup-jfrog-cli@v4
+- uses: jfrog/setup-jfrog-cli@v5
   with:
       version: latest
 ```
@@ -308,7 +308,7 @@ By default, the JFrog CLI accepts a project flag in some of its commands.
 You can set the project key in the environment variable ```JF_PROJECT``` to avoid passing it in each command.
 
 ```yml
-- uses: jfrog/setup-jfrog-cli@v4
+- uses: jfrog/setup-jfrog-cli@v5
   env:
       JF_PROJECT: "project-key"
 ```
@@ -359,10 +359,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup JFrog CLI
-        uses: jfrog/setup-jfrog-cli@v4
+        uses: jfrog/setup-jfrog-cli@v5
         env:
           JF_URL: ${{ secrets.JFROG_URL }}
           JFROG_CLI_APPLICATION_KEY: nginx-app
@@ -384,10 +384,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup JFrog CLI
-        uses: jfrog/setup-jfrog-cli@v4
+        uses: jfrog/setup-jfrog-cli@v5
         env:
           JF_URL: ${{ secrets.JFROG_URL }}
           JFROG_CLI_APPLICATION_KEY: frontend-app
@@ -432,7 +432,7 @@ Here's how you do this:
 2. Set _download-repository_ input to jfrog-cli-remote and pin `version`:
 
     ```yml
-    - uses: jfrog/setup-jfrog-cli@v4
+    - uses: jfrog/setup-jfrog-cli@v5
       env:
           # JFrog platform url (for example: https://acme.jfrog.io)
           JF_URL: ${{ vars.JF_URL }}
@@ -454,7 +454,7 @@ The action configures JFrog CLI with a default server ID, which is unique for ea
 You may override the default server ID by providing a custom server ID:
 
  ```yml
- - uses: jfrog/setup-jfrog-cli@v4
+ - uses: jfrog/setup-jfrog-cli@v5
    with:
        custom-server-id: my-server
  ```
@@ -476,7 +476,7 @@ You can optionally provide `package-alias-tools` as a comma-separated list to pa
 This feature requires JFrog CLI version **2.93.0** or above. If the requested version is older, or if `jf package-alias install` fails for another reason, the action logs a warning and does not fail the job; subsequent steps will not use package aliases.
 
 ```yml
-- uses: jfrog/setup-jfrog-cli@v4
+- uses: jfrog/setup-jfrog-cli@v5
   with:
     enable-package-alias: true
     package-alias-tools: npm,mvn,go
@@ -506,7 +506,7 @@ By default, [build-info](https://jfrog.com/help/r/jfrog-pipelines-documentation/
 This behavior is disabled if the `jf rt build-publish` command was manually run during the workflow, or if requested explicitly by setting the `disable-auto-build-publish` input to `true`:
 
 ```yml
-- uses: jfrog/setup-jfrog-cli@v4
+- uses: jfrog/setup-jfrog-cli@v5
   with:
     disable-auto-build-publish: true
 ```
@@ -514,7 +514,7 @@ This behavior is disabled if the `jf rt build-publish` command was manually run 
 To disable the JFrog Job Summary altogether, set the `disable-job-summary` input to `true`:
 
 ```yml
-- uses: jfrog/setup-jfrog-cli@v4
+- uses: jfrog/setup-jfrog-cli@v5
   with:
     disable-job-summary: true
 ```
@@ -575,7 +575,7 @@ permissions:
 ```
 
 ``` yaml
-- uses: jfrog/setup-jfrog-cli@v4
+- uses: jfrog/setup-jfrog-cli@v5
   env:
     # The GitHub token is automatically generated for the job
     JF_GIT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -611,7 +611,7 @@ You should create the attestion with the `subject-name` set to the JFrog Artifat
                 echo "artifact_digest=$ARTIFACT_DIGEST" >> $GITHUB_OUTPUT
 
             - name: Create attestation
-              uses: actions/attest@v2
+              uses: actions/attest@v4
               with:
                 subject-digest: ${{ steps.create_artifact_digest.outputs.artifact_digest }}
                 subject-name: dev-repo-local/artifact1.txt
@@ -633,14 +633,14 @@ Example:
 ```yaml
     - name: Build and push Docker image
       id: build-and-push
-      uses: docker/build-push-action@v6
+      uses: docker/build-push-action@v7
       with:
         context: .
         push: true
         tags: dev-docker-repo-local/dockerimage:21
 
     - name: Attest docker image
-      uses: actions/attest-build-provenance@v2
+      uses: actions/attest-build-provenance@v4
       with:
         subject-name: oci://dev-docker-repo-local/dockerimage
         subject-digest: ${{ steps.build-and-push.outputs.digest }}
