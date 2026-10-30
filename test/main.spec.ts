@@ -2,6 +2,7 @@ import * as os from 'os';
 import * as path from 'path';
 import * as core from '@actions/core';
 import * as exec from '@actions/exec';
+import * as toolCache from '@actions/tool-cache';
 import { existsSync, unlinkSync } from 'fs';
 
 import { Utils } from '../src/utils';
@@ -10,6 +11,7 @@ import { DownloadDetails, JfrogCredentials } from '../src/types';
 jest.mock('os');
 jest.mock('@actions/exec');
 jest.mock('@actions/core');
+jest.mock('@actions/tool-cache');
 
 const DEFAULT_CLI_URL: string = 'https://releases.jfrog.io/artifactory/jfrog-cli/';
 const CUSTOM_CLI_URL: string = 'http://127.0.0.1:8081/artifactory/jfrog-cli-remote/';
@@ -256,6 +258,139 @@ describe('JFrog CLI V2 URL Tests', () => {
         process.env.JF_ENV_LOCAL = V2_CONFIG;
         cliUrl = Utils.getCliUrl('2.3.4', fileName, Utils.extractDownloadDetails('jfrog-cli-remote', {} as JfrogCredentials));
         expect(cliUrl).toBe(CUSTOM_CLI_URL + expectedUrl);
+    });
+});
+
+describe('JFrog CLI latest URL uses literal [RELEASE]', () => {
+    const myOs: jest.Mocked<typeof os> = os as any;
+
+    beforeEach(() => {
+        myOs.platform.mockImplementation(() => 'linux');
+        myOs.arch.mockImplementation(() => 'amd64');
+    });
+
+    test('Public download URL keeps [RELEASE] instead of a version number', () => {
+        const cliUrl: string = Utils.getCliUrl(Utils.LATEST_CLI_VERSION, 'jfrog', Utils.DEFAULT_DOWNLOAD_DETAILS);
+        expect(cliUrl).toBe(DEFAULT_CLI_URL + 'v2/[RELEASE]/jfrog-cli-linux-amd64/jfrog');
+        expect(cliUrl).not.toMatch(/v2\/\d+\.\d+\.\d+\//);
+    });
+
+    test('download-repository URL still uses the literal [RELEASE] path', () => {
+        process.env.JF_ENV_LOCAL = V2_CONFIG;
+        const cliUrl: string = Utils.getCliUrl(
+            Utils.LATEST_CLI_VERSION,
+            'jfrog',
+            Utils.extractDownloadDetails('jfrog-cli-remote', {} as JfrogCredentials),
+        );
+        expect(cliUrl).toBe(CUSTOM_CLI_URL + 'v2/[RELEASE]/jfrog-cli-linux-amd64/jfrog');
+        expect(cliUrl).toContain('/v2/[RELEASE]/');
+        expect(cliUrl).not.toMatch(/v2\/\d+\.\d+\.\d+\//);
+    });
+});
+
+describe('logIfLatestDownloadedFromRemote', () => {
+    beforeEach(() => {
+        (core.info as jest.Mock).mockClear();
+    });
+
+    test('Logs info when latest is downloaded from an Artifactory repository', () => {
+        Utils.logIfLatestDownloadedFromRemote(Utils.LATEST_CLI_VERSION, 'jfrog-cli-remote');
+        expect(core.info).toHaveBeenCalledWith(Utils.LATEST_FROM_REMOTE_INFO);
+    });
+
+    test('Does not log when version is pinned', () => {
+        Utils.logIfLatestDownloadedFromRemote('2.91.0', 'jfrog-cli-remote');
+        expect(core.info).not.toHaveBeenCalled();
+    });
+
+    test('Does not log when download-repository is unset', () => {
+        Utils.logIfLatestDownloadedFromRemote(Utils.LATEST_CLI_VERSION, '');
+        expect(core.info).not.toHaveBeenCalled();
+    });
+
+    test('Does not log when version is Latest with different casing', () => {
+        Utils.logIfLatestDownloadedFromRemote('Latest', 'jfrog-cli-remote');
+        expect(core.info).not.toHaveBeenCalled();
+    });
+});
+
+describe('getAndAddCliToPath latest + download-repository', () => {
+    const myCore: jest.Mocked<typeof core> = core as any;
+    const myOs: jest.Mocked<typeof os> = os as any;
+    const myToolCache: jest.Mocked<typeof toolCache> = toolCache as any;
+
+    beforeEach(() => {
+        myCore.info.mockClear();
+        myOs.platform.mockImplementation(() => 'linux');
+        myOs.arch.mockImplementation(() => 'amd64');
+        myToolCache.downloadTool.mockResolvedValue('/tmp/downloaded-jf');
+        jest.spyOn(Utils, 'cacheAndAddPath').mockResolvedValue();
+    });
+
+    afterEach(() => {
+        jest.spyOn(Utils, 'cacheAndAddPath').mockRestore();
+    });
+
+    test('logs and downloads the literal [RELEASE] URL when latest and download-repository are set', async () => {
+        myCore.getInput.mockImplementation((name: string) => {
+            if (name === Utils.CLI_VERSION_ARG) {
+                return Utils.LATEST_CLI_VERSION;
+            }
+            if (name === Utils.CLI_REMOTE_ARG) {
+                return 'jfrog-cli-remote';
+            }
+            return '';
+        });
+        process.env.JF_ENV_LOCAL = V2_CONFIG;
+
+        await Utils.getAndAddCliToPath({} as JfrogCredentials);
+
+        expect(myCore.info).toHaveBeenCalledWith(Utils.LATEST_FROM_REMOTE_INFO);
+        expect(myToolCache.downloadTool).toHaveBeenCalledWith(
+            CUSTOM_CLI_URL + 'v2/[RELEASE]/jfrog-cli-linux-amd64/jfrog',
+            undefined,
+            'Basic YWRtaW46cGFzc3dvcmQ=',
+        );
+    });
+
+    test('does not log when version is latest but download-repository is empty', async () => {
+        myCore.getInput.mockImplementation((name: string) => {
+            if (name === Utils.CLI_VERSION_ARG) {
+                return Utils.LATEST_CLI_VERSION;
+            }
+            if (name === Utils.CLI_REMOTE_ARG) {
+                return '';
+            }
+            return '';
+        });
+
+        await Utils.getAndAddCliToPath({} as JfrogCredentials);
+
+        expect(myCore.info).not.toHaveBeenCalledWith(Utils.LATEST_FROM_REMOTE_INFO);
+        expect(myToolCache.downloadTool).toHaveBeenCalledWith(DEFAULT_CLI_URL + 'v2/[RELEASE]/jfrog-cli-linux-amd64/jfrog', undefined, undefined);
+    });
+
+    test('does not log when version is pinned and download-repository is set', async () => {
+        myCore.getInput.mockImplementation((name: string) => {
+            if (name === Utils.CLI_VERSION_ARG) {
+                return '2.91.0';
+            }
+            if (name === Utils.CLI_REMOTE_ARG) {
+                return 'jfrog-cli-remote';
+            }
+            return '';
+        });
+        process.env.JF_ENV_LOCAL = V2_CONFIG;
+        myToolCache.find.mockReturnValue('');
+
+        await Utils.getAndAddCliToPath({} as JfrogCredentials);
+
+        expect(myCore.info).not.toHaveBeenCalledWith(Utils.LATEST_FROM_REMOTE_INFO);
+        expect(myToolCache.downloadTool).toHaveBeenCalledWith(
+            CUSTOM_CLI_URL + 'v2/2.91.0/jfrog-cli-linux-amd64/jfrog',
+            undefined,
+            'Basic YWRtaW46cGFzc3dvcmQ=',
+        );
     });
 });
 

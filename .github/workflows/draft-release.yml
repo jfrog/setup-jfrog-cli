@@ -1,0 +1,54 @@
+# Place in: jfrog/setup-jfrog-cli  ->  .github/workflows/draft-release.yml
+# After a version bump lands (master = v5, preRelease/jfrog-setup-cli-v4.* = v4),
+# create a DRAFT release vX.Y.Z with generated notes. A human then opens the draft,
+# ticks "Publish this Action to the GitHub Marketplace" and clicks Publish (v4 first, then v5).
+name: Draft release
+on:
+  push:
+    branches:
+      - master
+      - "preRelease/jfrog-setup-cli-v4.*"
+    paths:
+      - package.json
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  draft:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # need tags to find the previous release on the same major line
+
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          TAG="v$VERSION"
+          MAJOR="${VERSION%%.*}"
+
+          if gh release view "$TAG" >/dev/null 2>&1 || git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "::notice::$TAG already exists, nothing to do."
+            exit 0
+          fi
+
+          # Notes are generated from the previous release of the same major line (v4 vs v5).
+          # (skip the floating vX / vX.Y tags that release.yml maintains)
+          PREV=$(git tag -l "v$MAJOR.*" | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)
+          ARGS=(--draft --title "$TAG" --target "$BRANCH" --generate-notes)
+          [ -n "$PREV" ] && ARGS+=(--notes-start-tag "$PREV")
+          # Only the v5 line (master) may become GitHub's "Latest" release.
+          [ "$BRANCH" = "master" ] || ARGS+=(--latest=false)
+
+          gh release create "$TAG" "${ARGS[@]}"
+
+          {
+            echo "### Draft release \`$TAG\` created (target \`$BRANCH\`)"
+            echo "Open it, tick **Publish this Action to the GitHub Marketplace**, review the notes and publish."
+            echo "Publish **v4 before v5** so the Marketplace latest stays v5."
+          } >> "$GITHUB_STEP_SUMMARY"

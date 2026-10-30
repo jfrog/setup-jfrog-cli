@@ -1,4 +1,6 @@
 import * as core from '@actions/core';
+import { existsSync } from 'fs';
+import { join } from 'path';
 import { Utils } from './utils';
 import { JobSummary } from './job-summary';
 import { collectEvidences } from './evidence-collection';
@@ -105,8 +107,8 @@ async function collectAndPublishBuildInfoIfNeeded() {
     // We allow this step to fail, and we don't want to fail the entire build publish if they do.
     try {
         core.startGroup('Collect the Git information');
-        const gitDir: string = require('path').join(workingDirectory, '.git');
-        if (require('fs').existsSync(gitDir)) {
+        const gitDir: string = join(workingDirectory, '.git');
+        if (existsSync(gitDir)) {
             await Utils.runCli(['rt', 'build-add-git'], { cwd: workingDirectory });
         } else {
             core.info('No .git directory found. Skipping Git information collection.');

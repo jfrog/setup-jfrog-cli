@@ -2,7 +2,6 @@ import * as core from '@actions/core';
 import { Utils } from './utils';
 import { HttpClient, HttpClientResponse } from '@actions/http-client';
 import { OutgoingHttpHeaders } from 'http';
-import { JfrogCredentials } from './types';
 import { promises as fs } from 'fs';
 import * as path from 'path';
 

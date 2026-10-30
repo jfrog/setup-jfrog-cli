@@ -1,14 +1,11 @@
 import * as core from '@actions/core';
 import { gte } from 'semver';
-import { Octokit } from '@octokit/core';
-import { OctokitResponse } from '@octokit/types/dist-types/OctokitResponse';
 import * as github from '@actions/github';
 import { promisify } from 'util';
 import { gzip } from 'zlib';
 import path from 'path';
 import { existsSync, promises as fs } from 'fs';
 import { HttpClient, HttpClientResponse } from '@actions/http-client';
-import { OutgoingHttpHeaders } from 'http';
 import { tmpdir } from 'os';
 import { Utils } from './utils';
 
