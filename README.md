@@ -469,7 +469,7 @@ Alternating between configurations can be done by providing the `--server-id` op
 
 ### Enabling Package Alias
 
-When enabled, the action runs `jf package-alias install` after setting up JFrog CLI and appends the alias bin directory to `GITHUB_PATH`. Subsequent steps will transparently intercept package manager commands such as `mvn`, `npm`, `go`, etc., so they use JFrog CLI without changing your workflow scripts.
+When enabled, the action runs `jf package-alias install` after setting up JFrog CLI, appends the alias bin directory to `GITHUB_PATH`, and exports `JFROG_CLI_GHOST_FROG` so Ghost Frog interception is active. Subsequent steps will transparently intercept package manager commands such as `mvn`, `npm`, `go`, etc., so they use JFrog CLI without changing your workflow scripts.
 
 You can optionally provide `package-alias-tools` as a comma-separated list to pass specific package managers to `jf package-alias install --packages`.
 
