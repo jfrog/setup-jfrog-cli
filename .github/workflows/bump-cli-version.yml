@@ -1,0 +1,103 @@
+# Place in: jfrog/setup-jfrog-cli  ->  .github/workflows/bump-cli-version.yml
+# Triggered by jfrog-cli after each release (or manually), and mirrors the manual routine (see PRs #362 / #363): after every CLI release,
+#   1. master (v5 line):                      action.yml default + patch bump of package(-lock).json
+#   2. preRelease/jfrog-setup-cli-v4.N.x (v4): action.yml default + minor bump of package(-lock).json
+name: Bump default JFrog CLI version
+on:
+  repository_dispatch:
+    types: [cli-released] # sent by jfrog/jfrog-cli after a release is published
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "JFrog CLI version to set as default (X.Y.Z)"
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  bump-v5:
+    runs-on: ubuntu-latest
+    env:
+      NEW: ${{ github.event.client_payload.version || inputs.version }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: master
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+      - id: bump
+        run: |
+          [[ "$NEW" =~ ^2\.[0-9]+\.[0-9]+$ ]] || { echo "::error::bad version '$NEW'"; exit 1; }
+          CUR=$(grep -m1 -oE 'default: "2\.[0-9]+\.[0-9]+"' action.yml | grep -oE '2\.[0-9]+\.[0-9]+')
+          if [ "$(printf '%s\n%s\n' "$CUR" "$NEW" | sort -V | tail -1)" != "$NEW" ] || [ "$CUR" = "$NEW" ]; then
+            echo "Current $CUR >= $NEW, nothing to do."; echo "changed=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          sed -i -E "0,/default: \"$CUR\"/s//default: \"$NEW\"/" action.yml
+          npm version patch --no-git-tag-version
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          echo "pkg=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+      - if: steps.bump.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v8
+        with:
+          branch: infra/RTECO-0000-bump-cli-version-${{ env.NEW }}
+          base: master
+          commit-message: "RTECO-00000 - Update default JFrog CLI version to ${{ env.NEW }}"
+          title: "RTECO-00000 - Update default JFrog CLI version to ${{ env.NEW }}"
+          body: |
+            Updates the default JFrog CLI version to ${{ env.NEW }} and bumps the package to v${{ steps.bump.outputs.pkg }}.
+
+            Merge/release **after** the v4 PR so the Marketplace latest release stays v5.
+          labels: safe to test
+          delete-branch: true
+
+  bump-v4:
+    runs-on: ubuntu-latest
+    env:
+      NEW: ${{ github.event.client_payload.version || inputs.version }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+      - name: Find/create the next v4 preRelease branch
+        id: branch
+        run: |
+          LAST=$(git tag -l 'v4.*' | sort -V | tail -1)         # e.g. v4.13.0
+          MINOR=$(echo "$LAST" | cut -d. -f2)
+          BASE="preRelease/jfrog-setup-cli-v4.$((MINOR+1)).x"
+          if git ls-remote --exit-code --heads origin "$BASE" >/dev/null; then
+            git checkout -B "$BASE" "origin/$BASE"
+          else
+            git checkout -B "$BASE" "origin/preRelease/jfrog-setup-cli-v4.${MINOR}.x"
+            git push origin "$BASE"
+          fi
+          echo "base=$BASE" >> "$GITHUB_OUTPUT"
+      - id: bump
+        run: |
+          [[ "$NEW" =~ ^2\.[0-9]+\.[0-9]+$ ]] || { echo "::error::bad version '$NEW'"; exit 1; }
+          CUR=$(grep -m1 -oE 'default: "2\.[0-9]+\.[0-9]+"' action.yml | grep -oE '2\.[0-9]+\.[0-9]+')
+          if [ "$(printf '%s\n%s\n' "$CUR" "$NEW" | sort -V | tail -1)" != "$NEW" ] || [ "$CUR" = "$NEW" ]; then
+            echo "Current $CUR >= $NEW, nothing to do."; echo "changed=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          sed -i -E "0,/default: \"$CUR\"/s//default: \"$NEW\"/" action.yml
+          npm version minor --no-git-tag-version
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          echo "pkg=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+      - if: steps.bump.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v8
+        with:
+          branch: infra/RTECO-0000-bump-cli-version-${{ env.NEW }}-v4
+          base: ${{ steps.branch.outputs.base }}
+          commit-message: "RTECO-00000 - Update default JFrog CLI version to ${{ env.NEW }} and promote version to ${{ steps.bump.outputs.pkg }}"
+          title: "RTECO-00000 - Update default JFrog CLI version to ${{ env.NEW }} and promote version to ${{ steps.bump.outputs.pkg }}"
+          body: |
+            Updates the default JFrog CLI version to ${{ env.NEW }} and promotes the v4 line to ${{ steps.bump.outputs.pkg }}.
+
+            To be released **before** the v5 PR so the Marketplace latest release is v5.
+          labels: safe to test
+          delete-branch: true
