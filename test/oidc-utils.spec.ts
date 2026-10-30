@@ -121,10 +121,10 @@ describe('OidcUtils', (): void => {
     });
 
     describe('setOidcStepOutputs', (): void => {
-        it('should export user/token as step output and secret', (): void => {
+        it('should export user/token as step output and mark token as secret', (): void => {
             OidcUtils.setOidcStepOutputs('foo', 'bar');
             expect(core.setSecret).toHaveBeenCalledWith('bar');
-            expect(core.setSecret).toHaveBeenCalledWith('foo');
+            expect(core.setSecret).not.toHaveBeenCalledWith('foo');
             expect(core.setOutput).toHaveBeenCalledWith('oidc-token', 'bar');
             expect(core.setOutput).toHaveBeenCalledWith('oidc-user', 'foo');
         });

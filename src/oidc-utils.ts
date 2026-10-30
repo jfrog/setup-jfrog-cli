@@ -157,7 +157,6 @@ export class OidcUtils {
 
     public static setOidcStepOutputs(username: string, accessToken: string): void {
         core.setSecret(accessToken);
-        core.setSecret(username);
         core.setOutput('oidc-token', accessToken);
         core.setOutput('oidc-user', username);
     }
