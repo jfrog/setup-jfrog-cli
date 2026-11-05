@@ -1,0 +1,4 @@
+# Place in: jfrog/setup-jfrog-cli  ->  .github/CODEOWNERS
+# Files touched by the automated CLI version bump PRs. The team is requested for review on any PR changing them.
+/action.yml      @jfrog/ecomatrix
+/package.json    @jfrog/ecomatrix
